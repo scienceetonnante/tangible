@@ -19,7 +19,8 @@ function walk(dir) {
   for (const entry of readdirSync(dir)) {
     const p = join(dir, entry);
     if (statSync(p).isDirectory()) out.push(...walk(p));
-    else if (/\.(ts|tsx|mts)$/.test(entry)) out.push(p);
+    // Guard the shipped-runtime graph only; test files are not bundled.
+    else if (/\.(ts|tsx|mts)$/.test(entry) && !/\.(test|spec)\.[a-z]+$/.test(entry)) out.push(p);
   }
   return out;
 }
