@@ -8,6 +8,7 @@ import { TimelineDriver } from "./timeline.js";
 import { SceneHost, type SceneModule } from "./scene-host.js";
 import { Chrome } from "./chrome.js";
 import { Reconciler } from "./reconciler.js";
+import { InteractionManager } from "./interaction.js";
 import { parseDevParams } from "./url.js";
 
 declare global {
@@ -32,6 +33,7 @@ export class Player {
   readonly host: SceneHost;
   readonly chrome?: Chrome;
   readonly reconciler: Reconciler;
+  readonly interaction: InteractionManager;
   readonly audio: HTMLAudioElement;
 
   private canvas: HTMLCanvasElement;
@@ -71,6 +73,7 @@ export class Player {
     });
     this.reconciler = new Reconciler(this.store, this.index, schema);
     this.driver = new TimelineDriver(this.clock, this.index, this.store, { onFrame: (t) => this.frame(t) }, this.reconciler);
+    this.interaction = new InteractionManager(this.canvas, this.host, this.store, this.clock);
 
     const dev = parseDevParams(typeof location !== "undefined" ? location.search : "");
     if (opts.chrome !== false && !dev.nochrome) {
@@ -92,6 +95,7 @@ export class Player {
 
   dispose(): void {
     this.driver.stop();
+    this.interaction.dispose();
     this.unbindKeys?.();
     this.host.dispose();
     this.container.remove();

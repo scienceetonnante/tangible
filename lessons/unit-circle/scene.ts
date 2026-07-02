@@ -2,7 +2,7 @@
 // theta, and its projection (cosine) onto the horizontal axis. Renders as a pure
 // function of state.
 
-import type { Schema, ParamValue, PlainState } from "@xv/core";
+import type { Schema, ParamValue, PlainState, Handle } from "@xv/core";
 import type { SceneModule, SceneInstance, SceneContext } from "@xv/player";
 
 export const schema: Schema = {
@@ -49,11 +49,34 @@ export const scene: SceneModule = {
       render(state: Readonly<PlainState>) {
         draw(c2d, ctx.viewport(), state);
       },
-      handles: () => [],
+      handles: () => [pointHandle(ctx.viewport)],
       dispose: () => {},
     };
   },
 };
+
+/** Drag the red point around the circle → set theta = atan2. */
+function pointHandle(viewport: () => { width: number; height: number }): Handle {
+  const geom = () => {
+    const { width: w, height: h } = viewport();
+    return { cx: w / 2, cy: h / 2, R: Math.min(w, h) * 0.4 };
+  };
+  return {
+    id: "point",
+    params: ["theta"],
+    hitTest(px, py, state) {
+      const { cx, cy, R } = geom();
+      const th = state.theta as number;
+      return Math.hypot(px - (cx + Math.cos(th) * R), py - (cy - Math.sin(th) * R)) < 18;
+    },
+    onDrag(px, py) {
+      const { cx, cy } = geom();
+      let a = Math.atan2(cy - py, px - cx); // screen y is down
+      if (a < 0) a += Math.PI * 2;
+      return { theta: a };
+    },
+  };
+}
 
 function draw(g: CanvasRenderingContext2D, view: { width: number; height: number }, state: Readonly<PlainState>) {
   const { width: w, height: h } = view;

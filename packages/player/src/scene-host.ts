@@ -2,20 +2,14 @@
 // a pure function of state — it may cache expensive geometry but must not keep
 // mutable state that affects output across frames (that would break value-at-time).
 
-import type { Schema, ParamValue, PlainState } from "@xv/core";
+import type { Schema, ParamValue, PlainState, Handle } from "@xv/core";
+
+export type { Handle };
 
 export interface SceneContext {
   canvas: HTMLCanvasElement;
   overlay: HTMLElement; // for DOM labels / in-scene KaTeX
   viewport(): { width: number; height: number };
-}
-
-/** A draggable region: hit-test, the params it writes, and pointer→param mapping. */
-export interface Handle {
-  id: string;
-  params: string[];
-  hitTest(px: number, py: number, state: Readonly<PlainState>): boolean;
-  onDrag(px: number, py: number, state: Readonly<PlainState>): Record<string, ParamValue>;
 }
 
 export interface SceneInstance {

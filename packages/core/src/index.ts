@@ -5,3 +5,4 @@ export * from "./schema.js";
 export * from "./interpolate.js";
 export * from "./reconcile.js";
 export * from "./tts.js";
+export * from "./handle.js";
