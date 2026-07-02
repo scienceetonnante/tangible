@@ -15,6 +15,8 @@ import { loadScene } from "./scene-loader.js";
 import { loadManifest, type Manifest } from "./manifest.js";
 import { refSheet } from "./ref.js";
 import { scaffold } from "./scaffold.js";
+import { bundleSite } from "./bundle.js";
+import { renderFrame } from "./frame.js";
 
 async function main() {
   const argv = process.argv.slice(2);
@@ -31,6 +33,9 @@ async function main() {
     case "build":
       await cmdBuild(flags);
       return;
+    case "frame":
+      await cmdFrame(flags);
+      return;
     case "state":
       await cmdState(flags);
       return;
@@ -38,7 +43,7 @@ async function main() {
       await cmdRef(flags);
       return;
     default:
-      die(`unknown command "${cmd ?? ""}"\nusage: lesson <new|check|build|state|ref> [--lang fr] [--lesson dir] [--at t]`);
+      die(`unknown command "${cmd ?? ""}"\nusage: lesson <new|check|build|frame|state|ref> [--lang fr] [--lesson dir] [--at t] [--bundle] [-o file] [--size WxH] [--fake]`);
   }
 }
 
@@ -65,10 +70,27 @@ async function cmdBuild(flags: Flags): Promise<void> {
   const lessonDir = flags.lesson ?? process.cwd();
   const manifest = await loadManifest(lessonDir);
   const scene = await loadScene(join(lessonDir, manifest.scene));
-  for (const lang of languagesFor(flags, manifest)) {
+  const langs = languagesFor(flags, manifest);
+  for (const lang of langs) {
     await buildLanguage(lessonDir, manifest, scene, lang, flags.fake ?? false);
     console.error(`built ${manifest.id} [${lang}] → build/${lang}/`);
   }
+  if (flags.bundle) {
+    const out = await bundleSite(lessonDir, manifest, join(lessonDir, manifest.scene), langs);
+    console.error(`bundled static site → ${out}`);
+  }
+}
+
+async function cmdFrame(flags: Flags): Promise<void> {
+  const lessonDir = flags.lesson ?? process.cwd();
+  const manifest = await loadManifest(lessonDir);
+  const lang = flags.lang ?? manifest.languages[0]!;
+  const t = flags.at !== undefined ? Number(flags.at) : die("usage: lesson frame --at <t> -o <file.png>");
+  const out = flags.out ?? die("usage: lesson frame --at <t> -o <file.png>");
+  const siteDir = join(lessonDir, "build", "site");
+  if (!existsSync(join(siteDir, "index.html"))) die('no static bundle — run "lesson build --bundle" first');
+  await renderFrame(siteDir, { t, out, size: flags.size, lang });
+  console.error(`rendered frame at t=${t} → ${out}`);
 }
 
 /** Choose a TTS adapter from the manifest voice spec ("elevenlabs:ID"). */
@@ -155,6 +177,9 @@ interface Flags {
   lesson?: string;
   at?: string;
   fake?: boolean;
+  bundle?: boolean;
+  out?: string;
+  size?: string;
 }
 
 function parseFlags(args: string[]): Flags {
@@ -164,6 +189,9 @@ function parseFlags(args: string[]): Flags {
     else if (args[i] === "--at") f.at = args[++i];
     else if (args[i] === "--lesson") f.lesson = resolvePath(args[++i]!);
     else if (args[i] === "--fake") f.fake = true;
+    else if (args[i] === "--bundle") f.bundle = true;
+    else if (args[i] === "-o" || args[i] === "--out") f.out = args[++i];
+    else if (args[i] === "--size") f.size = args[++i];
   }
   return f;
 }
