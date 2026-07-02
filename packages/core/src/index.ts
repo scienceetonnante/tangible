@@ -1,2 +1,4 @@
-// @xv/core — Shared types, schema, easing, interpolation, time math.
-export const PACKAGE = "@xv/core" as const;
+// @xv/core — shared types, schema, easing, interpolation, time math.
+export * from "./types.js";
+export * from "./easing.js";
+export * from "./schema.js";
