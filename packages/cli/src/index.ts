@@ -17,6 +17,7 @@ import { refSheet } from "./ref.js";
 import { scaffold } from "./scaffold.js";
 import { bundleSite } from "./bundle.js";
 import { renderFrame } from "./frame.js";
+import { preview } from "./preview.js";
 
 async function main() {
   const argv = process.argv.slice(2);
@@ -36,6 +37,9 @@ async function main() {
     case "frame":
       await cmdFrame(flags);
       return;
+    case "preview":
+      await cmdPreview(flags);
+      return;
     case "state":
       await cmdState(flags);
       return;
@@ -43,7 +47,7 @@ async function main() {
       await cmdRef(flags);
       return;
     default:
-      die(`unknown command "${cmd ?? ""}"\nusage: lesson <new|check|build|frame|state|ref> [--lang fr] [--lesson dir] [--at t] [--bundle] [-o file] [--size WxH] [--fake]`);
+      die(`unknown command "${cmd ?? ""}"\nusage: lesson <new|check|build|frame|preview|state|ref> [--lang fr] [--lesson dir] [--at t] [--bundle] [-o file] [--size WxH] [--fake]`);
   }
 }
 
@@ -131,6 +135,20 @@ async function buildLanguage(lessonDir: string, manifest: Manifest, scene: Scene
   });
   for (const w of compiled.warnings) console.error(formatDiagnostic(w));
   await emit(join(lessonDir, "build", lang), compiled, result.audio);
+}
+
+async function cmdPreview(flags: Flags): Promise<void> {
+  const lessonDir = flags.lesson ?? process.cwd();
+  const manifest = await loadManifest(lessonDir);
+  const langs = languagesFor(flags, manifest);
+  const rebuild = async () => {
+    const scene = await loadScene(join(lessonDir, manifest.scene));
+    for (const lang of langs) await buildLanguage(lessonDir, manifest, scene, lang, true); // fake TTS for a fast loop
+    await bundleSite(lessonDir, manifest, join(lessonDir, manifest.scene), langs);
+  };
+  await rebuild();
+  const watchPaths = [join(lessonDir, manifest.scene), ...langs.map((l) => join(lessonDir, `script.${l}.md`))];
+  preview({ siteDir: join(lessonDir, "build", "site"), watchPaths, rebuild });
 }
 
 async function cmdState(flags: Flags): Promise<void> {
