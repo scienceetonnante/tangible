@@ -1,0 +1,27 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src"
+  },
+  "include": [
+    "src"
+  ],
+  "references": [
+    {
+      "path": "../core"
+    },
+    {
+      "path": "../compiler"
+    },
+    {
+      "path": "../tts"
+    },
+    {
+      "path": "../player"
+    },
+    {
+      "path": "../ingredients"
+    }
+  ]
+}

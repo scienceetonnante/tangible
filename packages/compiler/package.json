@@ -1,0 +1,17 @@
+{
+  "name": "@xv/compiler",
+  "version": "0.0.0",
+  "description": "script.md → tracks.json + captions.vtt (+ TTS orchestration).",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "dependencies": {
+    "@xv/core": "workspace:*"
+  }
+}

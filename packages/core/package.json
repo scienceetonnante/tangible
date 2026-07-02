@@ -1,0 +1,14 @@
+{
+  "name": "@xv/core",
+  "version": "0.0.0",
+  "description": "Shared types, schema, easing, interpolation, time math.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  }
+}

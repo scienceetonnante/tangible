@@ -1,0 +1,16 @@
+node_modules/
+.pnpm-store/
+*.tsbuildinfo
+dist/
+coverage/
+
+# Generated lesson artifacts
+lessons/*/build/
+lessons/*/.cache/
+
+# Env / secrets
+.env
+.env.*
+
+# OS / editor
+.DS_Store

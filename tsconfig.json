@@ -1,0 +1,11 @@
+{
+  "files": [],
+  "references": [
+    { "path": "packages/core" },
+    { "path": "packages/compiler" },
+    { "path": "packages/tts" },
+    { "path": "packages/player" },
+    { "path": "packages/ingredients" },
+    { "path": "packages/cli" }
+  ]
+}
