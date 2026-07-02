@@ -3,6 +3,9 @@ node_modules/
 *.tsbuildinfo
 dist/
 coverage/
+e2e/dist/
+test-results/
+playwright-report/
 
 # Generated lesson artifacts
 lessons/*/build/

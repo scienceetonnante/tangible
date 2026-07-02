@@ -14,10 +14,13 @@
     "test:watch": "vitest",
     "lint": "eslint .",
     "boundaries": "node scripts/check-boundaries.mjs",
+    "test:e2e": "playwright test",
     "check": "pnpm typecheck && pnpm lint && pnpm boundaries && pnpm test"
   },
   "devDependencies": {
+    "@playwright/test": "^1.49.1",
     "@types/node": "^22.10.2",
+    "esbuild": "^0.24.0",
     "eslint": "^9.17.0",
     "jsdom": "^25.0.1",
     "typescript": "^5.7.2",
