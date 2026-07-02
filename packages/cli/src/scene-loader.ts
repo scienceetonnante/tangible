@@ -1,0 +1,35 @@
+// Load a scene module's data exports (schema/presets/constants) in Node by
+// transpiling scene.ts with esbuild to a temp ESM file and importing it. The
+// schema export must not require a DOM (ARCHITECTURE §4.2).
+
+import { build } from "esbuild";
+import { mkdtemp, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
+import type { SceneInfo } from "@xv/compiler";
+
+export async function loadScene(scenePath: string): Promise<SceneInfo> {
+  const dir = await mkdtemp(join(tmpdir(), "xv-scene-"));
+  const outfile = join(dir, "scene.mjs");
+  try {
+    await build({
+      entryPoints: [scenePath],
+      outfile,
+      bundle: true,
+      format: "esm",
+      platform: "node",
+      external: ["@xv/*", "three"],
+      logLevel: "silent",
+    });
+    const mod = (await import(pathToFileURL(outfile).href)) as {
+      schema: SceneInfo["schema"];
+      presets?: SceneInfo["presets"];
+      constants?: SceneInfo["constants"];
+    };
+    if (!mod.schema) throw new Error(`${scenePath} does not export a "schema"`);
+    return { schema: mod.schema, presets: mod.presets, constants: mod.constants };
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+}

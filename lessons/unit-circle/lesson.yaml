@@ -1,0 +1,13 @@
+id: unit-circle
+title:
+  fr: Le cercle unité
+  en: The unit circle
+scene: ./scene.ts
+languages: [fr, en]
+voice:
+  fr: elevenlabs:VOICE_ID_FR
+  en: elevenlabs:VOICE_ID_EN
+defaults:
+  anticipation: -0.2
+  ease: inOutCubic
+  transition: 1.0

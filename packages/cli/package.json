@@ -5,6 +5,9 @@
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "bin": {
+    "lesson": "./dist/index.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -16,6 +19,8 @@
     "@xv/compiler": "workspace:*",
     "@xv/tts": "workspace:*",
     "@xv/player": "workspace:*",
-    "@xv/ingredients": "workspace:*"
+    "@xv/ingredients": "workspace:*",
+    "esbuild": "^0.24.0",
+    "yaml": "^2.6.1"
   }
 }
