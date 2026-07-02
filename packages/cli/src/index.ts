@@ -9,8 +9,8 @@ import { createHash } from "node:crypto";
 import { parseScript, check, compile, emit, synthesize, formatDiagnostic } from "@xv/compiler";
 import type { SceneInfo } from "@xv/compiler";
 import { buildIndex, evaluate } from "@xv/core";
-import type { Schema, Keyframe } from "@xv/core";
-import { FakeTtsAdapter } from "@xv/tts";
+import type { Schema, Keyframe, TtsAdapter } from "@xv/core";
+import { FakeTtsAdapter, ElevenLabsAdapter } from "@xv/tts";
 import { loadScene } from "./scene-loader.js";
 import { loadManifest, type Manifest } from "./manifest.js";
 import { refSheet } from "./ref.js";
@@ -65,14 +65,23 @@ async function cmdBuild(flags: Flags): Promise<void> {
   const lessonDir = flags.lesson ?? process.cwd();
   const manifest = await loadManifest(lessonDir);
   const scene = await loadScene(join(lessonDir, manifest.scene));
-  const adapter = new FakeTtsAdapter(); // M0: fake TTS; M3 selects elevenlabs from manifest.voice
   for (const lang of languagesFor(flags, manifest)) {
-    await buildLanguage(lessonDir, manifest, scene, lang, adapter);
+    await buildLanguage(lessonDir, manifest, scene, lang, flags.fake ?? false);
     console.error(`built ${manifest.id} [${lang}] → build/${lang}/`);
   }
 }
 
-async function buildLanguage(lessonDir: string, manifest: Manifest, scene: SceneInfo, lang: string, adapter: FakeTtsAdapter) {
+/** Choose a TTS adapter from the manifest voice spec ("elevenlabs:ID"). */
+function selectTts(voiceSpec: string, fake: boolean): { adapter: TtsAdapter; voice: string } {
+  const [provider, id] = voiceSpec.split(":");
+  if (!fake && provider === "elevenlabs" && process.env.ELEVENLABS_API_KEY) {
+    return { adapter: new ElevenLabsAdapter(), voice: id ?? "" };
+  }
+  if (!fake && provider === "elevenlabs") console.error("note: ELEVENLABS_API_KEY not set — using fake TTS");
+  return { adapter: new FakeTtsAdapter(), voice: voiceSpec };
+}
+
+async function buildLanguage(lessonDir: string, manifest: Manifest, scene: SceneInfo, lang: string, fake: boolean) {
   const file = `script.${lang}.md`;
   const script = await readFile(join(lessonDir, file), "utf8");
   const parsed = parseScript(script, file);
@@ -83,8 +92,9 @@ async function buildLanguage(lessonDir: string, manifest: Manifest, scene: Scene
     die(`build aborted: ${errs.length} error(s) in ${file}`);
   }
 
+  const { adapter, voice } = selectTts(manifest.voice[lang] ?? "", fake);
   const result = await synthesize(adapter, parsed.narration, {
-    voice: manifest.voice[lang] ?? "",
+    voice,
     language: lang,
     cacheDir: join(lessonDir, ".cache", "tts"),
   });
@@ -144,6 +154,7 @@ interface Flags {
   lang?: string;
   lesson?: string;
   at?: string;
+  fake?: boolean;
 }
 
 function parseFlags(args: string[]): Flags {
@@ -152,6 +163,7 @@ function parseFlags(args: string[]): Flags {
     if (args[i] === "--lang") f.lang = args[++i];
     else if (args[i] === "--at") f.at = args[++i];
     else if (args[i] === "--lesson") f.lesson = resolvePath(args[++i]!);
+    else if (args[i] === "--fake") f.fake = true;
   }
   return f;
 }
