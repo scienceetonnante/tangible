@@ -7,6 +7,7 @@ import { StateStore } from "./store.js";
 import { TimelineDriver } from "./timeline.js";
 import { SceneHost, type SceneModule } from "./scene-host.js";
 import { Chrome } from "./chrome.js";
+import { Reconciler } from "./reconciler.js";
 import { parseDevParams } from "./url.js";
 
 declare global {
@@ -30,6 +31,7 @@ export class Player {
   readonly driver: TimelineDriver;
   readonly host: SceneHost;
   readonly chrome?: Chrome;
+  readonly reconciler: Reconciler;
   readonly audio: HTMLAudioElement;
 
   private canvas: HTMLCanvasElement;
@@ -67,7 +69,8 @@ export class Player {
       overlay,
       viewport: () => ({ width: this.canvas.width, height: this.canvas.height }),
     });
-    this.driver = new TimelineDriver(this.clock, this.index, this.store, { onFrame: (t) => this.frame(t) });
+    this.reconciler = new Reconciler(this.store, this.index, schema);
+    this.driver = new TimelineDriver(this.clock, this.index, this.store, { onFrame: (t) => this.frame(t) }, this.reconciler);
 
     const dev = parseDevParams(typeof location !== "undefined" ? location.search : "");
     if (opts.chrome !== false && !dev.nochrome) {

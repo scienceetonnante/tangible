@@ -8,8 +8,11 @@ import type { Schema, ParamValue, PlainState, OrbitState } from "@xv/core";
 
 export interface InteractionMeta {
   userValue?: ParamValue;
-  lastTouched: number;
+  lastTouched: number; // wall-clock seconds of last touch
+  touchT: number; // timeline time at last touch (for `shared` resume)
   touchedEver: boolean;
+  modified: boolean; // still overriding/gliding back to scripted
+  dragging: boolean;
 }
 
 export class StateStore {
@@ -22,7 +25,7 @@ export class StateStore {
       const v = clone(spec.default);
       this.signals.set(key, signal(v));
       this.plain[key] = v;
-      this.meta.set(key, { lastTouched: -Infinity, touchedEver: false });
+      this.meta.set(key, { lastTouched: -Infinity, touchT: -Infinity, touchedEver: false, modified: false, dragging: false });
     }
   }
 
@@ -46,12 +49,31 @@ export class StateStore {
   }
 
   /** Record a user interaction on a parameter (for the Reconciler). */
-  touch(key: string, value: ParamValue, now: number): void {
+  touch(key: string, value: ParamValue, now: number, t: number): void {
     const m = this.meta.get(key);
     if (!m) return;
     m.userValue = clone(value);
     m.lastTouched = now;
+    m.touchT = t;
     m.touchedEver = true;
+    m.modified = true;
+  }
+
+  setDragging(key: string, dragging: boolean): void {
+    const m = this.meta.get(key);
+    if (m) m.dragging = dragging;
+  }
+
+  /** Clear all interaction state (on seek: rejoin the narration). */
+  resetInteractions(): void {
+    for (const m of this.meta.values()) {
+      m.userValue = undefined;
+      m.lastTouched = -Infinity;
+      m.touchT = -Infinity;
+      m.touchedEver = false;
+      m.modified = false;
+      m.dragging = false;
+    }
   }
 }
 

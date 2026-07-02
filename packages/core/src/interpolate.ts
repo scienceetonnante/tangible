@@ -189,3 +189,31 @@ function sphericalTo(out: [number, number, number], az: number, el: number): voi
 function isOrbit(v: unknown): v is OrbitState {
   return typeof v === "object" && v !== null && !Array.isArray(v) && "azimuth" in v;
 }
+
+// --- pure kernels for the Reconciler's frame-by-frame blend (§5.5) ---
+
+/** Blend from a toward b by u using the given kernel; returns a fresh value. */
+export function blend(mode: InterpolateMode, a: ParamValue, b: ParamValue, u: number): ParamValue {
+  if (mode === "snap") return b;
+  const out: PlainState = {};
+  interpInto(out, "v", mode, a, b, u);
+  return out["v"]!;
+}
+
+/** Structural convergence test (scalar / vector / orbit) within epsilon. */
+export function converged(a: ParamValue, b: ParamValue, eps: number): boolean {
+  if (typeof a === "number" && typeof b === "number") return Math.abs(a - b) <= eps;
+  if (Array.isArray(a) && Array.isArray(b)) {
+    for (let i = 0; i < a.length; i++) if (Math.abs(a[i]! - b[i]!) > eps) return false;
+    return true;
+  }
+  if (isOrbit(a) && isOrbit(b)) {
+    return (
+      Math.abs(a.distance - b.distance) <= eps &&
+      Math.abs(a.azimuth - b.azimuth) <= eps &&
+      Math.abs(a.elevation - b.elevation) <= eps &&
+      a.target.every((x, i) => Math.abs(x - b.target[i]!) <= eps)
+    );
+  }
+  return a === b;
+}
