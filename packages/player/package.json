@@ -13,6 +13,10 @@
   },
   "dependencies": {
     "@xv/core": "workspace:*",
-    "@preact/signals-core": "^1.8.0"
+    "@preact/signals-core": "^1.8.0",
+    "katex": "^0.16.11"
+  },
+  "devDependencies": {
+    "@types/katex": "^0.16.7"
   }
 }

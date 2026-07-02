@@ -7,7 +7,15 @@ export const PLAYER_CSS = `
 .xv-overlay { position: absolute; inset: 0; pointer-events: none; }
 .xv-board { position: absolute; top: 0; right: 0; width: 28%; height: 100%; padding: 12px; box-sizing: border-box; overflow: auto; }
 .xv-captions { position: absolute; left: 0; right: 0; bottom: 48px; text-align: center; font: 18px/1.4 sans-serif; color: #111; text-shadow: 0 1px 2px #fff; }
-.xv-gate { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; }
+.xv-board-inner { display: flex; flex-direction: column; gap: 10px; }
+.xv-board-item { transition: opacity 200ms ease; }
+.xv-board-item.xv-hidden { display: none; }
+.xv-board-item.xv-shown { opacity: 1; }
+.xv-board-item.xv-dimmed { opacity: 0.4; }
+.xv-hl { background: #fff3a0; border-radius: 3px; }
+.xv-gate { position: absolute; inset: 0; display: none; align-items: flex-end; justify-content: center; pointer-events: none; padding-bottom: 60px; }
+.xv-gate-box { pointer-events: auto; background: rgba(20,20,20,0.9); color: #fff; padding: 12px 16px; border-radius: 8px; display: flex; gap: 12px; align-items: center; }
+.xv-gate-box button { background: #fff; border: none; border-radius: 4px; padding: 4px 10px; cursor: pointer; }
 .xv-chrome { position: absolute; left: 0; right: 0; bottom: 0; height: 40px; display: flex; align-items: center; gap: 8px; padding: 0 8px; background: rgba(255,255,255,0.85); }
 .xv-chrome button { border: none; background: none; font-size: 16px; cursor: pointer; }
 .xv-scrubber { flex: 1; }

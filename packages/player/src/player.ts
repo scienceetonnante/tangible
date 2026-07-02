@@ -1,14 +1,18 @@
 // Player — composes the runtime: DOM layers, store, clock, timeline driver, scene
-// host, and chrome. One Player per lesson page (ARCHITECTURE §5.1).
+// host, reconciler, interaction, board, captions, pause gates, and chrome. One
+// Player per lesson page (ARCHITECTURE §5.1).
 
 import { buildIndex, type LessonTracks, type Schema, type PlainState, type TrackIndex } from "@xv/core";
 import { AudioClock } from "./clock.js";
 import { StateStore } from "./store.js";
 import { TimelineDriver } from "./timeline.js";
 import { SceneHost, type SceneModule } from "./scene-host.js";
-import { Chrome } from "./chrome.js";
 import { Reconciler } from "./reconciler.js";
 import { InteractionManager } from "./interaction.js";
+import { Board } from "./board.js";
+import { Captions } from "./captions.js";
+import { PauseGate } from "./pause-gate.js";
+import { Chrome } from "./chrome.js";
 import { parseDevParams } from "./url.js";
 
 declare global {
@@ -21,6 +25,7 @@ export interface PlayerOptions {
   mount: HTMLElement;
   scene: SceneModule;
   tracks: LessonTracks;
+  captionsVtt?: string;
   audioSrc?: string[];
   baseUrl?: string;
   chrome?: boolean; // default true
@@ -31,9 +36,12 @@ export class Player {
   readonly clock: AudioClock;
   readonly driver: TimelineDriver;
   readonly host: SceneHost;
-  readonly chrome?: Chrome;
   readonly reconciler: Reconciler;
   readonly interaction: InteractionManager;
+  readonly board: Board;
+  readonly captions: Captions;
+  readonly pauseGate: PauseGate;
+  readonly chrome?: Chrome;
   readonly audio: HTMLAudioElement;
 
   private canvas: HTMLCanvasElement;
@@ -52,20 +60,25 @@ export class Player {
     this.container = el("div", "xv-player");
     this.canvas = el("canvas", "") as HTMLCanvasElement;
     const overlay = el("div", "xv-overlay");
-    const board = el("aside", "xv-board");
-    const captions = el("div", "xv-captions");
-    const gate = el("div", "xv-gate");
+    const boardPanel = el("aside", "xv-board");
+
     this.audio = document.createElement("audio");
     for (const src of opts.audioSrc ?? []) {
       const s = document.createElement("source");
       s.src = (opts.baseUrl ?? "") + src;
       this.audio.append(s);
     }
-    this.container.append(this.canvas, overlay, board, captions, gate, this.audio);
+    this.clock = new AudioClock(this.audio);
+
+    this.board = new Board(this.store, opts.tracks.boardItems, opts.tracks.language);
+    boardPanel.append(this.board.el);
+    this.captions = new Captions(opts.captionsVtt ?? "");
+    this.pauseGate = new PauseGate(this.clock, opts.tracks.pauses);
+
+    this.container.append(this.canvas, overlay, boardPanel, this.captions.el, this.pauseGate.el, this.audio);
     opts.mount.append(this.container);
     this.resize();
 
-    this.clock = new AudioClock(this.audio);
     this.host = new SceneHost(opts.scene, {
       canvas: this.canvas,
       overlay,
@@ -77,7 +90,7 @@ export class Player {
 
     const dev = parseDevParams(typeof location !== "undefined" ? location.search : "");
     if (opts.chrome !== false && !dev.nochrome) {
-      this.chrome = new Chrome(this.clock, opts.tracks);
+      this.chrome = new Chrome(this.clock, opts.tracks, { onCaptionsToggle: (on) => this.captions.setVisible(on) });
       this.container.append(this.chrome.el);
       this.unbindKeys = this.chrome.bindKeys();
     }
@@ -97,6 +110,7 @@ export class Player {
     this.driver.stop();
     this.interaction.dispose();
     this.unbindKeys?.();
+    this.board.dispose();
     this.host.dispose();
     this.container.remove();
   }
@@ -105,6 +119,8 @@ export class Player {
     const dt = Math.max(0, t - this.lastFrameT);
     this.lastFrameT = t;
     this.host.render(this.store.plain, dt);
+    this.captions.update(t);
+    this.pauseGate.update(t);
     this.chrome?.update(t);
     if (this.dumpState) window.__XV_STATE__ = { ...this.store.plain };
   }
