@@ -2,3 +2,4 @@
 export * from "./clock.js";
 export * from "./store.js";
 export * from "./timeline.js";
+export * from "./scene-host.js";

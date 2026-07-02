@@ -1,0 +1,53 @@
+// SceneHost and the scene-module contract (ARCHITECTURE §5.6). A scene renders as
+// a pure function of state — it may cache expensive geometry but must not keep
+// mutable state that affects output across frames (that would break value-at-time).
+
+import type { Schema, ParamValue, PlainState } from "@xv/core";
+
+export interface SceneContext {
+  canvas: HTMLCanvasElement;
+  overlay: HTMLElement; // for DOM labels / in-scene KaTeX
+  viewport(): { width: number; height: number };
+}
+
+/** A draggable region: hit-test, the params it writes, and pointer→param mapping. */
+export interface Handle {
+  id: string;
+  params: string[];
+  hitTest(px: number, py: number, state: Readonly<PlainState>): boolean;
+  onDrag(px: number, py: number, state: Readonly<PlainState>): Record<string, ParamValue>;
+}
+
+export interface SceneInstance {
+  render(state: Readonly<PlainState>, dt: number): void;
+  handles(): Handle[];
+  dispose(): void;
+}
+
+export interface SceneModule {
+  schema: Schema;
+  presets?: Record<string, Record<string, ParamValue>>;
+  constants?: Record<string, number | number[]>;
+  create(ctx: SceneContext): SceneInstance;
+}
+
+/** Owns a scene instance and drives its imperative render from plain state. */
+export class SceneHost {
+  readonly instance: SceneInstance;
+
+  constructor(module: SceneModule, ctx: SceneContext) {
+    this.instance = module.create(ctx);
+  }
+
+  render(state: Readonly<PlainState>, dt: number): void {
+    this.instance.render(state, dt);
+  }
+
+  handles(): Handle[] {
+    return this.instance.handles();
+  }
+
+  dispose(): void {
+    this.instance.dispose();
+  }
+}
