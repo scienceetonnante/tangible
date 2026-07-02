@@ -12,6 +12,7 @@
     }
   },
   "dependencies": {
-    "@xv/core": "workspace:*"
+    "@xv/core": "workspace:*",
+    "@preact/signals-core": "^1.8.0"
   }
 }
