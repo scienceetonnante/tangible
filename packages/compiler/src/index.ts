@@ -3,3 +3,4 @@ export * from "./diagnostics.js";
 export * from "./parse.js";
 export * from "./value.js";
 export * from "./check.js";
+export * from "./synthesize.js";
