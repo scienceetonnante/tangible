@@ -12,6 +12,7 @@
     }
   },
   "dependencies": {
-    "@xv/core": "workspace:*"
+    "@xv/core": "workspace:*",
+    "yaml": "^2.6.1"
   }
 }

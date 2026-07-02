@@ -163,7 +163,7 @@ const _dirB: [number, number, number] = [0, 0, 0];
 function orbitInto(dst: OrbitState, a: OrbitState, b: OrbitState, u: number): void {
   sphericalTo(_dirA, a.azimuth, a.elevation);
   sphericalTo(_dirB, b.azimuth, b.elevation);
-  let dot = _dirA[0] * _dirB[0] + _dirA[1] * _dirB[1] + _dirA[2] * _dirB[2];
+  const dot = _dirA[0] * _dirB[0] + _dirA[1] * _dirB[1] + _dirA[2] * _dirB[2];
   const s = dot < 0 ? -1 : 1;
   let x = _dirA[0] + (s * _dirB[0] - _dirA[0]) * u;
   let y = _dirA[1] + (s * _dirB[1] - _dirA[1]) * u;
