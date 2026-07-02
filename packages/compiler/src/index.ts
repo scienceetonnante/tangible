@@ -6,3 +6,4 @@ export * from "./check.js";
 export * from "./synthesize.js";
 export * from "./resolve.js";
 export * from "./expand.js";
+export * from "./emit.js";
