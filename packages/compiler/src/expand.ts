@@ -32,12 +32,15 @@ interface Builder {
   kf: Keyframe[];
   current: ParamValue;
   runningEnd: number; // end time of any in-flight transition
+  startLoc?: Diagnostic["loc"]; // source of the in-flight transition (for the truncation warning)
 }
 
 export function expand(cues: ResolvedCue[], scene: SceneInfo, opts: ExpandOptions): ExpandResult {
   const constants = scene.constants ?? {};
   const presets = scene.presets ?? {};
   const warnings: Diagnostic[] = [];
+  // Each truncation of an in-flight transition; grouped into one warning per truncating cue below.
+  const truncations: { cutBy: Diagnostic["loc"]; startedAt?: Diagnostic["loc"]; param: string }[] = [];
   const builders = new Map<string, Builder>();
   const boardItems: Record<string, BoardItem> = {};
   const highlightsByItem = new Map<string, Set<string>>(); // item → highlight param keys
@@ -58,7 +61,7 @@ export function expand(cues: ResolvedCue[], scene: SceneInfo, opts: ExpandOption
   }
 
   // Truncate an in-flight transition at time t, folding its interpolated value in.
-  function truncate(b: Builder, t: number, loc: Diagnostic["loc"]) {
+  function truncate(b: Builder, param: string, t: number, cutBy: Diagnostic["loc"]) {
     if (t >= b.runningEnd || b.kf.length < 2) return;
     const last = b.kf[b.kf.length - 1]!;
     const idx = buildIndex({ tmp: b.kf.slice(-2) }, { tmp: b.spec });
@@ -67,24 +70,26 @@ export function expand(cues: ResolvedCue[], scene: SceneInfo, opts: ExpandOption
     last.v = iv;
     b.current = iv;
     b.runningEnd = t;
-    warnings.push({ severity: "warning", message: `overlapping transition truncated at ${t.toFixed(3)}s`, loc });
+    truncations.push({ cutBy, startedAt: b.startLoc, param });
   }
 
   function setInstant(param: string, spec: ParamSpec, t: number, v: ParamValue, loc: Diagnostic["loc"]) {
     const b = builder(param, spec);
-    truncate(b, t, loc);
+    truncate(b, param, t, loc);
     b.kf.push({ t, v });
     b.current = v;
     b.runningEnd = t;
+    b.startLoc = undefined; // an instant set leaves no in-flight transition
   }
 
   function setAnimate(param: string, spec: ParamSpec, t: number, dur: number, ease: string, v: ParamValue, loc: Diagnostic["loc"]) {
     const b = builder(param, spec);
-    truncate(b, t, loc);
+    truncate(b, param, t, loc);
     b.kf.push({ t, v: b.current });
     b.kf.push({ t: t + dur, v, ease });
     b.current = v;
     b.runningEnd = t + dur;
+    b.startLoc = loc; // this cue owns the now-in-flight transition
   }
 
   for (const { t, directive: d } of cues) {
@@ -173,6 +178,21 @@ export function expand(cues: ResolvedCue[], scene: SceneInfo, opts: ExpandOption
 
   function clearHighlights(item: string, t: number, loc: Diagnostic["loc"]) {
     for (const key of highlightsByItem.get(item) ?? []) setInstant(key, flagSpec(), t, false, loc);
+  }
+
+  // One warning per truncating cue (not per assignment), naming the affected params
+  // and the source line(s) where the transitions it cut began.
+  const byCue = new Map<string, typeof truncations>();
+  for (const tr of truncations) {
+    const k = `${tr.cutBy.line}:${tr.cutBy.col}`;
+    if (!byCue.has(k)) byCue.set(k, []);
+    byCue.get(k)!.push(tr);
+  }
+  for (const group of byCue.values()) {
+    const params = group.map((g) => g.param);
+    const lines = [...new Set(group.map((g) => g.startedAt?.line).filter((l): l is number => l !== undefined))].sort((a, b) => a - b);
+    const where = lines.length ? ` (started at line ${lines.join(", ")})` : "";
+    warnings.push({ severity: "warning", message: `overlapping transition truncated: this cue cut ${params.length} in-flight transition(s)${where}: ${params.join(", ")}`, loc: group[0]!.cutBy });
   }
 
   // Assemble tracks; merge recorded tracks verbatim (error on cue/recorded conflict).

@@ -142,6 +142,7 @@ async function buildLanguage(lessonDir: string, manifest: Manifest, scene: Scene
   const compiled = compile(script, result, scene, {
     lessonId: manifest.id,
     language: lang,
+    file,
     defaults: manifest.defaults,
     audioSrc: [`audio.${format}`],
     audioHash,

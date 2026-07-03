@@ -18,6 +18,7 @@ type Timing = Pick<TtsResult, "charTimes" | "wordTimes" | "duration">;
 export interface CompileOptions {
   lessonId: string;
   language: string;
+  file?: string; // source filename, so build-path warnings carry it (not "<script>")
   defaults: { anticipation: number; ease: string; transition: number };
   audioSrc: string[];
   audioHash: string;
@@ -33,7 +34,7 @@ export interface Compiled {
 
 /** Full parse→resolve→expand→assemble, deterministic for fixed inputs. */
 export function compile(script: string, timing: Timing, scene: SceneInfo, opts: CompileOptions): Compiled {
-  const parsed = parseScript(script);
+  const parsed = parseScript(script, opts.file);
   const cues = resolve(parsed.directives, parsed.narration, timing, { anticipation: opts.defaults.anticipation });
   const ex = expand(cues, scene, {
     language: opts.language,
