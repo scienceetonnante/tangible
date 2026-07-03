@@ -145,7 +145,9 @@ async function cmdPreview(flags: Flags): Promise<void> {
   const langs = languagesFor(flags, manifest);
   const rebuild = async () => {
     const scene = await loadScene(join(lessonDir, manifest.scene));
-    for (const lang of langs) await buildLanguage(lessonDir, manifest, scene, lang, true); // fake TTS for a fast loop
+    // Same TTS selection as build; cached, so it only re-synthesizes on prose edits.
+    // Pass --fake for a zero-cost loop while editing narration.
+    for (const lang of langs) await buildLanguage(lessonDir, manifest, scene, lang, flags.fake ?? false);
     await bundleSite(lessonDir, manifest, join(lessonDir, manifest.scene), langs);
   };
   await rebuild();
