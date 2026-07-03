@@ -68,7 +68,9 @@ export class Player {
     for (const src of opts.audioSrc ?? []) {
       const s = document.createElement("source");
       s.src = (opts.baseUrl ?? "") + src;
-      s.type = mimeForAudio(src); // Safari is picky about selecting a typeless source
+      // A blob: URL carries its own MIME (set at creation); a guessed type would
+      // override it. Otherwise set the type — Safari won't select a typeless source.
+      if (!s.src.startsWith("blob:")) s.type = mimeForAudio(src);
       this.audio.append(s);
     }
     this.clock = new AudioClock(this.audio);

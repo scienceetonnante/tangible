@@ -23,13 +23,23 @@ export async function bundleSite(lessonDir: string, manifest: Manifest, scenePat
 import { Player, PLAYER_CSS } from "@narrable/player";
 import { scene } from ${JSON.stringify(scenePath)};
 const DEFAULT_LANG = ${JSON.stringify(langs[0])};
+const mimeForAudio = (s) => s.endsWith(".m4a") ? "audio/mp4" : s.endsWith(".mp3") ? "audio/mpeg" : s.endsWith(".webm") ? "audio/webm" : "audio/wav";
 async function main() {
   const lang = new URLSearchParams(location.search).get("lang") || DEFAULT_LANG;
   const base = "./" + lang + "/";
   const tracks = await (await fetch(base + "tracks.json")).json();
   const vtt = await (await fetch(base + "captions.vtt")).text();
+  // Fetch audio as an in-memory blob and play from an object URL. Static hosts (e.g.
+  // Hugging Face Spaces) serve media stored via Xet/LFS through signed CDN redirects
+  // that break Safari's range-based media loader (403 on the redirect); a blob URL
+  // has no redirect and no range negotiation, so it plays everywhere.
+  const audioSrc = [];
+  for (const src of tracks.audio.src) {
+    const buf = await (await fetch(base + src)).arrayBuffer();
+    audioSrc.push(URL.createObjectURL(new Blob([buf], { type: mimeForAudio(src) })));
+  }
   const style = document.createElement("style"); style.textContent = PLAYER_CSS; document.head.append(style);
-  const player = new Player({ mount: document.getElementById("app"), scene, tracks, captionsVtt: vtt, audioSrc: tracks.audio.src, baseUrl: base });
+  const player = new Player({ mount: document.getElementById("app"), scene, tracks, captionsVtt: vtt, audioSrc, baseUrl: "" });
   window.__player = player;
   player.start();
 }
