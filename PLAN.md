@@ -6,9 +6,9 @@
 
 ## Status — 2026-07-03
 
-**Done:** M-bootstrap, M0, M1, M2 (tagged `m0`/`m1`/`m2`) and M3 **except deploy** — the vertical slice works end to end (build → play → seek → catch-up → pause gate → board → captions, in real browsers, both fake and real ElevenLabs audio). Gate: `CI=true pnpm check` = **124 unit tests / 24 files**; **12 Playwright e2e on Chromium + WebKit**.
+**Done:** M-bootstrap, M0, M1, M2 (tagged `m0`/`m1`/`m2`) and nearly all of M3 — the vertical slice works end to end (build → play → seek → catch-up → pause gate → board → captions) and is **deployed live to a static HF Space** ([dlouapre/unit-circle](https://huggingface.co/spaces/dlouapre/unit-circle)), both languages, real ElevenLabs voice, verified on Chrome, Safari (macOS), and iPad. Gate: `CI=true pnpm check` = **125 unit tests / 24 files**; **12 Playwright e2e on Chromium + WebKit**.
 
-**Remaining in M3:** `C3.7` — deploy the demo to a static HF Space + write up the agent-authoring validation. Owner-gated (key added; deploy is outward-facing). The **rename gate** is cleared — the package scope is now `@narrable/*` and the CLI stays `lesson`.
+**Remaining in M3:** the **agent-authoring validation** — the second half of `C3.7`. The deploy half is ✅ done and verified. What's left: give an agent only `lesson ref` output for the unit-circle scene, have it draft the script + choreography, and write up findings (markup ergonomics, anticipation default, hold-and-blend feel). Only then is M3 complete and `v0.1.0` tag-able. The **rename gate** is cleared — scope is `@narrable/*`, CLI stays `lesson`.
 
 **Not started:** M4 (record mode + fake cursor), M5 (ingredients library + 3D lesson).
 
@@ -49,7 +49,7 @@ These were chosen as defaults (the interview timed out); flag any you want chang
 | **M0** | `core` + `compiler` (fake TTS) + `lesson check/build/state/ref` | Golden tests green; `state --at` correct on fixture | Full | ✅ (tag `m0`) |
 | **M1** | `player` core: clock, timeline driver, store, scene host, chrome; unit-circle 2D scene | Plays/seeks correctly with fake-TTS audio | Full | ✅ (tag `m1`) |
 | **M2** | Reconciler + interaction (handles, camera-orbit); board; captions; pause gates | Catch-up feels right; Playwright green | Full | ✅ (tag `m2`) |
-| **M3** | ElevenLabs adapter + caching; FR+EN unit-circle; `frame`; static bundle; **agent-authoring validation** | Published static demo, both languages, one script pair; agent drafts a competent lesson | Full | 🔶 built; deploy + agent validation (`C3.7`) pending |
+| **M3** | ElevenLabs adapter + caching; FR+EN unit-circle; `frame`; static bundle; **agent-authoring validation** | Published static demo, both languages, one script pair; agent drafts a competent lesson | Full | 🔶 deployed & verified (both langs, real voice); agent-authoring validation writeup pending |
 | **M4** | Record mode + recorded-track merging; fake cursor | Camera choreography recorded, trimmed, replayed | Sketch | ⬜ |
 | **M5** | `ingredients` growth + second lesson (3D, three.js) | Second lesson built with < 30% platform changes | Sketch | ⬜ |
 
@@ -310,7 +310,8 @@ Everything real: true voice, two languages, headless frames, a shippable bundle,
 - **Agent-authoring validation** (the core slice validation target): give an agent only `lesson ref` output for the unit-circle scene and have it draft the script + choreography; human directs. Capture findings on markup ergonomics, anticipation default, hold-and-blend feel.
 
 - `C3.6` — agent-loop smoke test in CI.
-- `C3.7` — deploy the static demo to a static HF Space (both languages); write up agent-authoring validation results.
+- `C3.7a` ✅ — deploy the static demo to a static HF Space (both languages). Live at [dlouapre/unit-circle](https://huggingface.co/spaces/dlouapre/unit-circle), verified on Chrome, Safari (macOS), and iPad.
+- `C3.7b` ⬜ — write up agent-authoring validation results.
 
 **M3 exit criterion** — published static demo, both languages, from one script pair; agent produces a competent lesson draft from `lesson ref`. This validates every architectural decision at small scale before generalization.
 
@@ -387,7 +388,7 @@ Everything real: true voice, two languages, headless frames, a shippable bundle,
 ✅ C3.4 static bundle
 🔶 C3.5 preview: static serve + watch + live-reload (not Vite HMR)
 ✅ C3.6 agent-loop smoke test in CI
-⬜ C3.7 deploy demo + agent-authoring validation writeup         [R3, tag v0.1.0]
+🔶 C3.7 deploy ✅ (live HF Space, both langs, real voice, verified) — agent-authoring validation writeup ⬜  [R3, tag v0.1.0]
 ⬜ C4.* record mode + recorded-track merge (sketch)
 ⬜ C5.* ingredients + second 3D lesson (sketch)
 ```
@@ -407,13 +408,17 @@ Work done while iterating on the running slice, not in the original plan. All co
 - ✅ **Seek-accurate audio (m4a)** — ElevenLabs MP3 has malformed frame headers, so browsers byte-offset-seek it imprecisely and the voice drifts from the animation after scrubbing (all browsers; WebKit even misreads its duration). The CLI now transcodes real-voice MP3 → sample-indexed AAC/MP4 (`audio.m4a`) via ffmpeg; both engines then read the correct duration and seek exactly. Fake/CI stays WAV (hermetic, no ffmpeg).
 - ✅ **Narration speed** — `lesson.yaml` `tts.speed` (ElevenLabs speaking rate) threaded through the request + cache key; fake TTS scales duration too.
 - ✅ **Spoken pause prompts** — `@pause` narrates its prompt (injected into the spoken text, checkpoint anchored just after); `speak: false` opts out.
+- ✅ **HF Space deploy tooling** — `lessons/<id>/space/` (Space card `README.md` with `sdk: static`, `.gitattributes` LFS-tracking audio) + `scripts/deploy-space.sh` (clone → replace with `build/site/` → push). Audio must be LFS/Xet on HF.
+- ✅ **Safari on HF Spaces (blob audio)** — HF serves Xet/LFS media via a 302 to a signed CDN URL bound to a byte range; Safari's range-based media loader 403s on it (works in Chrome). The static bundle now fetches audio up front and plays from an in-memory `blob:` URL — no redirect, no range negotiation. Bundle-entry only; the Player keeps its streaming `<source>` path.
+- ✅ **Touch drag (iPad)** — `touch-action: none` on the canvas so touch gestures drag the handle instead of scrolling the page.
+- ✅ **Pause gate hardening** — re-arms whenever playback goes back before a checkpoint (was one-shot until seek-to-start); snaps the clock to the exact checkpoint on trigger so Safari's audio-output latency doesn't leak the next word and resume is clean; board panel made `pointer-events: none` (non-modal) so it no longer blocks dragging a handle beneath it.
 
 ---
 
 ## What remains
 
-1. **`C3.7` — deploy + agent-authoring validation** (owner-gated): rename gate cleared (scope `@narrable/*`); deploy the static bundle to an HF Space; run the "agent drafts a lesson from `lesson ref`" exercise and write up findings. Tag `v0.1.0`.
-2. **Real-voice pass** — build the demo with the real ElevenLabs key (voice IDs set), tune `tts.speed`/anticipation by ear. (Adapter + caching ready.)
+1. **`C3.7b` — agent-authoring validation** (closes M3): give an agent only `lesson ref` output for the unit-circle scene, have it draft the script + choreography, and write up findings (markup ergonomics, anticipation default, hold-and-blend feel). This is the last item before tagging `v0.1.0`. *(The `C3.7a` deploy and the real-voice build are done — the demo is live with real ElevenLabs audio in both languages.)*
+2. **Optional real-voice tuning** — fine-tune `tts.speed`/anticipation by ear if desired. (Built and live; adapter + caching ready.)
 3. **M4** — record mode + recorded-track merging + fake cursor.
 4. **M5** — grow `ingredients` (axes, arrows, draggable points, scrub-able KaTeX numbers) + a second, 3D (three.js) lesson to force the abstractions.
 5. **Deferred niceties** — Vite module-level HMR for `preview`; word-level (karaoke) captions; the `align` adapter (forced alignment of a human recording).
