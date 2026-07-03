@@ -50,6 +50,7 @@ export class Player {
   private lastFrameT = 0;
   private dumpState = false;
   private unbindKeys?: () => void;
+  private resizeObserver?: ResizeObserver;
 
   constructor(opts: PlayerOptions) {
     const schema: Schema = { ...opts.scene.schema, ...boardSchema(opts.tracks.tracks) };
@@ -99,6 +100,15 @@ export class Player {
       this.clock.seek(dev.t);
       this.clock.pause();
     }
+
+    // Keep the canvas backing store matched to its display size (handles fullscreen).
+    if (typeof ResizeObserver !== "undefined") {
+      this.resizeObserver = new ResizeObserver(() => {
+        this.resize();
+        this.driver.tick(); // repaint at the new size even when paused
+      });
+      this.resizeObserver.observe(this.container);
+    }
   }
 
   start(): void {
@@ -108,6 +118,7 @@ export class Player {
 
   dispose(): void {
     this.driver.stop();
+    this.resizeObserver?.disconnect();
     this.interaction.dispose();
     this.unbindKeys?.();
     this.board.dispose();
@@ -126,9 +137,14 @@ export class Player {
   }
 
   private resize(): void {
+    // Back the canvas at device resolution so lines and text stay crisp (incl.
+    // fullscreen); the scene draws in backing pixels via viewport().
+    const dpr = window.devicePixelRatio || 1;
     const r = this.container.getBoundingClientRect();
-    this.canvas.width = Math.round(r.width) || 640;
-    this.canvas.height = Math.round(r.height) || 360;
+    const cssW = Math.round(r.width) || 640;
+    const cssH = Math.round(r.height) || 360;
+    this.canvas.width = Math.round(cssW * dpr);
+    this.canvas.height = Math.round(cssH * dpr);
   }
 }
 

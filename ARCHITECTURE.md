@@ -38,8 +38,8 @@ lessons/
     assets/           # recorded tracks (JSON), images
     build/            # generated output — gitignored except on publish
 docs/
-  interactive-explorable-video.md
-  architecture.md   (this file)
+  DESIGN.md
+  ARCHITECTURE.md   (this file)
 ```
 
 Dependency rule: `core` depends on nothing; `compiler` and `player` depend on `core` only; `cli` depends on everything; `ingredients` depends on `core` (+ three). `player` must never import `compiler` or `tts` — the runtime consumes only built artifacts.

@@ -32,6 +32,7 @@ export class Chrome {
   private scrubber: HTMLInputElement;
   private elapsed: HTMLElement;
   private captionsOn = true;
+  private scrubbing = false;
 
   constructor(
     private clock: AudioClock,
@@ -52,7 +53,14 @@ export class Chrome {
     this.scrubber.max = "1000";
     this.scrubber.value = "0";
     this.scrubber.className = "xv-scrubber";
+    // Seek live while dragging; suppress the frame loop's value writes so the
+    // drag isn't fought back to the current playback position.
     this.scrubber.oninput = () => this.clock.seek((Number(this.scrubber.value) / 1000) * this.duration());
+    this.scrubber.addEventListener("pointerdown", () => (this.scrubbing = true));
+    const endScrub = () => (this.scrubbing = false);
+    this.scrubber.addEventListener("pointerup", endScrub);
+    this.scrubber.addEventListener("pointercancel", endScrub);
+    this.scrubber.addEventListener("blur", endScrub);
 
     this.elapsed = div("xv-elapsed");
     this.elapsed.textContent = "0:00 / 0:00";
@@ -68,7 +76,7 @@ export class Chrome {
     const full = doc.createElement("button");
     full.className = "xv-fullscreen";
     full.textContent = "⛶";
-    full.onclick = () => void this.el.closest(".xv-player")?.requestFullscreen?.();
+    full.onclick = () => this.toggleFullscreen();
 
     this.el.append(this.playBtn, this.scrubber, this.elapsed, captions, full);
     this.clock.on("play", () => (this.playBtn.textContent = "⏸"));
@@ -81,7 +89,7 @@ export class Chrome {
       if (e.key === " " || e.key === "k") {
         e.preventDefault();
         this.togglePlay();
-      } else if (e.key === "f") this.el.closest(".xv-player")?.requestFullscreen?.();
+      } else if (e.key === "f") this.toggleFullscreen();
       else if (e.key === "ArrowRight") this.clock.seek(this.clock.t + 5);
       else if (e.key === "ArrowLeft") this.clock.seek(this.clock.t - 5);
     };
@@ -91,13 +99,18 @@ export class Chrome {
 
   update(t: number): void {
     const d = this.duration();
-    this.scrubber.value = String(d > 0 ? Math.round((t / d) * 1000) : 0);
+    if (!this.scrubbing) this.scrubber.value = String(d > 0 ? Math.round((t / d) * 1000) : 0);
     this.elapsed.textContent = `${formatTime(t)} / ${formatTime(d)}`;
   }
 
   private togglePlay(): void {
     if (this.clock.playing) this.clock.pause();
     else this.clock.play();
+  }
+
+  private toggleFullscreen(): void {
+    if (document.fullscreenElement) void document.exitFullscreen();
+    else void this.el.closest(".xv-player")?.requestFullscreen?.();
   }
 
   private duration(): number {

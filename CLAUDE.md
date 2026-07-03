@@ -1,5 +1,9 @@
 # CLAUDE.md
 
+## Project documents
+- DESIGN.md for high level design
+- ARCHITECTURE.md for implementation architecture.
+
 ## General Guidelines
 
 Prioritize:

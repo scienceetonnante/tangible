@@ -67,7 +67,7 @@ function pointHandle(viewport: () => { width: number; height: number }): Handle 
     hitTest(px, py, state) {
       const { cx, cy, R } = geom();
       const th = state.theta as number;
-      return Math.hypot(px - (cx + Math.cos(th) * R), py - (cy - Math.sin(th) * R)) < 18;
+      return Math.hypot(px - (cx + Math.cos(th) * R), py - (cy - Math.sin(th) * R)) < R * 0.08;
     },
     onDrag(px, py) {
       const { cx, cy } = geom();
@@ -88,17 +88,20 @@ function draw(g: CanvasRenderingContext2D, view: { width: number; height: number
   const px = cx + p.x * R;
   const py = cy - p.y * R; // screen y is down
 
+  // Sizes are relative to the radius so they stay proportional at any resolution.
+  const stroke = R * 0.012;
+
   g.clearRect(0, 0, w, h);
 
   // Axes
   g.strokeStyle = "#888";
-  g.lineWidth = 1;
+  g.lineWidth = Math.max(1, R * 0.004);
   line(g, 0, cy, w, cy);
   line(g, cx, 0, cx, h);
 
   // Unit circle
   g.strokeStyle = "#333";
-  g.lineWidth = 2;
+  g.lineWidth = stroke;
   g.beginPath();
   g.arc(cx, cy, R, 0, Math.PI * 2);
   g.stroke();
@@ -106,27 +109,28 @@ function draw(g: CanvasRenderingContext2D, view: { width: number; height: number
   // Projection (cosine) onto the x-axis
   if (state["show.projection"]) {
     g.strokeStyle = "#c0392b";
-    g.setLineDash([4, 4]);
+    g.lineWidth = stroke;
+    g.setLineDash([R * 0.03, R * 0.03]);
     line(g, px, py, px, cy);
     g.setLineDash([]);
-    g.lineWidth = 4;
+    g.lineWidth = stroke * 2;
     line(g, cx, cy, px, cy); // the cosine segment
-    g.lineWidth = 2;
   }
 
   // Radius + point
   g.strokeStyle = "#2c3e50";
+  g.lineWidth = stroke;
   line(g, cx, cy, px, py);
   g.fillStyle = "#e74c3c";
   g.beginPath();
-  g.arc(px, py, 7, 0, Math.PI * 2);
+  g.arc(px, py, R * 0.04, 0, Math.PI * 2);
   g.fill();
 
   // Labels
   g.fillStyle = "#2c3e50";
-  g.font = "16px sans-serif";
-  if (state["show.thetaLabel"]) g.fillText("θ", cx + 24 * Math.cos(theta / 2), cy - 24 * Math.sin(theta / 2));
-  if (state["show.cosLabel"]) g.fillText("cos θ", (cx + px) / 2 - 16, cy + 18);
+  g.font = `${R * 0.1}px sans-serif`;
+  if (state["show.thetaLabel"]) g.fillText("θ", cx + R * 0.16 * Math.cos(theta / 2), cy - R * 0.16 * Math.sin(theta / 2));
+  if (state["show.cosLabel"]) g.fillText("cos θ", (cx + px) / 2 - R * 0.1, cy + R * 0.12);
 }
 
 function line(g: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number) {
