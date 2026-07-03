@@ -21,19 +21,24 @@ const tracks = { duration: 20, chapters: [], pauses: [] } as unknown as LessonTr
 
 describe("Chrome scrubber", () => {
   it("does not fight the user's drag: value writes are suppressed while scrubbing", () => {
-    const clock = new AudioClock(new FakeMedia());
+    const media = new FakeMedia();
+    const clock = new AudioClock(media);
     const chrome = new Chrome(clock, tracks);
     const scrubber = chrome.el.querySelector(".xv-scrubber") as HTMLInputElement;
 
     chrome.update(5);
     expect(scrubber.value).toBe("250"); // 5/20 * 1000
 
-    scrubber.dispatchEvent(new Event("pointerdown"));
-    chrome.update(10); // frame loop tries to move it — should be ignored
-    expect(scrubber.value).toBe("250");
+    // Simulate a drag: the range fires `input` with the new value.
+    scrubber.value = "600";
+    scrubber.dispatchEvent(new Event("input"));
+    expect(media.currentTime).toBe(12); // seeked to 0.6 * 20
+    chrome.update(3); // frame loop tries to move it — should be ignored while scrubbing
+    expect(scrubber.value).toBe("600");
 
-    scrubber.dispatchEvent(new Event("pointerup"));
-    chrome.update(10); // resumed
-    expect(scrubber.value).toBe("500");
+    // Release: `change` clears scrubbing and the loop resumes.
+    scrubber.dispatchEvent(new Event("change"));
+    chrome.update(3);
+    expect(scrubber.value).toBe("150");
   });
 });

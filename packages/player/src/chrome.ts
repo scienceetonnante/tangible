@@ -33,6 +33,7 @@ export class Chrome {
   private elapsed: HTMLElement;
   private captionsOn = true;
   private scrubbing = false;
+  private scrubTimer?: ReturnType<typeof setTimeout>;
 
   constructor(
     private clock: AudioClock,
@@ -53,14 +54,24 @@ export class Chrome {
     this.scrubber.max = "1000";
     this.scrubber.value = "0";
     this.scrubber.className = "xv-scrubber";
-    // Seek live while dragging; suppress the frame loop's value writes so the
-    // drag isn't fought back to the current playback position.
-    this.scrubber.oninput = () => this.clock.seek((Number(this.scrubber.value) / 1000) * this.duration());
-    this.scrubber.addEventListener("pointerdown", () => (this.scrubbing = true));
-    const endScrub = () => (this.scrubbing = false);
-    this.scrubber.addEventListener("pointerup", endScrub);
-    this.scrubber.addEventListener("pointercancel", endScrub);
-    this.scrubber.addEventListener("blur", endScrub);
+    // Seek live while dragging; suppress the frame loop's value writes so the drag
+    // isn't fought back to the playhead. Driven by `input` (fires on every value
+    // change in all browsers) with a watchdog — robust to flaky pointer events on
+    // range inputs. `change` (release) and the timeout clear it.
+    const beginScrub = () => {
+      this.scrubbing = true;
+      clearTimeout(this.scrubTimer);
+      this.scrubTimer = setTimeout(() => (this.scrubbing = false), 400);
+    };
+    this.scrubber.addEventListener("input", () => {
+      this.clock.seek((Number(this.scrubber.value) / 1000) * this.duration());
+      beginScrub();
+    });
+    this.scrubber.addEventListener("pointerdown", beginScrub);
+    this.scrubber.addEventListener("change", () => {
+      clearTimeout(this.scrubTimer);
+      this.scrubbing = false;
+    });
 
     this.elapsed = div("xv-elapsed");
     this.elapsed.textContent = "0:00 / 0:00";
