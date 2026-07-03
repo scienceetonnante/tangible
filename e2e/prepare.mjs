@@ -3,7 +3,7 @@
 // inlined) that the static server serves.
 
 import { spawnSync } from "node:child_process";
-import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { readFile, writeFile, mkdir, copyFile } from "node:fs/promises";
 import { join } from "node:path";
 import { build } from "esbuild";
 
@@ -20,10 +20,10 @@ export default async function prepare() {
   const buildDir = join(root, "lessons/unit-circle/build/fr");
   const tracks = await readFile(join(buildDir, "tracks.json"), "utf8");
   const vtt = await readFile(join(buildDir, "captions.vtt"), "utf8");
-  const audioB64 = (await readFile(join(buildDir, "audio.wav"))).toString("base64");
 
   const distDir = join(root, "e2e/dist");
   await mkdir(distDir, { recursive: true });
+  await copyFile(join(buildDir, "audio.wav"), join(distDir, "audio.wav")); // served over HTTP (Safari path)
 
   await build({
     entryPoints: [join(root, "e2e/harness/main.ts")],
@@ -38,7 +38,7 @@ export default async function prepare() {
     },
   });
 
-  const data = { tracks: JSON.parse(tracks), vtt, audio: `data:audio/wav;base64,${audioB64}` };
+  const data = { tracks: JSON.parse(tracks), vtt, audio: "audio.wav" };
   await writeFile(join(distDir, "data.js"), `window.__XV_DATA = ${JSON.stringify(data)};`);
   await writeFile(
     join(distDir, "index.html"),

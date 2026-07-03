@@ -3,18 +3,8 @@
 
 import { chromium } from "playwright";
 import { createServer, type Server } from "node:http";
-import { readFile } from "node:fs/promises";
-import { join, extname } from "node:path";
 import type { AddressInfo } from "node:net";
-
-const TYPES: Record<string, string> = {
-  ".html": "text/html",
-  ".js": "text/javascript",
-  ".json": "application/json",
-  ".css": "text/css",
-  ".vtt": "text/vtt",
-  ".wav": "audio/wav",
-};
+import { serveFromDir } from "./static-server.js";
 
 export interface FrameOptions {
   t: number;
@@ -43,15 +33,5 @@ export async function renderFrame(siteDir: string, opts: FrameOptions): Promise<
 }
 
 function staticServer(dir: string): Server {
-  return createServer(async (req, res) => {
-    const path = req.url === "/" || req.url?.startsWith("/?") ? "/index.html" : (req.url?.split("?")[0] ?? "/");
-    try {
-      const body = await readFile(join(dir, path));
-      res.writeHead(200, { "content-type": TYPES[extname(path)] ?? "application/octet-stream" });
-      res.end(body);
-    } catch {
-      res.writeHead(404);
-      res.end("not found");
-    }
-  });
+  return createServer((req, res) => void serveFromDir(dir, req, res));
 }

@@ -11,7 +11,7 @@ const scriptedTheta = (t: number) => evaluate(idx, t).theta as number;
 
 async function ready(page: import("@playwright/test").Page) {
   await page.goto("/");
-  await page.waitForFunction(() => (window as any).__player?.clock.duration > 0, null, { timeout: 10000 });
+  await page.waitForFunction(() => (window as any).__player?.clock.duration > 0, null, { timeout: 20000 });
 }
 
 test("seek correctness: browser state matches core evaluation at random times", async ({ page }) => {
