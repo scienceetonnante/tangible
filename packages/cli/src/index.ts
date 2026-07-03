@@ -18,6 +18,7 @@ import { scaffold } from "./scaffold.js";
 import { bundleSite } from "./bundle.js";
 import { renderFrame } from "./frame.js";
 import { preview } from "./preview.js";
+import { transcodeToM4a } from "./transcode.js";
 
 async function main() {
   const argv = process.argv.slice(2);
@@ -128,16 +129,25 @@ async function buildLanguage(lessonDir: string, manifest: Manifest, scene: Scene
     speed: manifest.tts?.speed,
   });
 
-  const audioHash = createHash("sha256").update(result.audio).digest("hex").slice(0, 16);
+  // Real-voice MP3 seeks imprecisely in browsers (voice drifts from the animation
+  // after scrubbing); transcode to sample-indexed AAC/MP4. Timing is unchanged.
+  let audio = result.audio;
+  let format = result.format;
+  if (format === "mp3") {
+    audio = transcodeToM4a(audio);
+    format = "m4a";
+  }
+
+  const audioHash = createHash("sha256").update(audio).digest("hex").slice(0, 16);
   const compiled = compile(script, result, scene, {
     lessonId: manifest.id,
     language: lang,
     defaults: manifest.defaults,
-    audioSrc: [`audio.${result.format}`],
+    audioSrc: [`audio.${format}`],
     audioHash,
   });
   for (const w of compiled.warnings) console.error(formatDiagnostic(w));
-  await emit(join(lessonDir, "build", lang), compiled, result.audio);
+  await emit(join(lessonDir, "build", lang), compiled, audio);
 }
 
 async function cmdPreview(flags: Flags): Promise<void> {

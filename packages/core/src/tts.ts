@@ -16,7 +16,7 @@ export interface WordTime {
   charOffset: number; // start offset of this word in the request text
 }
 
-export type AudioFormat = "mp3" | "wav" | "webm";
+export type AudioFormat = "mp3" | "wav" | "webm" | "m4a";
 
 export interface TtsResult {
   audio: Uint8Array;

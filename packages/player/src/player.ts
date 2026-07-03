@@ -169,6 +169,7 @@ function el(tag: string, className: string): HTMLElement {
 }
 
 function mimeForAudio(src: string): string {
+  if (src.endsWith(".m4a")) return "audio/mp4";
   if (src.endsWith(".mp3")) return "audio/mpeg";
   if (src.endsWith(".webm")) return "audio/webm";
   if (src.endsWith(".ogg")) return "audio/ogg";

@@ -404,6 +404,7 @@ Work done while iterating on the running slice, not in the original plan. All co
 - ✅ **Scrubber robustness** — drag detection driven by the `input` event (not flaky pointer events), so it keeps working after play/pause across browsers.
 - ✅ **`.env` auto-loading** — the CLI loads `.env` (cwd + lesson dir) via Node's built-in `process.loadEnvFile`, so `ELEVENLABS_API_KEY` needn't be exported each run.
 - ✅ **Audio format** — `TtsResult.format` (mp3 for ElevenLabs, wav for fake) drives the emitted filename and `<source>` type; the bundle copies the audio named in `tracks.json`.
+- ✅ **Seek-accurate audio (m4a)** — ElevenLabs MP3 has malformed frame headers, so browsers byte-offset-seek it imprecisely and the voice drifts from the animation after scrubbing (all browsers; WebKit even misreads its duration). The CLI now transcodes real-voice MP3 → sample-indexed AAC/MP4 (`audio.m4a`) via ffmpeg; both engines then read the correct duration and seek exactly. Fake/CI stays WAV (hermetic, no ffmpeg).
 - ✅ **Narration speed** — `lesson.yaml` `tts.speed` (ElevenLabs speaking rate) threaded through the request + cache key; fake TTS scales duration too.
 - ✅ **Spoken pause prompts** — `@pause` narrates its prompt (injected into the spoken text, checkpoint anchored just after); `speak: false` opts out.
 

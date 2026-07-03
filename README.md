@@ -18,7 +18,7 @@ Three layers with a hard separation (DESIGN §5):
 
 ```
 script.md ─┐
-           ├─ compile ─► tracks.json + captions.vtt + audio.(mp3|wav)
+           ├─ compile ─► tracks.json + captions.vtt + audio.(m4a|wav)
 scene.ts ──┘                              │
                                           ▼
               player (shared): <audio> clock ► interpolator ► state ◄ interaction
