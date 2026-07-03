@@ -4,6 +4,20 @@
 
 ---
 
+## Status — 2026-07-03
+
+**Done:** M-bootstrap, M0, M1, M2 (tagged `m0`/`m1`/`m2`) and M3 **except deploy** — the vertical slice works end to end (build → play → seek → catch-up → pause gate → board → captions, in real browsers, both fake and real ElevenLabs audio). Gate: `CI=true pnpm check` = **124 unit tests / 24 files**; **12 Playwright e2e on Chromium + WebKit**.
+
+**Remaining in M3:** `C3.7` — deploy the demo to a static HF Space + write up the agent-authoring validation. Owner-gated (key added; deploy is outward-facing). The **rename gate** (`@xv/*` / `lesson` → real names) must precede that deploy.
+
+**Not started:** M4 (record mode + fake cursor), M5 (ingredients library + 3D lesson).
+
+**Beyond the original plan** (done while iterating on the slice — see [Post-slice additions](#post-slice-additions)): Safari/HTTP-Range playback fix + dual-browser e2e, device-pixel-ratio crispness + fullscreen toggle, `.env` auto-loading, audio-format (mp3/wav) handling, a narration-speed knob, and spoken `@pause` prompts.
+
+**Legend:** ✅ done · 🔶 done, with a noted deviation · ⬜ not started
+
+---
+
 ## 0. Decisions locked for this plan
 
 These were chosen as defaults (the interview timed out); flag any you want changed and the affected phases will be re-cut.
@@ -30,14 +44,14 @@ These were chosen as defaults (the interview timed out); flag any you want chang
 
 ## 1. Milestone map
 
-| Phase | Deliverable | Exit criterion (ARCHITECTURE §8) | Depth here |
-|---|---|---|---|
-| **M0** | `core` + `compiler` (fake TTS) + `lesson check/build/state/ref` | Golden tests green; `state --at` correct on fixture | Full |
-| **M1** | `player` core: clock, timeline driver, store, scene host, chrome; unit-circle 2D scene | Plays/seeks correctly with fake-TTS audio | Full |
-| **M2** | Reconciler + interaction (handles, camera-orbit); board; captions; pause gates | Catch-up feels right; Playwright green | Full |
-| **M3** | ElevenLabs adapter + caching; FR+EN unit-circle; `frame`; static bundle; **agent-authoring validation** | Published static demo, both languages, one script pair; agent drafts a competent lesson | Full |
-| **M4** | Record mode + recorded-track merging; fake cursor | Camera choreography recorded, trimmed, replayed | Sketch |
-| **M5** | `ingredients` growth + second lesson (3D, three.js) | Second lesson built with < 30% platform changes | Sketch |
+| Phase | Deliverable | Exit criterion (ARCHITECTURE §8) | Depth | Status |
+|---|---|---|---|---|
+| **M0** | `core` + `compiler` (fake TTS) + `lesson check/build/state/ref` | Golden tests green; `state --at` correct on fixture | Full | ✅ (tag `m0`) |
+| **M1** | `player` core: clock, timeline driver, store, scene host, chrome; unit-circle 2D scene | Plays/seeks correctly with fake-TTS audio | Full | ✅ (tag `m1`) |
+| **M2** | Reconciler + interaction (handles, camera-orbit); board; captions; pause gates | Catch-up feels right; Playwright green | Full | ✅ (tag `m2`) |
+| **M3** | ElevenLabs adapter + caching; FR+EN unit-circle; `frame`; static bundle; **agent-authoring validation** | Published static demo, both languages, one script pair; agent drafts a competent lesson | Full | 🔶 built; deploy + agent validation (`C3.7`) pending |
+| **M4** | Record mode + recorded-track merging; fake cursor | Camera choreography recorded, trimmed, replayed | Sketch | ⬜ |
+| **M5** | `ingredients` growth + second lesson (3D, three.js) | Second lesson built with < 30% platform changes | Sketch | ⬜ |
 
 Agent-authoring validation runs at the end of M3 (DESIGN §9: "a core validation target of the slice, not an afterthought").
 
@@ -286,8 +300,8 @@ Everything real: true voice, two languages, headless frames, a shippable bundle,
 
 **Tests** — bundle build produces a self-contained `site/` that loads offline (Playwright loads `index.html` from disk and plays).
 
-- `C3.4` — static bundle emit.
-- `C3.5` — `preview` HMR + auto-rebuild.
+- `C3.4` — static bundle emit. ✅
+- `C3.5` — `preview` HMR + auto-rebuild. 🔶 *Done as a range-capable static server + file watch + SSE live-reload (full-page reload on save), not Vite module-level HMR. Sufficient for the authoring loop; revisit if HMR granularity is wanted.*
 
 ### M3.E — End-to-end agent-loop smoke test + agent-authoring validation
 
@@ -344,36 +358,61 @@ Everything real: true voice, two languages, headless frames, a shippable bundle,
 ## Commit ledger (quick reference)
 
 ```
-CB.1 workspace + package stubs build
-CB.2 test/lint/CI + dependency guard
-C0.1 core types + schema + easing
-C0.2 interpolator + kernels (seek property tests)
-C0.3 parse + check + fake TTS + diagnostics snapshots
-C0.4 reconciliation math in core
-C0.5 synthesize + caching
-C0.6 resolve + expand (conflict rule, recorded merge)
-C0.7 emit (tracks/VTT/audio) + determinism test
-C0.8 CLI new/check/build/state/ref + unit-circle fixture      [R0, tag m0]
-C1.1 AudioClock + StateStore
-C1.2 TimelineDriver rAF loop
-C1.3 SceneHost + scene contract
-C1.4 unit-circle 2D render
-C1.5 Player composition + DOM layering
-C1.6 Chrome + keyboard + dev URL params                        [R1, tag m1]
-C2.1 Reconciler (ownership matrix)
-C2.2 InteractionManager + unit-circle handle
-C2.3 camera-orbit ingredient
-C2.4 Board + KaTeX + highlight
-C2.5 Captions + toggle
-C2.6 PauseGate
-C2.7 Playwright seek/catch-up/pause-gate suite                 [R2, tag m2]
-C3.1 ElevenLabs adapter + chunking + caching
-C3.2 FR + EN scripts + both-language build
-C3.3 frame command + determinism
-C3.4 static bundle
-C3.5 preview HMR + auto-rebuild
-C3.6 agent-loop smoke test in CI
-C3.7 deploy demo + agent-authoring validation writeup         [R3, tag v0.1.0]
-C4.* record mode + recorded-track merge (sketch)
-C5.* ingredients + second 3D lesson (sketch)
+✅ CB.1 workspace + package stubs build
+✅ CB.2 test/lint/CI + dependency guard
+✅ C0.1 core types + schema + easing
+✅ C0.2 interpolator + kernels (seek property tests)
+✅ C0.3 parse + check + fake TTS + diagnostics snapshots
+✅ C0.4 reconciliation math in core
+✅ C0.5 synthesize + caching
+✅ C0.6 resolve + expand (conflict rule, recorded merge)
+✅ C0.7 emit (tracks/VTT/audio) + determinism test
+✅ C0.8 CLI new/check/build/state/ref + unit-circle fixture      [R0, tag m0]
+✅ C1.1 AudioClock + StateStore
+✅ C1.2 TimelineDriver rAF loop
+✅ C1.3 SceneHost + scene contract
+✅ C1.4 unit-circle 2D render
+✅ C1.5 Player composition + DOM layering
+✅ C1.6 Chrome + keyboard + dev URL params                        [R1, tag m1]
+✅ C2.1 Reconciler (ownership matrix)
+✅ C2.2 InteractionManager + unit-circle handle
+✅ C2.3 camera-orbit ingredient
+✅ C2.4 Board + KaTeX + highlight
+✅ C2.5 Captions + toggle
+✅ C2.6 PauseGate
+✅ C2.7 Playwright seek/catch-up/pause-gate suite                 [R2, tag m2]
+✅ C3.1 ElevenLabs adapter + chunking + caching
+✅ C3.2 FR + EN scripts + both-language build
+✅ C3.3 frame command + determinism
+✅ C3.4 static bundle
+🔶 C3.5 preview: static serve + watch + live-reload (not Vite HMR)
+✅ C3.6 agent-loop smoke test in CI
+⬜ C3.7 deploy demo + agent-authoring validation writeup         [R3, tag v0.1.0]
+⬜ C4.* record mode + recorded-track merge (sketch)
+⬜ C5.* ingredients + second 3D lesson (sketch)
 ```
+
+---
+
+## Post-slice additions
+
+Work done while iterating on the running slice, not in the original plan. All committed on `master`; unit + dual-browser e2e green.
+
+- ✅ **Safari playback** — dev servers (`preview`, `frame`, e2e) now support HTTP Range (`206`); WebKit refuses to play `<audio>` from a plain `200`. e2e runs on **Chromium + WebKit** to guard it. (Static hosts already do Range, so deploys were never affected.)
+- ✅ **Canvas crispness** — canvas backed at `devicePixelRatio` + `ResizeObserver`; unit-circle draws with radius-relative sizes. Fixes blur, including fullscreen.
+- ✅ **Fullscreen toggle** — the chrome icon (and `f`) now exit fullscreen too; control buttons given a proper sized/centered hit area.
+- ✅ **Scrubber robustness** — drag detection driven by the `input` event (not flaky pointer events), so it keeps working after play/pause across browsers.
+- ✅ **`.env` auto-loading** — the CLI loads `.env` (cwd + lesson dir) via Node's built-in `process.loadEnvFile`, so `ELEVENLABS_API_KEY` needn't be exported each run.
+- ✅ **Audio format** — `TtsResult.format` (mp3 for ElevenLabs, wav for fake) drives the emitted filename and `<source>` type; the bundle copies the audio named in `tracks.json`.
+- ✅ **Narration speed** — `lesson.yaml` `tts.speed` (ElevenLabs speaking rate) threaded through the request + cache key; fake TTS scales duration too.
+- ✅ **Spoken pause prompts** — `@pause` narrates its prompt (injected into the spoken text, checkpoint anchored just after); `speak: false` opts out.
+
+---
+
+## What remains
+
+1. **`C3.7` — deploy + agent-authoring validation** (owner-gated): rename `@xv/*`/`lesson` (rename gate), then deploy the static bundle to an HF Space; run the "agent drafts a lesson from `lesson ref`" exercise and write up findings. Tag `v0.1.0`.
+2. **Real-voice pass** — build the demo with the real ElevenLabs key (voice IDs set), tune `tts.speed`/anticipation by ear. (Adapter + caching ready.)
+3. **M4** — record mode + recorded-track merging + fake cursor.
+4. **M5** — grow `ingredients` (axes, arrows, draggable points, scrub-able KaTeX numbers) + a second, 3D (three.js) lesson to force the abstractions.
+5. **Deferred niceties** — Vite module-level HMR for `preview`; word-level (karaoke) captions; the `align` adapter (forced alignment of a human recording).
