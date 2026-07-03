@@ -26,9 +26,10 @@ export async function loadScene(scenePath: string): Promise<SceneInfo> {
       schema: SceneInfo["schema"];
       presets?: SceneInfo["presets"];
       constants?: SceneInfo["constants"];
+      groups?: SceneInfo["groups"];
     };
     if (!mod.schema) throw new Error(`${scenePath} does not export a "schema"`);
-    return { schema: mod.schema, presets: mod.presets, constants: mod.constants };
+    return { schema: mod.schema, presets: mod.presets, constants: mod.constants, groups: mod.groups };
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

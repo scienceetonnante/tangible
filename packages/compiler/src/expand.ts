@@ -8,7 +8,7 @@ import type { Keyframe, ParamValue, ParamSpec, BoardItem } from "@narrable/core"
 import { buildIndex, evaluate } from "@narrable/core";
 import type { ResolvedCue } from "./resolve.js";
 import type { SceneInfo } from "./check.js";
-import { parseValue } from "./value.js";
+import { parseValue, parseGroup } from "./value.js";
 import type { Diagnostic } from "./diagnostics.js";
 
 export interface ExpandOptions {
@@ -96,16 +96,22 @@ export function expand(cues: ResolvedCue[], scene: SceneInfo, opts: ExpandOption
     const loc = d.loc;
     switch (d.kind) {
       case "cue": {
+        const apply = (param: string, mode: "animate" | "set", raw: string) => {
+          const spec = scene.schema[param];
+          if (!spec) return; // check already reported unknown params
+          const { value } = parseValue(spec.type, raw, constants);
+          if (value === undefined) return;
+          if (mode === "animate") setAnimate(param, spec, t, d.options.over ?? opts.defaults.transition, d.options.ease ?? opts.defaults.ease, value, loc);
+          else setInstant(param, spec, t, value, loc);
+        };
         for (const asn of d.assignments) {
-          const spec = scene.schema[asn.param];
-          if (!spec) continue; // check already reported unknown params
-          const { value } = parseValue(spec.type, asn.value, constants);
-          if (value === undefined) continue;
-          if (asn.mode === "animate") {
-            setAnimate(asn.param, spec, t, d.options.over ?? opts.defaults.transition, d.options.ease ?? opts.defaults.ease, value, loc);
-          } else {
-            setInstant(asn.param, spec, t, value, loc);
+          const group = scene.groups?.[asn.param];
+          if (group) {
+            const vals = parseGroup(asn.value);
+            if (vals && vals.length === group.length) group.forEach((p, i) => apply(p, asn.mode, vals[i]!));
+            continue; // malformed groups are reported by check
           }
+          apply(asn.param, asn.mode, asn.value);
         }
         break;
       }

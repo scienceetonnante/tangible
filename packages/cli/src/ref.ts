@@ -24,6 +24,17 @@ export function refSheet(sceneName: string, scene: SceneInfo): string {
   if (constants.length)
     lines.push("## Constants", "", constants.map(([k, v]) => `- \`${k}\` = ${fmt(v)}`).join("\n"), "");
 
+  const groups = Object.entries(scene.groups ?? {});
+  if (groups.length)
+    lines.push(
+      "## Parameter groups",
+      "",
+      "Set a whole group in one cue: `@cue(<group> -> [v1, v2, …])` (values map to the params in order).",
+      "",
+      groups.map(([k, ps]) => `- \`${k}\` → [${ps.map((p) => `\`${p}\``).join(", ")}]`).join("\n"),
+      "",
+    );
+
   return lines.join("\n") + "\n";
 }
 

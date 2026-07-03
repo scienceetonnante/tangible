@@ -117,7 +117,7 @@ A lesson is a directory with three authored files:
     speed: 0.9           # ElevenLabs speaking rate: 0.7 (slow) .. 1.2 (fast)
   ```
 
-- **`scene.ts`** — the visualization: a parameter `schema`, optional `presets`/`constants`, and a `scene` module that renders as a pure function of state.
+- **`scene.ts`** — the visualization: a parameter `schema`, optional `presets`/`constants`/`groups` (named parameter groups, so one cue can set several params at once — `@cue(weights -> [0.7, -0.3, …])`), and a `scene` module that renders as a pure function of state.
 
 - **`script.<lang>.md`** — narration prose with embedded directives. Prose is spoken verbatim; directives are stripped and anchored to the word that follows them. A taste:
 

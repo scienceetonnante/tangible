@@ -5,13 +5,14 @@
 import type { Schema, ParamValue } from "@narrable/core";
 import { isEasing } from "@narrable/core";
 import type { ParsedScript, Options } from "./parse.js";
-import { parseValue, type Constants } from "./value.js";
+import { parseValue, parseGroup, type Constants } from "./value.js";
 import { type Diagnostic, type SourceLoc, suggest } from "./diagnostics.js";
 
 export interface SceneInfo {
   schema: Schema;
   presets?: Record<string, Record<string, ParamValue>>;
   constants?: Constants;
+  groups?: Record<string, string[]>; // named parameter groups: `@cue(name -> [v1, v2, ...])`
 }
 
 export interface CheckOptions {
@@ -47,6 +48,23 @@ export function check(parsed: ParsedScript, scene: SceneInfo, opts: CheckOptions
     switch (d.kind) {
       case "cue": {
         for (const asn of d.assignments) {
+          const group = scene.groups?.[asn.param];
+          if (group) {
+            const vals = parseGroup(asn.value);
+            if (!vals) {
+              err(`group "${asn.param}" expects a list value like [a, b, c], got "${asn.value}"`, d.loc);
+            } else if (vals.length !== group.length) {
+              err(`group "${asn.param}" has ${group.length} parameter(s) but got ${vals.length} value(s)`, d.loc);
+            } else {
+              group.forEach((p, i) => {
+                const spec = scene.schema[p];
+                if (!spec) return err(`group "${asn.param}" references unknown parameter "${p}"`, d.loc);
+                const { error } = parseValue(spec.type, vals[i]!, constants);
+                if (error) err(`${p} (in group ${asn.param}): ${error}`, d.loc);
+              });
+            }
+            continue;
+          }
           if (!checkParam(asn.param, d.loc)) continue;
           const spec = scene.schema[asn.param]!;
           const { error } = parseValue(spec.type, asn.value, constants);

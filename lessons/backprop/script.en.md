@@ -51,12 +51,12 @@ Now we know which way is downhill for every weight. @dim(chain) @cue(backward ->
 So we take a small step: each weight moves against its gradient, scaled
 by a learning rate. @board(update: $w \leftarrow w - \eta\,\frac{\partial L}{\partial w}$)
 
-@cue(w11 -> 0.74, w12 -> -0.28, w21 -> -0.517, w22 -> 0.692, wo1 -> 0.727, wo2 -> -0.456, over: 2s)
+@cue(weights -> [0.74, -0.28, -0.517, 0.692, 0.727, -0.456], over: 2s)
 Watch the loss. As the weights shift, the prediction climbs toward the
 target and the loss falls.
 
-And we can simply do it again, @cue(w11 -> 0.878, w12 -> -0.211, w21 -> -0.635, w22 -> 0.633, wo1 -> 0.87, wo2 -> -0.501, over: 1.2s)
-and the loss drops further. One more time, @cue(w11 -> 0.949, w12 -> -0.176, w21 -> -0.698, w22 -> 0.601, wo1 -> 0.962, wo2 -> -0.545, over: 1.2s)
+And we can simply do it again, @cue(weights -> [0.878, -0.211, -0.635, 0.633, 0.87, -0.501], over: 1.2s)
+and the loss drops further. One more time, @cue(weights -> [0.949, -0.176, -0.698, 0.601, 0.962, -0.545], over: 1.2s)
 and each step nudges the network a little closer to getting this
 example right. That, in the end, is all that training is: forward,
 backward, step, and repeat.

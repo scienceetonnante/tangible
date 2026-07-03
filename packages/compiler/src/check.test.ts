@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { parseScript } from "./parse.js";
-import { check } from "./check.js";
+import { check, type SceneInfo } from "./check.js";
 import { formatDiagnostic } from "./diagnostics.js";
 import { SCRIPT_FR, SCENE } from "./fixtures.js";
 
@@ -75,5 +75,39 @@ describe("check — diagnostics (snapshots)", () => {
   it("accepts a properly tagged highlight target", () => {
     const src = "@board(euler: $\\htmlClass{cos}{\\cos\\theta}$) texte @highlight(euler.cos) fin.";
     expect(diagnose(src)).toEqual([]);
+  });
+});
+
+describe("check — parameter groups", () => {
+  const GROUP_SCENE: SceneInfo = {
+    schema: {
+      scene: { type: { kind: "enum", values: ["s"] }, default: "s", interpolate: "snap", ownership: "script" },
+      a: { type: { kind: "scalar", range: [-1, 1] }, default: 0, interpolate: "lerp", ownership: "shared" },
+      b: { type: { kind: "scalar", range: [-1, 1] }, default: 0, interpolate: "lerp", ownership: "shared" },
+    },
+    groups: { pair: ["a", "b"] },
+  };
+  const g = (src: string) => check(parseScript(src, "script.fr.md"), GROUP_SCENE).map(formatDiagnostic);
+
+  it("accepts a well-formed group cue", () => {
+    expect(check(parseScript("Texte @cue(pair -> [0.5, -0.5]) fin.", "script.fr.md"), GROUP_SCENE)).toEqual([]);
+  });
+
+  it("flags wrong arity", () => {
+    expect(g("Texte @cue(pair -> [0.5]) fin.")).toEqual([
+      'script.fr.md:1:7: error: group "pair" has 2 parameter(s) but got 1 value(s)',
+    ]);
+  });
+
+  it("flags a non-list value", () => {
+    expect(g("Texte @cue(pair -> 0.5) fin.")).toEqual([
+      'script.fr.md:1:7: error: group "pair" expects a list value like [a, b, c], got "0.5"',
+    ]);
+  });
+
+  it("flags an out-of-range member", () => {
+    expect(g("Texte @cue(pair -> [0.5, 9]) fin.")).toEqual([
+      'script.fr.md:1:7: error: b (in group pair): 9 is out of range [-1, 1]',
+    ]);
   });
 });

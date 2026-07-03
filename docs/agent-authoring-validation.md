@@ -55,6 +55,18 @@ Frame review across the timeline (`lesson frame` at 6 timestamps) caught two leg
 4. **Make a visual check work in-sandbox** — `frame` binds a local server socket the sandbox blocks, so the agent's only *visual* check is unavailable; document a supported stub-canvas smoke-test pattern otherwise.
 5. **`lesson new`** should honor `--lesson` and language; **multi-assignment cue** sugar (array/group form) would keep a step from burying its sentence.
 
+## Follow-up — findings acted on
+
+All five findings were addressed after the validation:
+
+- **#1 headless interaction** → `lesson state --at <t> --drag <param>=<value>` now runs the real reconciler in Node and prints the hold-then-glide trajectory (scripted vs displayed). The `shared` behaviors above are now checkable without a browser.
+- **#2 computed process** → design note [computed-cues-design-note.md](./computed-cues-design-note.md) (recommends a build-time, checkable `@bake` directive). Design only; not yet built.
+- **overlap warning** → now one warning per cue, with the real filename and the truncated cue's source line.
+- **`lesson new`** → honors `--lesson <dir>` and `--lang`; the scaffold passes `check` cleanly.
+- **#6 multi-assignment cue** → named parameter **groups**: a scene exports `groups`, and `@cue(weights -> [ … ])` sets the whole group in one readable cue (validated by `check`, shown by `ref`). The backprop descent cues now use it.
+
+The anticipation default (#3) remains open — it needs a real-voice build to judge.
+
 ## Bottom line
 
 The medium and its authoring loop are sound enough that a strong agent can build a competent, genuinely interactive lesson on a new topic from the docs alone. The gaps that remain are specific and actionable, and two of them (headless interaction verification; animating a computed process) are the clearest priorities for making agent-authoring scale beyond hand-tuned slices.

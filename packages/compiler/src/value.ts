@@ -60,6 +60,14 @@ export function parseValue(
   return { value };
 }
 
+/** Split a bracketed group value "[a, b, c]" into its raw scalar tokens, or undefined
+ *  if it isn't a bracketed list. Used by the named-parameter-group cue sugar. */
+export function parseGroup(raw: string): string[] | undefined {
+  const t = raw.trim();
+  if (!t.startsWith("[") || !t.endsWith("]")) return undefined;
+  return t.slice(1, -1).split(",").map((s) => s.trim()).filter((s) => s.length > 0);
+}
+
 function parseNumberArray(r: string): number[] | null {
   const m = r.match(/^\[(.*)\]$/s);
   if (!m) return null;

@@ -36,6 +36,12 @@ export const schema: Schema = {
 
 export const constants: Record<string, number | number[]> = { X1, X2, TARGET };
 
+// Named group so a whole gradient-descent step is one readable cue:
+// `@cue(weights -> [w11, w12, w21, w22, wo1, wo2], over: 2s)`.
+export const groups: Record<string, string[]> = {
+  weights: ["w11", "w12", "w21", "w22", "wo1", "wo2"],
+};
+
 // --- the maths, as pure functions of the weight state ---
 
 interface Fwd { z1: number; z2: number; h1: number; h2: number; yhat: number; loss: number; }

@@ -95,6 +95,23 @@ describe("expand — conflict rule", () => {
   });
 });
 
+describe("expand — parameter groups", () => {
+  it("fans a group cue out to its member params in order", () => {
+    const scene = {
+      schema: {
+        a: { type: { kind: "scalar" as const }, default: 0, interpolate: "lerp" as const, ownership: "shared" as const },
+        b: { type: { kind: "scalar" as const }, default: 0, interpolate: "lerp" as const, ownership: "shared" as const },
+      },
+      groups: { pair: ["a", "b"] },
+    };
+    const cues = [{ t: 1, directive: mkCue("pair", "set", "[0.5, -0.5]", {}) }];
+    const result = expand(cues, scene, { language: "fr", defaults: DEFAULTS });
+    expect(result.warnings).toEqual([]);
+    expect(result.tracks.a![0]!.v).toBe(0.5);
+    expect(result.tracks.b![0]!.v).toBe(-0.5);
+  });
+});
+
 function mkCue(param: string, mode: "animate" | "set", value: string, options: { over?: number; ease?: string }) {
   return {
     kind: "cue" as const,
