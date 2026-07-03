@@ -9,7 +9,8 @@ import { createHash } from "node:crypto";
 import { parseScript, check, compile, emit, synthesize, formatDiagnostic } from "@narrable/compiler";
 import type { SceneInfo } from "@narrable/compiler";
 import { buildIndex, evaluate } from "@narrable/core";
-import type { Schema, Keyframe, TtsAdapter } from "@narrable/core";
+import type { Schema, Keyframe, TtsAdapter, ParamSpec, ParamValue } from "@narrable/core";
+import { StateStore, Reconciler } from "@narrable/player";
 import { FakeTtsAdapter, ElevenLabsAdapter } from "@narrable/tts";
 import { loadScene } from "./scene-loader.js";
 import { loadManifest, type Manifest } from "./manifest.js";
@@ -50,7 +51,7 @@ async function main() {
       await cmdRef(flags);
       return;
     default:
-      die(`unknown command "${cmd ?? ""}"\nusage: lesson <new|check|build|frame|preview|state|ref> [--lang fr] [--lesson dir] [--at t] [--bundle] [-o file] [--size WxH] [--fake]`);
+      die(`unknown command "${cmd ?? ""}"\nusage: lesson <new|check|build|frame|preview|state|ref> [--lang fr] [--lesson dir] [--at t] [--drag p=v] [--bundle] [-o file] [--size WxH] [--fake]`);
   }
 }
 
@@ -175,9 +176,63 @@ async function cmdState(flags: Flags): Promise<void> {
   const scene = await loadScene(join(lessonDir, manifest.scene));
   const tracksPath = join(lessonDir, "build", lang, "tracks.json");
   if (!existsSync(tracksPath)) die(`no build for [${lang}] — run "lesson build --lang ${lang}" first`);
-  const data = JSON.parse(await readFile(tracksPath, "utf8")) as { tracks: Record<string, Keyframe[]> };
-  const idx = buildIndex(data.tracks, { ...scene.schema, ...boardSpecs(data.tracks) });
+  const data = JSON.parse(await readFile(tracksPath, "utf8")) as { tracks: Record<string, Keyframe[]>; duration: number };
+  const schema = { ...scene.schema, ...boardSpecs(data.tracks) };
+  const idx = buildIndex(data.tracks, schema);
+
+  if (flags.drag) {
+    console.log(JSON.stringify(simulateDrag(idx, schema, scene.schema, data.duration, Number(t), flags.drag), null, 2));
+    return;
+  }
   console.log(JSON.stringify(evaluate(idx, Number(t)), null, 2));
+}
+
+// --- headless interaction check: simulate a viewer grab and report the reconciled trajectory ---
+
+/** Parse "param=value"; validate the param is draggable (scalar/boolean) and in range. */
+function parseDrag(spec: Record<string, ParamSpec>, drag: string): { param: string; value: ParamValue } {
+  const eq = drag.indexOf("=");
+  if (eq < 0) die('usage: --drag <param>=<value>');
+  const param = drag.slice(0, eq).trim();
+  const raw = drag.slice(eq + 1).trim();
+  const s = spec[param] ?? die(`--drag: unknown parameter "${param}"`);
+  if (s.type.kind === "boolean") return { param, value: raw === "true" };
+  if (s.type.kind !== "scalar") die(`--drag: "${param}" is a ${s.type.kind}; only scalar/boolean params are supported`);
+  const n = Number(raw);
+  if (Number.isNaN(n)) die(`--drag: "${raw}" is not a number`);
+  if (s.type.range && (n < s.type.range[0] || n > s.type.range[1])) die(`--drag: ${n} is out of range [${s.type.range[0]}, ${s.type.range[1]}] for "${param}"`);
+  return { param, value: n };
+}
+
+/** Grab `param` at time `grabT`, release, then step the real Reconciler forward and
+ *  sample scripted-vs-displayed until the display rejoins the timeline (or the window ends). */
+function simulateDrag(idx: ReturnType<typeof buildIndex>, schema: Schema, sceneSchema: Record<string, ParamSpec>, duration: number, grabT: number, drag: string) {
+  const { param, value } = parseDrag(sceneSchema, drag);
+  const store = new StateStore(schema);
+  const recon = new Reconciler(store, idx, schema);
+  const seed = evaluate(idx, grabT);
+  for (const k of Object.keys(schema)) store.set(k, seed[k]!);
+  store.touch(param, value, grabT, grabT); // grabbed and released at grabT
+
+  const dt = 1 / 60;
+  const window = Math.min(duration - grabT, 8); // seconds of playback to simulate
+  const every = 0.25;
+  const round = (v: ParamValue) => (typeof v === "number" ? Math.round(v * 1000) / 1000 : v);
+  const trajectory: { t: number; scripted: ParamValue; displayed: ParamValue; overriding: boolean }[] = [];
+  let reconverged = false;
+  let nextSample = 0;
+  for (let i = 0; grabT + i * dt <= grabT + window + 1e-9; i++) {
+    const tt = grabT + i * dt;
+    const scripted = evaluate(idx, tt);
+    recon.reconcile(scripted, tt, tt, dt); // now == media time (continuous playback from the grab)
+    const overriding = store.meta.get(param)!.modified;
+    if (tt - grabT >= nextSample - 1e-9) {
+      trajectory.push({ t: Math.round(tt * 1000) / 1000, scripted: round(scripted[param]!), displayed: round(store.plain[param]!), overriding });
+      nextSample += every;
+    }
+    if (!overriding && i > 0) { reconverged = true; break; }
+  }
+  return { param, ownership: sceneSchema[param]!.ownership, grabbedAt: grabT, userValue: value, reconverged, trajectory };
 }
 
 async function cmdRef(flags: Flags): Promise<void> {
@@ -214,6 +269,7 @@ interface Flags {
   bundle?: boolean;
   out?: string;
   size?: string;
+  drag?: string;
 }
 
 function parseFlags(args: string[]): Flags {
@@ -226,6 +282,7 @@ function parseFlags(args: string[]): Flags {
     else if (args[i] === "--bundle") f.bundle = true;
     else if (args[i] === "-o" || args[i] === "--out") f.out = args[++i];
     else if (args[i] === "--size") f.size = args[++i];
+    else if (args[i] === "--drag") f.drag = args[++i];
   }
   return f;
 }

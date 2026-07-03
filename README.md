@@ -91,7 +91,7 @@ Run as `node packages/cli/dist/index.js <command>` (after `pnpm build`).
 | `build [--lang en] [--bundle] [--fake]` | Full pipeline → `build/<lang>/`. `--bundle` also emits a static site under `build/site/`. `--fake` uses the deterministic fake voice. |
 | `preview [--fake]` | Serve the static bundle with file-watch + browser live-reload. |
 | `frame --at <t> -o <file.png> [--lang en] [--size WxH]` | Headless-render the lesson at time `t` to a PNG (deterministic). |
-| `state --at <t> [--lang en]` | Print the full scene state at time `t` as JSON (no browser). |
+| `state --at <t> [--lang en] [--drag p=v]` | Print the full scene state at time `t` as JSON (no browser). With `--drag <param>=<value>`, simulate a viewer grabbing that param at `t` and print the reconciled hold-then-glide trajectory (scripted vs displayed) — a headless check of interaction/`shared` behavior. |
 | `ref` | Emit the scene's **cue-reference sheet** (params, presets, constants) as Markdown. |
 
 Common flags: `--lesson <dir>` (defaults to the current directory), `--lang <code>`.
