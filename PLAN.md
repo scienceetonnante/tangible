@@ -6,9 +6,9 @@
 
 ## Status — 2026-07-03
 
-**Done:** M-bootstrap, M0, M1, M2 (tagged `m0`/`m1`/`m2`) and nearly all of M3 — the vertical slice works end to end (build → play → seek → catch-up → pause gate → board → captions) and is **deployed live to a static HF Space** ([dlouapre/unit-circle](https://huggingface.co/spaces/dlouapre/unit-circle)), both languages, real ElevenLabs voice, verified on Chrome, Safari (macOS), and iPad. Gate: `CI=true pnpm check` = **125 unit tests / 24 files**; **12 Playwright e2e on Chromium + WebKit**.
+**Done:** M-bootstrap, M0, M1, M2 (tagged `m0`/`m1`/`m2`) and **all of M3** — the vertical slice works end to end (build → play → seek → catch-up → pause gate → board → captions) and is **deployed live to a static HF Space** ([dlouapre/unit-circle](https://huggingface.co/spaces/dlouapre/unit-circle)), both languages, real ElevenLabs voice, verified on Chrome, Safari (macOS), and iPad. Gate: `CI=true pnpm check` = **125 unit tests / 24 files**; **12 Playwright e2e on Chromium + WebKit**.
 
-**Remaining in M3:** the **agent-authoring validation** — the second half of `C3.7`. The deploy half is ✅ done and verified. What's left: give an agent only `lesson ref` output for the unit-circle scene, have it draft the script + choreography, and write up findings (markup ergonomics, anticipation default, hold-and-blend feel). Only then is M3 complete and `v0.1.0` tag-able. The **rename gate** is cleared — scope is `@narrable/*`, CLI stays `lesson`.
+**Agent-authoring validation (`C3.7b`) — ✅ done.** Ran harder than planned: instead of drafting a script against the existing scene, one Opus agent authored a **whole new lesson end to end** (scene + script + choreography) on **backpropagation** ([`lessons/backprop/`](./lessons/backprop/)), from the docs alone. It passed `check` first try, exercised the previously-untested `shared` ownership / reconciliation path, and converges (loss 0.383 → 0.008). Verdict: **pass**. Full writeup in [docs/agent-authoring-validation.md](./docs/agent-authoring-validation.md); raw agent log in [lessons/backprop/FINDINGS.md](./lessons/backprop/FINDINGS.md). Two structural findings stand out as the next priorities: (1) interaction/reconciliation can't be verified headlessly (only scripted state via `state --at`), and (2) there's no way to animate a *computed* process — gradient descent had to be simulated offline and pasted as literals `check` can't validate. **M3 is complete; `v0.1.0` is tag-able.** The **rename gate** is cleared — scope is `@narrable/*`, CLI stays `lesson`.
 
 **Not started:** M4 (record mode + fake cursor), M5 (ingredients library + 3D lesson).
 
@@ -49,7 +49,7 @@ These were chosen as defaults (the interview timed out); flag any you want chang
 | **M0** | `core` + `compiler` (fake TTS) + `lesson check/build/state/ref` | Golden tests green; `state --at` correct on fixture | Full | ✅ (tag `m0`) |
 | **M1** | `player` core: clock, timeline driver, store, scene host, chrome; unit-circle 2D scene | Plays/seeks correctly with fake-TTS audio | Full | ✅ (tag `m1`) |
 | **M2** | Reconciler + interaction (handles, camera-orbit); board; captions; pause gates | Catch-up feels right; Playwright green | Full | ✅ (tag `m2`) |
-| **M3** | ElevenLabs adapter + caching; FR+EN unit-circle; `frame`; static bundle; **agent-authoring validation** | Published static demo, both languages, one script pair; agent drafts a competent lesson | Full | 🔶 deployed & verified (both langs, real voice); agent-authoring validation writeup pending |
+| **M3** | ElevenLabs adapter + caching; FR+EN unit-circle; `frame`; static bundle; **agent-authoring validation** | Published static demo, both languages, one script pair; agent drafts a competent lesson | Full | ✅ deployed & verified (both langs, real voice); agent-authoring validation done (backprop lesson) |
 | **M4** | Record mode + recorded-track merging; fake cursor | Camera choreography recorded, trimmed, replayed | Sketch | ⬜ |
 | **M5** | `ingredients` growth + second lesson (3D, three.js) | Second lesson built with < 30% platform changes | Sketch | ⬜ |
 
@@ -311,9 +311,9 @@ Everything real: true voice, two languages, headless frames, a shippable bundle,
 
 - `C3.6` — agent-loop smoke test in CI.
 - `C3.7a` ✅ — deploy the static demo to a static HF Space (both languages). Live at [dlouapre/unit-circle](https://huggingface.co/spaces/dlouapre/unit-circle), verified on Chrome, Safari (macOS), and iPad.
-- `C3.7b` ⬜ — write up agent-authoring validation results.
+- `C3.7b` ✅ — agent-authoring validation. An Opus agent authored a whole new lesson end to end (scene + script) on **backpropagation** ([`lessons/backprop/`](./lessons/backprop/)) from the docs alone; passed `check` first try; exercised `shared` ownership. Writeup: [docs/agent-authoring-validation.md](./docs/agent-authoring-validation.md).
 
-**M3 exit criterion** — published static demo, both languages, from one script pair; agent produces a competent lesson draft from `lesson ref`. This validates every architectural decision at small scale before generalization.
+**M3 exit criterion** — ✅ published static demo, both languages, from one script pair; agent produces a competent lesson (in fact a whole new one) from the docs. This validates every architectural decision at small scale before generalization.
 
 **Test round R3** — full suite (Vitest + Playwright + agent-loop smoke) + live ElevenLabs build once with a real key (manual, outside CI) + manual review of the deployed demo. Tag `m3` / `v0.1.0`.
 
@@ -388,7 +388,7 @@ Everything real: true voice, two languages, headless frames, a shippable bundle,
 ✅ C3.4 static bundle
 🔶 C3.5 preview: static serve + watch + live-reload (not Vite HMR)
 ✅ C3.6 agent-loop smoke test in CI
-🔶 C3.7 deploy ✅ (live HF Space, both langs, real voice, verified) — agent-authoring validation writeup ⬜  [R3, tag v0.1.0]
+✅ C3.7 deploy (live HF Space, both langs, real voice, verified) + agent-authoring validation (backprop lesson)  [R3, tag v0.1.0]
 ⬜ C4.* record mode + recorded-track merge (sketch)
 ⬜ C5.* ingredients + second 3D lesson (sketch)
 ```
@@ -417,8 +417,9 @@ Work done while iterating on the running slice, not in the original plan. All co
 
 ## What remains
 
-1. **`C3.7b` — agent-authoring validation** (closes M3): give an agent only `lesson ref` output for the unit-circle scene, have it draft the script + choreography, and write up findings (markup ergonomics, anticipation default, hold-and-blend feel). This is the last item before tagging `v0.1.0`. *(The `C3.7a` deploy and the real-voice build are done — the demo is live with real ElevenLabs audio in both languages.)*
-2. **Optional real-voice tuning** — fine-tune `tts.speed`/anticipation by ear if desired. (Built and live; adapter + caching ready.)
-3. **M4** — record mode + recorded-track merging + fake cursor.
-4. **M5** — grow `ingredients` (axes, arrows, draggable points, scrub-able KaTeX numbers) + a second, 3D (three.js) lesson to force the abstractions.
-5. **Deferred niceties** — Vite module-level HMR for `preview`; word-level (karaoke) captions; the `align` adapter (forced alignment of a human recording).
+1. **`v0.1.0` tag** — M3 is complete; the milestone is tag-able. (Agent-authoring validation done via the backprop lesson; see [docs/agent-authoring-validation.md](./docs/agent-authoring-validation.md).)
+2. **Act on the validation findings** — ranked in the writeup. Highest-value: (a) let the agent verify *interaction* headlessly (a `state --at --drag` that runs the reconciler), and (b) a first-class way to animate a *computed* process (build-time computed cue / `@bake`), so ML/physics choreography isn't simulated offline and pasted as un-checkable literals. Plus papercuts: the overlap warning, `lesson new` flags.
+3. **Optional real-voice tuning** — the anticipation default (`-0.2s`) can't be judged under fake TTS; fine-tune `tts.speed`/anticipation by ear on a real-voice build if desired. (Adapter + caching ready.)
+4. **M4** — record mode + recorded-track merging + fake cursor.
+5. **M5** — grow `ingredients` (axes, arrows, draggable points, scrub-able KaTeX numbers) + a second, 3D (three.js) lesson to force the abstractions.
+6. **Deferred niceties** — Vite module-level HMR for `preview`; word-level (karaoke) captions; the `align` adapter (forced alignment of a human recording).

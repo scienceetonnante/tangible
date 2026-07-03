@@ -232,7 +232,8 @@ function parseFlags(args: string[]): Flags {
 /** Load .env from the current dir and the lesson dir (built-in, no dependency). */
 function loadDotenv(lessonDir: string): void {
   for (const p of new Set([join(process.cwd(), ".env"), join(lessonDir, ".env")])) {
-    if (existsSync(p)) process.loadEnvFile(p);
+    // A .env that is absent — or present but unreadable (e.g. a sandbox read-deny) — is not fatal.
+    if (existsSync(p)) try { process.loadEnvFile(p); } catch { /* unreadable .env is not fatal */ }
   }
 }
 
