@@ -2,7 +2,7 @@
 // Drags write parameters through store.touch(); the Reconciler then owns catch-up.
 // Implements the scene-change rule: changing the active scene while playing pauses.
 
-import type { Handle, ParamValue } from "@xv/core";
+import type { Handle, ParamValue } from "@narrable/core";
 import type { StateStore } from "./store.js";
 import type { AudioClock } from "./clock.js";
 

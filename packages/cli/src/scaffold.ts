@@ -27,7 +27,7 @@ defaults:
   transition: 1.0
 `;
 
-const SCENE = `import type { Schema } from "@xv/core";
+const SCENE = `import type { Schema } from "@narrable/core";
 
 export const schema: Schema = {
   scene: { type: { kind: "enum", values: ["main"] }, default: "main", interpolate: "snap", ownership: "script" },

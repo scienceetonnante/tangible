@@ -4,13 +4,13 @@
 
 import { writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
-import type { LessonTracks, TtsResult } from "@xv/core";
-import { schemaHash } from "@xv/core";
+import type { LessonTracks, TtsResult } from "@narrable/core";
+import { schemaHash } from "@narrable/core";
 import { parseScript } from "./parse.js";
 import { resolve } from "./resolve.js";
 import { expand } from "./expand.js";
 import type { SceneInfo } from "./check.js";
-import type { Keyframe } from "@xv/core";
+import type { Keyframe } from "@narrable/core";
 import type { Diagnostic } from "./diagnostics.js";
 
 type Timing = Pick<TtsResult, "charTimes" | "wordTimes" | "duration">;

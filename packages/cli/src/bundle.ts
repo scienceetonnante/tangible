@@ -7,7 +7,7 @@ import { createRequire } from "node:module";
 import { mkdir, writeFile, copyFile, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Manifest } from "./manifest.js";
-import type { LessonTracks } from "@xv/core";
+import type { LessonTracks } from "@narrable/core";
 
 const require = createRequire(import.meta.url);
 
@@ -15,12 +15,12 @@ export async function bundleSite(lessonDir: string, manifest: Manifest, scenePat
   const outDir = join(lessonDir, "build", "site");
   await mkdir(outDir, { recursive: true });
 
-  const playerPath = require.resolve("@xv/player");
-  const corePath = require.resolve("@xv/core");
+  const playerPath = require.resolve("@narrable/player");
+  const corePath = require.resolve("@narrable/core");
   const katexCss = createRequire(playerPath).resolve("katex/dist/katex.min.css");
 
   const entry = `
-import { Player, PLAYER_CSS } from "@xv/player";
+import { Player, PLAYER_CSS } from "@narrable/player";
 import { scene } from ${JSON.stringify(scenePath)};
 const DEFAULT_LANG = ${JSON.stringify(langs[0])};
 async function main() {
@@ -42,7 +42,7 @@ main();
     bundle: true,
     format: "iife",
     platform: "browser",
-    alias: { "@xv/player": playerPath, "@xv/core": corePath },
+    alias: { "@narrable/player": playerPath, "@narrable/core": corePath },
     logLevel: "silent",
   });
 

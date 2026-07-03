@@ -1,5 +1,5 @@
 {
-  "name": "@xv/ingredients",
+  "name": "@narrable/ingredients",
   "version": "0.0.0",
   "description": "Reusable scene components (2D canvas + three.js helpers).",
   "type": "module",
@@ -12,6 +12,6 @@
     }
   },
   "dependencies": {
-    "@xv/core": "workspace:*"
+    "@narrable/core": "workspace:*"
   }
 }

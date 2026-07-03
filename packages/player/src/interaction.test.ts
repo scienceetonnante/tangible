@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from "vitest";
-import type { Handle, Schema } from "@xv/core";
+import type { Handle, Schema } from "@narrable/core";
 import { StateStore } from "./store.js";
 import { AudioClock, type MediaClockSource } from "./clock.js";
 import { InteractionManager } from "./interaction.js";

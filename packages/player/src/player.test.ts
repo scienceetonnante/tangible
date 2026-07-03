@@ -2,7 +2,7 @@
 import { describe, it, expect } from "vitest";
 import { Player } from "./player.js";
 import type { SceneModule } from "./scene-host.js";
-import type { LessonTracks, PlainState } from "@xv/core";
+import type { LessonTracks, PlainState } from "@narrable/core";
 
 const tracks: LessonTracks = {
   version: 1,

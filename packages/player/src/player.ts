@@ -2,7 +2,7 @@
 // host, reconciler, interaction, board, captions, pause gates, and chrome. One
 // Player per lesson page (ARCHITECTURE §5.1).
 
-import { buildIndex, type LessonTracks, type Schema, type PlainState, type TrackIndex } from "@xv/core";
+import { buildIndex, type LessonTracks, type Schema, type PlainState, type TrackIndex } from "@narrable/core";
 import { AudioClock } from "./clock.js";
 import { StateStore } from "./store.js";
 import { TimelineDriver } from "./timeline.js";

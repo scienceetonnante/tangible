@@ -1,7 +1,7 @@
 // Stage 4: resolve — map each directive's anchor offset to an absolute time using
 // the TTS timing, then apply per-cue `at:` offsets and the default anticipation.
 
-import type { TtsResult } from "@xv/core";
+import type { TtsResult } from "@narrable/core";
 import type { Directive } from "./parse.js";
 
 export interface ResolvedCue {

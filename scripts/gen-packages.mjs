@@ -15,9 +15,9 @@ for (const [name, { deps, desc }] of Object.entries(PKGS)) {
   const dir = `packages/${name}`;
   mkdirSync(`${dir}/src`, { recursive: true });
 
-  const dependencies = Object.fromEntries(deps.map((d) => [`@xv/${d}`, "workspace:*"]));
+  const dependencies = Object.fromEntries(deps.map((d) => [`@narrable/${d}`, "workspace:*"]));
   const pkg = {
-    name: `@xv/${name}`,
+    name: `@narrable/${name}`,
     version: "0.0.0",
     description: desc,
     type: "module",
@@ -36,6 +36,6 @@ for (const [name, { deps, desc }] of Object.entries(PKGS)) {
   };
   writeFileSync(`${dir}/tsconfig.json`, JSON.stringify(tsconfig, null, 2) + "\n");
 
-  writeFileSync(`${dir}/src/index.ts`, `// @xv/${name} — ${desc}\nexport const PACKAGE = "@xv/${name}" as const;\n`);
-  console.log(`scaffolded @xv/${name}`);
+  writeFileSync(`${dir}/src/index.ts`, `// @narrable/${name} — ${desc}\nexport const PACKAGE = "@narrable/${name}" as const;\n`);
+  console.log(`scaffolded @narrable/${name}`);
 }

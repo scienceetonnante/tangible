@@ -1,5 +1,5 @@
 {
-  "name": "@xv/compiler",
+  "name": "@narrable/compiler",
   "version": "0.0.0",
   "description": "script.md → tracks.json + captions.vtt (+ TTS orchestration).",
   "type": "module",
@@ -12,7 +12,7 @@
     }
   },
   "dependencies": {
-    "@xv/core": "workspace:*",
+    "@narrable/core": "workspace:*",
     "yaml": "^2.6.1"
   }
 }

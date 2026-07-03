@@ -7,7 +7,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
-import type { SceneInfo } from "@xv/compiler";
+import type { SceneInfo } from "@narrable/compiler";
 
 export async function loadScene(scenePath: string): Promise<SceneInfo> {
   const dir = await mkdtemp(join(tmpdir(), "xv-scene-"));
@@ -19,7 +19,7 @@ export async function loadScene(scenePath: string): Promise<SceneInfo> {
       bundle: true,
       format: "esm",
       platform: "node",
-      external: ["@xv/*", "three"],
+      external: ["@narrable/*", "three"],
       logLevel: "silent",
     });
     const mod = (await import(pathToFileURL(outfile).href)) as {

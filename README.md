@@ -6,7 +6,7 @@ A platform for **interactive ("explorable") narrated video** — lessons that ar
 - **[ARCHITECTURE.md](./ARCHITECTURE.md)** — the implementation blueprint (data formats, modules, algorithms).
 - **[PLAN.md](./PLAN.md)** — phased build plan with current status.
 
-> Naming note: the package scope `@xv/*` and the CLI name `lesson` are placeholders, to be renamed before the first public deploy.
+> Naming note: the project's package scope is `@narrable/*`; the CLI command is `lesson`.
 
 ## Status
 

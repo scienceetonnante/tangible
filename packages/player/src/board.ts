@@ -4,7 +4,7 @@
 
 import katex from "katex";
 import { effect } from "@preact/signals-core";
-import type { BoardItem } from "@xv/core";
+import type { BoardItem } from "@narrable/core";
 import type { StateStore } from "./store.js";
 
 export class Board {

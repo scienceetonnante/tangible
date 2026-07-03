@@ -35,19 +35,19 @@ importers:
 
   packages/cli:
     dependencies:
-      '@xv/compiler':
+      '@narrable/compiler':
         specifier: workspace:*
         version: link:../compiler
-      '@xv/core':
+      '@narrable/core':
         specifier: workspace:*
         version: link:../core
-      '@xv/ingredients':
+      '@narrable/ingredients':
         specifier: workspace:*
         version: link:../ingredients
-      '@xv/player':
+      '@narrable/player':
         specifier: workspace:*
         version: link:../player
-      '@xv/tts':
+      '@narrable/tts':
         specifier: workspace:*
         version: link:../tts
       esbuild:
@@ -62,7 +62,7 @@ importers:
 
   packages/compiler:
     dependencies:
-      '@xv/core':
+      '@narrable/core':
         specifier: workspace:*
         version: link:../core
       yaml:
@@ -73,18 +73,18 @@ importers:
 
   packages/ingredients:
     dependencies:
-      '@xv/core':
+      '@narrable/core':
         specifier: workspace:*
         version: link:../core
 
   packages/player:
     dependencies:
+      '@narrable/core':
+        specifier: workspace:*
+        version: link:../core
       '@preact/signals-core':
         specifier: ^1.8.0
         version: 1.14.3
-      '@xv/core':
-        specifier: workspace:*
-        version: link:../core
       katex:
         specifier: ^0.16.11
         version: 0.16.47
@@ -95,7 +95,7 @@ importers:
 
   packages/tts:
     dependencies:
-      '@xv/core':
+      '@narrable/core':
         specifier: workspace:*
         version: link:../core
 

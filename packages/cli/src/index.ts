@@ -1,16 +1,16 @@
 #!/usr/bin/env node
-// @xv/cli — the `lesson` command. Wires the compiler + fake TTS for M0
+// @narrable/cli — the `lesson` command. Wires the compiler + fake TTS for M0
 // (check/build/state/ref/new). ElevenLabs selection arrives in M3.
 
 import { readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join, resolve as resolvePath } from "node:path";
 import { createHash } from "node:crypto";
-import { parseScript, check, compile, emit, synthesize, formatDiagnostic } from "@xv/compiler";
-import type { SceneInfo } from "@xv/compiler";
-import { buildIndex, evaluate } from "@xv/core";
-import type { Schema, Keyframe, TtsAdapter } from "@xv/core";
-import { FakeTtsAdapter, ElevenLabsAdapter } from "@xv/tts";
+import { parseScript, check, compile, emit, synthesize, formatDiagnostic } from "@narrable/compiler";
+import type { SceneInfo } from "@narrable/compiler";
+import { buildIndex, evaluate } from "@narrable/core";
+import type { Schema, Keyframe, TtsAdapter } from "@narrable/core";
+import { FakeTtsAdapter, ElevenLabsAdapter } from "@narrable/tts";
 import { loadScene } from "./scene-loader.js";
 import { loadManifest, type Manifest } from "./manifest.js";
 import { refSheet } from "./ref.js";

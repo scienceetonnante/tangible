@@ -1,8 +1,8 @@
 // Emit the scene's cue-reference sheet (Markdown) — the context an agent needs to
 // write cues for a scene (ARCHITECTURE §6, `lesson ref`).
 
-import type { SceneInfo } from "@xv/compiler";
-import type { ParamType } from "@xv/core";
+import type { SceneInfo } from "@narrable/compiler";
+import type { ParamType } from "@narrable/core";
 
 export function refSheet(sceneName: string, scene: SceneInfo): string {
   const lines: string[] = [`# Cue reference — ${sceneName}`, ""];

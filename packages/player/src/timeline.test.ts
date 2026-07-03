@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { buildIndex } from "@xv/core";
-import type { Schema } from "@xv/core";
+import { buildIndex } from "@narrable/core";
+import type { Schema } from "@narrable/core";
 import { AudioClock, type MediaClockSource } from "./clock.js";
 import { StateStore } from "./store.js";
 import { TimelineDriver } from "./timeline.js";

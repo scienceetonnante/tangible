@@ -5,7 +5,7 @@
 import { createHash } from "node:crypto";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
-import type { TtsAdapter, TtsResult, AudioFormat } from "@xv/core";
+import type { TtsAdapter, TtsResult, AudioFormat } from "@narrable/core";
 
 export interface SynthesizeParams {
   voice: string;

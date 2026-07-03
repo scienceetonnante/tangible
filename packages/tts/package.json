@@ -1,5 +1,5 @@
 {
-  "name": "@xv/tts",
+  "name": "@narrable/tts",
   "version": "0.0.0",
   "description": "TTS provider adapters (fake, elevenlabs, align).",
   "type": "module",
@@ -12,6 +12,6 @@
     }
   },
   "dependencies": {
-    "@xv/core": "workspace:*"
+    "@narrable/core": "workspace:*"
   }
 }

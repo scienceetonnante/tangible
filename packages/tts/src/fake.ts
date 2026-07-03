@@ -1,7 +1,7 @@
 // Deterministic fake TTS adapter: 60 ms per character, silent audio. Makes the
 // whole compiler pipeline run hermetically in CI (no network, no API key).
 
-import type { TtsAdapter, TtsRequest, TtsResult, WordTime } from "@xv/core";
+import type { TtsAdapter, TtsRequest, TtsResult, WordTime } from "@narrable/core";
 
 const SEC_PER_CHAR = 0.06;
 

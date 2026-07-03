@@ -1,5 +1,5 @@
 {
-  "name": "@xv/cli",
+  "name": "@narrable/cli",
   "version": "0.0.0",
   "description": "The `lesson` command.",
   "type": "module",
@@ -15,11 +15,11 @@
     }
   },
   "dependencies": {
-    "@xv/core": "workspace:*",
-    "@xv/compiler": "workspace:*",
-    "@xv/tts": "workspace:*",
-    "@xv/player": "workspace:*",
-    "@xv/ingredients": "workspace:*",
+    "@narrable/core": "workspace:*",
+    "@narrable/compiler": "workspace:*",
+    "@narrable/tts": "workspace:*",
+    "@narrable/player": "workspace:*",
+    "@narrable/ingredients": "workspace:*",
     "esbuild": "^0.24.0",
     "playwright": "^1.49.1",
     "yaml": "^2.6.1"

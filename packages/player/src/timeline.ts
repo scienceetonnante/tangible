@@ -2,7 +2,7 @@
 // state (value-at-time), and writes it to the store. In M1 scripted state flows
 // straight to the store; the M2 Reconciler slots in between here and the store.
 
-import { evaluate, type TrackIndex, type PlainState } from "@xv/core";
+import { evaluate, type TrackIndex, type PlainState } from "@narrable/core";
 import type { AudioClock } from "./clock.js";
 import type { StateStore } from "./store.js";
 import type { Reconciler } from "./reconciler.js";

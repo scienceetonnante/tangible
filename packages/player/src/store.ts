@@ -4,7 +4,7 @@
 // Reconciler).
 
 import { signal, type Signal } from "@preact/signals-core";
-import type { Schema, ParamValue, PlainState, OrbitState } from "@xv/core";
+import type { Schema, ParamValue, PlainState, OrbitState } from "@narrable/core";
 
 export interface InteractionMeta {
   userValue?: ParamValue;

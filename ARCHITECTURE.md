@@ -18,7 +18,7 @@
 
 ## 1. Repository layout
 
-Monorepo, pnpm workspaces, TypeScript strict mode, Node ≥ 22, Vite for bundling/dev-server, Vitest for unit tests, Playwright for browser tests. (Working name for the CLI: `lesson`; the package scope below is `@xv/*` — both are placeholders, rename freely.)
+Monorepo, pnpm workspaces, TypeScript strict mode, Node ≥ 22, Vite for bundling/dev-server, Vitest for unit tests, Playwright for browser tests. (CLI command: `lesson`; package scope: `@narrable/*`.)
 
 ```
 packages/
@@ -46,7 +46,7 @@ Dependency rule: `core` depends on nothing; `compiler` and `player` depend on `c
 
 ---
 
-## 2. Core data structures (`@xv/core`)
+## 2. Core data structures (`@narrable/core`)
 
 These shapes are the contracts between all modules. They live in `core` and are the most stable part of the system — change them deliberately.
 
@@ -158,7 +158,7 @@ defaults:
 
 ---
 
-## 3. `@xv/core` modules
+## 3. `@narrable/core` modules
 
 Pure TypeScript, zero DOM, 100% unit-testable. Contains:
 
@@ -178,7 +178,7 @@ The pure functions used by the player's Reconciler (§5.5), kept in core so they
 
 ---
 
-## 4. `@xv/compiler` and `@xv/tts`
+## 4. `@narrable/compiler` and `@narrable/tts`
 
 ### 4.1 Pipeline
 
@@ -195,7 +195,7 @@ parse ─► check ─► synthesize ─► resolve ─► expand ─► emit
 5. **expand** — turns resolved cues into dense per-parameter `Keyframe[]` tracks: instant sets become hold-boundaries; `-> value over: d ease: e` becomes a pair `{t}, {t+d, ease}`; the **conflict rule** (a new cue on a param whose transition is still running truncates the old one at the new cue's start; compiler warns); recorded tracks from `assets/` are merged in (a recorded track is already a `Keyframe[]` — it is inserted verbatim, and cue-generated keyframes may not target the same param over the same span: build error). Board directives compile to `boardItem` enum tracks plus highlight-flag boolean tracks. `@scene`, `@chapter`, `@pause` become the scene track, `chapters[]`, `pauses[]`.
 6. **emit** — writes `build/<lang>/tracks.json`, `captions.vtt` (from word timings; cue text is the narration sentence-segmented; optional word-level karaoke via VTT timestamps deferred), `audio.mp3`/`audio.webm`, and a static bundle (§6.3) when `--bundle` is passed.
 
-### 4.2 TTS adapter interface (`@xv/tts`)
+### 4.2 TTS adapter interface (`@narrable/tts`)
 
 ```ts
 interface TtsAdapter {
@@ -222,7 +222,7 @@ TTS results are cached in `lessons/<id>/.cache/tts/<sha256(adapterId|voice|model
 
 ---
 
-## 5. `@xv/player` — the runtime
+## 5. `@narrable/player` — the runtime
 
 ### 5.1 Composition and DOM layering
 
@@ -319,7 +319,7 @@ The built lesson page honors query params (dev builds only): `?t=14.2` (seek and
 
 ---
 
-## 6. `@xv/cli` — the `lesson` command
+## 6. `@narrable/cli` — the `lesson` command
 
 | Command | What it does |
 |---|---|
@@ -375,6 +375,6 @@ Non-critical choices intentionally left to the implementation phase; the stated 
 | Fake-cursor rendering (recorded pointer track) | Overlay `<div>`, % coordinates in a 16:9 reference frame |
 | Mobile/touch support level | Handles must work with touch from M2; layout polish deferred |
 | Monorepo tooling (pnpm alone vs turborepo) | pnpm workspaces alone until build times hurt |
-| Package/CLI naming (`@xv/*`, `lesson`) | Placeholder; rename before anything is published |
+| Package/CLI naming (`@narrable/*`, `lesson`) | Resolved: scope `@narrable/*`, CLI `lesson` |
 | Multi-lesson catalogue site | Out of scope; each lesson is a static bundle. Revisit after ≥3 lessons |
 | Simulation-type scenes (history-dependent) | Out of scope until a topic demands it; design sketch: pre-baked trajectory track for the scripted path + live sim during free exploration |

@@ -8,7 +8,7 @@
 
 **Done:** M-bootstrap, M0, M1, M2 (tagged `m0`/`m1`/`m2`) and M3 **except deploy** — the vertical slice works end to end (build → play → seek → catch-up → pause gate → board → captions, in real browsers, both fake and real ElevenLabs audio). Gate: `CI=true pnpm check` = **124 unit tests / 24 files**; **12 Playwright e2e on Chromium + WebKit**.
 
-**Remaining in M3:** `C3.7` — deploy the demo to a static HF Space + write up the agent-authoring validation. Owner-gated (key added; deploy is outward-facing). The **rename gate** (`@xv/*` / `lesson` → real names) must precede that deploy.
+**Remaining in M3:** `C3.7` — deploy the demo to a static HF Space + write up the agent-authoring validation. Owner-gated (key added; deploy is outward-facing). The **rename gate** is cleared — the package scope is now `@narrable/*` and the CLI stays `lesson`.
 
 **Not started:** M4 (record mode + fake cursor), M5 (ingredients library + 3D lesson).
 
@@ -25,7 +25,7 @@ These were chosen as defaults (the interview timed out); flag any you want chang
 | # | Decision | Choice | Rationale |
 |---|---|---|---|
 | D1 | Plan depth | **Deep on M0–M3, lighter M4–M5** | DESIGN §9: build the vertical slice, *then* extract/generalize. M4–M5 shape depends on slice learnings. |
-| D2 | Package scope / CLI name | **`@xv/*` and `lesson` (placeholders)** | ARCHITECTURE Deferred Decisions default; rename before first publish. |
+| D2 | Package scope / CLI name | **`@narrable/*` and `lesson` (placeholders)** | ARCHITECTURE Deferred Decisions default; rename before first publish. |
 | D3 | Test rigor | **Full rigor as specified (ARCHITECTURE §7)** | The seekability property tests and compiler goldens are load-bearing, not optional. Sequenced pragmatically *within* phases (math tests first, browser suites once the surface stabilizes). |
 | D4 | Repo root / first lesson | **This repo (`mva_eater`) as monorepo root; `unit-circle` first lesson** | Repo is a clean slate; docs name unit-circle. |
 | D5 | Monorepo tooling | **pnpm workspaces alone** | ARCHITECTURE Deferred default; add turborepo only if build times hurt. |
@@ -81,7 +81,7 @@ Agent-authoring validation runs at the end of M3 (DESIGN §9: "a core validation
 
 The compiler-as-feedback-loop and value-at-time land here, provable without a browser.
 
-### M0.A — `@xv/core` types, schema, easing
+### M0.A — `@narrable/core` types, schema, easing
 
 **Tasks**
 - Data shapes (ARCHITECTURE §2): `ParamType`, `ParamSpec`, `ParamValue`, `Schema`, `Keyframe`, `LessonTracks`, `ScriptDoc`/`Segment`, `ResolvedCue`.
@@ -113,7 +113,7 @@ The compiler-as-feedback-loop and value-at-time land here, provable without a br
 **Tasks**
 - **parse**: `script.md` → `ScriptDoc`. YAML front matter; `@name(...)` tokenizer with balanced-paren scanning that respects `$…$` KaTeX spans; `\@` escape; produces stripped narration text + directive list with `anchorOffset` into stripped text.
 - **check**: validate against scene schema (imported from `scene.ts` in Node — schema export must load without DOM). Diagnostics with `file:line:col`: unknown params + did-you-mean, type/range errors, illegal easing, `@highlight` targets not tagged in the item's KaTeX, `@track` to missing assets, overlapping-transition warnings. **No network.** Non-zero exit on error.
-- **Fake TTS adapter** in `@xv/tts`: deterministic timing (e.g. 60 ms/char) implementing the `TtsAdapter` interface — the hermetic CI backbone.
+- **Fake TTS adapter** in `@narrable/tts`: deterministic timing (e.g. 60 ms/char) implementing the `TtsAdapter` interface — the hermetic CI backbone.
 - Port reconciliation math into `core` §3.3 now (hold/blend envelope, frame-rate-independent exponential approach) so it's unit-tested before the player needs it.
 
 **Tests** — golden-file per stage on fixture scripts *including French text with apostrophes/accents around anchors*; **error-message snapshot tests** (diagnostics are a public interface the agent consumes); reconciliation-math unit tests against the §5.5 normative algorithm.
@@ -138,7 +138,7 @@ The compiler-as-feedback-loop and value-at-time land here, provable without a br
 
 ### M0.E — CLI read-only surface
 
-**Tasks** (`@xv/cli`)
+**Tasks** (`@narrable/cli`)
 - `lesson new <id>` — scaffold manifest + template scene + script skeleton.
 - `lesson check [--lang]` — parse+check only, no network. The agent's inner loop.
 - `lesson build [--lang]` — full pipeline (fake TTS).
@@ -351,7 +351,7 @@ Everything real: true voice, two languages, headless frames, a shippable bundle,
 
 **Deferred decisions** (ARCHITECTURE §9) — defaults taken as noted (D5–D7 above, plus: sentence-level VTT first, hand-rolled VTT parser, one `spring` preset, overlay-div fake cursor, touch from M2). Revisit triggers: turborepo if build times hurt; Howler if Safari time-resolution breaks; word-level karaoke as an emit-stage extension; MFA if stable-ts alignment (the later `align` adapter) proves too coarse.
 
-**Rename gate** — `@xv/*` / `lesson` are placeholders (D2). Rename **before** the M3 public deploy (C3.7); it's a mechanical find-replace but must precede anything published.
+**Rename gate** — ✅ cleared. The `@xv/*` placeholder scope was renamed to `@narrable/*`; the CLI stays `lesson` (kept intentionally, not renamed). Done before the C3.7 public deploy as required.
 
 ---
 
@@ -411,7 +411,7 @@ Work done while iterating on the running slice, not in the original plan. All co
 
 ## What remains
 
-1. **`C3.7` — deploy + agent-authoring validation** (owner-gated): rename `@xv/*`/`lesson` (rename gate), then deploy the static bundle to an HF Space; run the "agent drafts a lesson from `lesson ref`" exercise and write up findings. Tag `v0.1.0`.
+1. **`C3.7` — deploy + agent-authoring validation** (owner-gated): rename gate cleared (scope `@narrable/*`); deploy the static bundle to an HF Space; run the "agent drafts a lesson from `lesson ref`" exercise and write up findings. Tag `v0.1.0`.
 2. **Real-voice pass** — build the demo with the real ElevenLabs key (voice IDs set), tune `tts.speed`/anticipation by ear. (Adapter + caching ready.)
 3. **M4** — record mode + recorded-track merging + fake cursor.
 4. **M5** — grow `ingredients` (axes, arrows, draggable points, scrub-able KaTeX numbers) + a second, 3D (three.js) lesson to force the abstractions.

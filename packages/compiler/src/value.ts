@@ -2,8 +2,8 @@
 // booleans, enum strings, vectors/quaternions ([a, b, c]), and named constants
 // declared by the scene module.
 
-import type { ParamType, ParamValue } from "@xv/core";
-import { validateValue } from "@xv/core";
+import type { ParamType, ParamValue } from "@narrable/core";
+import { validateValue } from "@narrable/core";
 
 export type Constants = Record<string, number | number[]>;
 

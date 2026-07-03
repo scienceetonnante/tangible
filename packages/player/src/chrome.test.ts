@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { formatTime, tickFractions } from "./chrome.js";
 import { parseDevParams } from "./url.js";
-import type { LessonTracks } from "@xv/core";
+import type { LessonTracks } from "@narrable/core";
 
 describe("formatTime", () => {
   it("formats m:ss and h:mm:ss", () => {

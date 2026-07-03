@@ -1,5 +1,5 @@
 {
-  "name": "@xv/core",
+  "name": "@narrable/core",
   "version": "0.0.0",
   "description": "Shared types, schema, easing, interpolation, time math.",
   "type": "module",

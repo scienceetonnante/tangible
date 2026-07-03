@@ -1,4 +1,4 @@
-// Enforces the §1 dependency rule by scanning @xv/* imports in each package's source.
+// Enforces the §1 dependency rule by scanning @narrable/* imports in each package's source.
 // core→none; compiler/tts/player/ingredients→core; cli→all. player must never import compiler or tts.
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
@@ -12,7 +12,7 @@ const ALLOWED = {
   cli: new Set(["core", "compiler", "tts", "player", "ingredients"]),
 };
 
-const IMPORT_RE = /(?:from|import)\s+["']@xv\/([a-z]+)["']/g;
+const IMPORT_RE = /(?:from|import)\s+["']@narrable\/([a-z]+)["']/g;
 
 function walk(dir) {
   const out = [];
@@ -34,7 +34,7 @@ for (const pkg of Object.keys(ALLOWED)) {
       const dep = m[1];
       if (dep === pkg) continue;
       if (!ALLOWED[pkg].has(dep)) {
-        console.error(`✗ ${file}: @xv/${pkg} may not import @xv/${dep}`);
+        console.error(`✗ ${file}: @narrable/${pkg} may not import @narrable/${dep}`);
         violations++;
       }
     }

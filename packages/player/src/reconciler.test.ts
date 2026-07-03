@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { buildIndex } from "@xv/core";
-import type { Schema } from "@xv/core";
+import { buildIndex } from "@narrable/core";
+import type { Schema } from "@narrable/core";
 import { StateStore } from "./store.js";
 import { Reconciler } from "./reconciler.js";
 

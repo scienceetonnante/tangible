@@ -2,8 +2,8 @@
 // theta, and its projection (cosine) onto the horizontal axis. Renders as a pure
 // function of state.
 
-import type { Schema, ParamValue, PlainState, Handle } from "@xv/core";
-import type { SceneModule, SceneInstance, SceneContext } from "@xv/player";
+import type { Schema, ParamValue, PlainState, Handle } from "@narrable/core";
+import type { SceneModule, SceneInstance, SceneContext } from "@narrable/player";
 
 export const schema: Schema = {
   scene: { type: { kind: "enum", values: ["circle"] }, default: "circle", interpolate: "snap", ownership: "script" },

@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { parseScript } from "./parse.js";
 import { resolve } from "./resolve.js";
 import { expand } from "./expand.js";
-import { buildIndex, evaluate } from "@xv/core";
+import { buildIndex, evaluate } from "@narrable/core";
 import { SCRIPT_FR, SCENE } from "./fixtures.js";
 
 const DEFAULTS = { ease: "inOutCubic", transition: 1.0 };
