@@ -90,8 +90,6 @@ export class Chrome {
     full.onclick = () => this.toggleFullscreen();
 
     this.el.append(this.playBtn, this.scrubber, this.elapsed, captions, full);
-    this.clock.on("play", () => (this.playBtn.textContent = "⏸"));
-    this.clock.on("pause", () => (this.playBtn.textContent = "▶"));
   }
 
   /** Global keyboard shortcuts; returns a disposer. */
@@ -112,6 +110,9 @@ export class Chrome {
     const d = this.duration();
     if (!this.scrubbing) this.scrubber.value = String(d > 0 ? Math.round((t / d) * 1000) : 0);
     this.elapsed.textContent = `${formatTime(t)} / ${formatTime(d)}`;
+    // Drive the icon from the actual state (robust to browsers that fire media
+    // play/pause events unreliably, e.g. Safari).
+    this.playBtn.textContent = this.clock.playing ? "⏸" : "▶";
   }
 
   private togglePlay(): void {

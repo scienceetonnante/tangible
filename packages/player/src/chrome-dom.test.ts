@@ -41,4 +41,17 @@ describe("Chrome scrubber", () => {
     chrome.update(3);
     expect(scrubber.value).toBe("150");
   });
+
+  it("drives the play/pause icon from the actual clock state each frame", () => {
+    const media = new FakeMedia();
+    const clock = new AudioClock(media);
+    const chrome = new Chrome(clock, tracks);
+    const playBtn = chrome.el.querySelector(".xv-play") as HTMLButtonElement;
+
+    chrome.update(0);
+    expect(playBtn.textContent).toBe("▶");
+    media.paused = false; // playing (as if any code/event changed it)
+    chrome.update(0);
+    expect(playBtn.textContent).toBe("⏸");
+  });
 });

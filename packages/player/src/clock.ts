@@ -31,7 +31,8 @@ export class AudioClock {
   }
 
   play(): void {
-    void this.media.play();
+    // Surface autoplay/codec rejections (notably Safari) instead of swallowing them.
+    void Promise.resolve(this.media.play()).catch((e: unknown) => console.warn("audio play() rejected:", e));
   }
 
   pause(): void {

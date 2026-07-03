@@ -64,9 +64,11 @@ export class Player {
     const boardPanel = el("aside", "xv-board");
 
     this.audio = document.createElement("audio");
+    this.audio.preload = "auto";
     for (const src of opts.audioSrc ?? []) {
       const s = document.createElement("source");
       s.src = (opts.baseUrl ?? "") + src;
+      s.type = mimeForAudio(src); // Safari is picky about selecting a typeless source
       this.audio.append(s);
     }
     this.clock = new AudioClock(this.audio);
@@ -164,4 +166,11 @@ function el(tag: string, className: string): HTMLElement {
   const e = document.createElement(tag);
   if (className) e.className = className;
   return e;
+}
+
+function mimeForAudio(src: string): string {
+  if (src.endsWith(".mp3")) return "audio/mpeg";
+  if (src.endsWith(".webm")) return "audio/webm";
+  if (src.endsWith(".ogg")) return "audio/ogg";
+  return "audio/wav";
 }
