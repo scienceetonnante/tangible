@@ -5,8 +5,8 @@ title:
 scene: ./scene.ts
 languages: [fr, en]
 voice:
-  fr: elevenlabs:VOICE_ID_FR
-  en: elevenlabs:VOICE_ID_EN
+  fr: elevenlabs:FFXYdAYPzn8Tw8KiHZqg
+  en: elevenlabs:s3TPKV1kjDlVtZbl4Ksh
 defaults:
   anticipation: -0.2
   ease: inOutCubic

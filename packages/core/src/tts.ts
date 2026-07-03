@@ -15,8 +15,11 @@ export interface WordTime {
   charOffset: number; // start offset of this word in the request text
 }
 
+export type AudioFormat = "mp3" | "wav" | "webm";
+
 export interface TtsResult {
-  audio: Uint8Array; // mp3 or wav; the compiler transcodes
+  audio: Uint8Array;
+  format: AudioFormat; // container of the audio bytes; drives the emitted filename + <source> type
   charTimes?: { start: number; end: number }[]; // per character of the request text
   wordTimes: WordTime[];
   duration: number; // seconds

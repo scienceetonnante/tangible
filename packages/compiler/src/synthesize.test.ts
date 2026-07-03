@@ -14,7 +14,7 @@ class CountingAdapter implements TtsAdapter {
   async synthesize(req: TtsRequest) {
     this.calls++;
     const duration = req.text.length * 0.06;
-    return { audio: new Uint8Array([1, 2, 3]), wordTimes: [], duration };
+    return { audio: new Uint8Array([1, 2, 3]), format: "wav" as const, wordTimes: [], duration };
   }
 }
 

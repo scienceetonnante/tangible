@@ -132,7 +132,7 @@ async function buildLanguage(lessonDir: string, manifest: Manifest, scene: Scene
     lessonId: manifest.id,
     language: lang,
     defaults: manifest.defaults,
-    audioSrc: ["audio.wav"],
+    audioSrc: [`audio.${result.format}`],
     audioHash,
   });
   for (const w of compiled.warnings) console.error(formatDiagnostic(w));

@@ -29,7 +29,7 @@ export class FakeTtsAdapter implements TtsAdapter {
       });
     }
 
-    return { audio: silentWav(duration), charTimes, wordTimes, duration };
+    return { audio: silentWav(duration), format: "wav", charTimes, wordTimes, duration };
   }
 }
 

@@ -5,7 +5,7 @@
 import { createHash } from "node:crypto";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
-import type { TtsAdapter, TtsResult } from "@xv/core";
+import type { TtsAdapter, TtsResult, AudioFormat } from "@xv/core";
 
 export interface SynthesizeParams {
   voice: string;
@@ -21,6 +21,7 @@ export function cacheKey(adapter: TtsAdapter, voice: string, text: string): stri
 }
 
 interface CachedTiming {
+  format: AudioFormat;
   charTimes?: { start: number; end: number }[];
   wordTimes: TtsResult["wordTimes"];
   duration: number;
@@ -36,7 +37,7 @@ export async function synthesize(adapter: TtsAdapter, text: string, params: Synt
 
   const result = await adapter.synthesize({ text, voice: params.voice, language: params.language });
   await mkdir(params.cacheDir, { recursive: true });
-  const timing: CachedTiming = { charTimes: result.charTimes, wordTimes: result.wordTimes, duration: result.duration };
+  const timing: CachedTiming = { format: result.format, charTimes: result.charTimes, wordTimes: result.wordTimes, duration: result.duration };
   await writeFile(jsonPath, JSON.stringify(timing));
   await writeFile(audioPath, result.audio);
   return result;
@@ -51,5 +52,5 @@ async function readCache(jsonPath: string, audioPath: string): Promise<TtsResult
   } catch {
     return null; // cache miss
   }
-  return { audio, charTimes: timing.charTimes, wordTimes: timing.wordTimes, duration: timing.duration };
+  return { audio, format: timing.format, charTimes: timing.charTimes, wordTimes: timing.wordTimes, duration: timing.duration };
 }

@@ -4,9 +4,10 @@
 
 import { build } from "esbuild";
 import { createRequire } from "node:module";
-import { mkdir, writeFile, copyFile } from "node:fs/promises";
+import { mkdir, writeFile, copyFile, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Manifest } from "./manifest.js";
+import type { LessonTracks } from "@xv/core";
 
 const require = createRequire(import.meta.url);
 
@@ -49,7 +50,8 @@ main();
     const src = join(lessonDir, "build", lang);
     const dst = join(outDir, lang);
     await mkdir(dst, { recursive: true });
-    for (const f of ["tracks.json", "captions.vtt", "audio.wav"]) await copyFile(join(src, f), join(dst, f));
+    const tracks = JSON.parse(await readFile(join(src, "tracks.json"), "utf8")) as LessonTracks;
+    for (const f of ["tracks.json", "captions.vtt", ...tracks.audio.src]) await copyFile(join(src, f), join(dst, f));
   }
   await copyFile(katexCss, join(outDir, "katex.css"));
   await writeFile(join(outDir, "index.html"), indexHtml(manifest, langs));

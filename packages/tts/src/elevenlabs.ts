@@ -60,6 +60,7 @@ export class ElevenLabsAdapter implements TtsAdapter {
 
     return {
       audio: new Uint8Array(Buffer.concat(audioChunks)),
+      format: "mp3", // with-timestamps returns mp3_44100_128 by default
       charTimes,
       wordTimes: deriveWordTimes(req.text, charTimes),
       duration: timeOffset,
