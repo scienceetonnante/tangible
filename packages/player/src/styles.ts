@@ -3,7 +3,7 @@
 
 export const PLAYER_CSS = `
 .xv-player { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #fafafa; overflow: hidden; user-select: none; }
-.xv-player > canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.xv-player > canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; }
 .xv-overlay { position: absolute; inset: 0; pointer-events: none; }
 .xv-board { position: absolute; top: 0; right: 0; width: 28%; height: 100%; padding: 12px; box-sizing: border-box; overflow: auto; pointer-events: none; }
 .xv-captions { position: absolute; left: 0; right: 0; bottom: 48px; text-align: center; font: 18px/1.4 sans-serif; color: #111; text-shadow: 0 1px 2px #fff; }
