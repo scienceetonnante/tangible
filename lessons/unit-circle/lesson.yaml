@@ -3,7 +3,7 @@ title:
   fr: Le cercle unité
   en: The unit circle
 scene: ./scene.ts
-languages: [en]
+languages: [en, fr]
 voice:
   fr: elevenlabs:FFXYdAYPzn8Tw8KiHZqg
   en: elevenlabs:s3TPKV1kjDlVtZbl4Ksh
