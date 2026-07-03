@@ -3,7 +3,7 @@ title:
   fr: Le cercle unité
   en: The unit circle
 scene: ./scene.ts
-languages: [fr, en]
+languages: [en]
 voice:
   fr: elevenlabs:FFXYdAYPzn8Tw8KiHZqg
   en: elevenlabs:s3TPKV1kjDlVtZbl4Ksh
@@ -11,3 +11,5 @@ defaults:
   anticipation: -0.2
   ease: inOutCubic
   transition: 1.0
+tts:
+  speed: 0.9 # ElevenLabs speaking rate: 0.7 (slow) .. 1.2 (fast), 1.0 = default

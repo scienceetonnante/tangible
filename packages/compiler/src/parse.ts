@@ -42,7 +42,7 @@ export type Directive = Base &
     | { kind: "highlight" | "dim" | "clear"; target: string }
     | { kind: "scene"; name: string }
     | { kind: "chapter"; title: string }
-    | { kind: "pause"; prompt: string }
+    | { kind: "pause"; prompt: string; speak: boolean }
     | { kind: "unknown"; name: string; argsText: string }
   );
 
@@ -131,6 +131,16 @@ function tokenize(body: string, startLine: number, file?: string): { textRaw: st
         const nextNl = body.indexOf("\n", end);
         const afterBlank = body.slice(end, nextNl === -1 ? body.length : nextNl).trim() === "";
         const block = beforeBlank && afterBlank;
+        // A @pause narrates its prompt: inject it into the spoken text and anchor
+        // the checkpoint just after it, so the voice reads the instruction, then
+        // the box appears. `speak: false` opts out.
+        if (name === "pause") {
+          const spoken = spokenPausePrompt(argsText);
+          if (spoken) {
+            if (textRaw.length && !/\s$/.test(textRaw)) textRaw += " ";
+            textRaw += spoken;
+          }
+        }
         raws.push({ name, argsText, anchorRaw: textRaw.length, block, loc: { file, line, col }, raw });
         // Advance past the directive (and its own line's trailing newline if block).
         const consumeTo = block && nextNl !== -1 ? nextNl + 1 : end;
@@ -248,11 +258,8 @@ function parseDirective(r: RawDirective, anchorOffset: number): Directive {
       return { ...base, kind: "scene", name: a };
     case "chapter":
       return { ...base, kind: "chapter", title: a };
-    case "pause": {
-      const ci = a.indexOf(":");
-      const prompt = ci === -1 ? stripQuotes(a) : stripQuotes(a.slice(ci + 1).trim());
-      return { ...base, kind: "pause", prompt };
-    }
+    case "pause":
+      return { ...base, kind: "pause", prompt: pausePromptText(a), speak: !/\bspeak\s*:\s*false\b/.test(a) };
     default:
       return { ...base, kind: "unknown", name: r.name, argsText: a };
   }
@@ -345,4 +352,16 @@ function splitOnce(s: string, sep: string): [string, string] {
 function stripQuotes(s: string): string {
   const t = s.trim();
   return t.startsWith('"') && t.endsWith('"') ? t.slice(1, -1) : t;
+}
+
+/** The prompt string of a @pause, from `prompt: "..."` (or a bare quoted arg). */
+function pausePromptText(argsText: string): string {
+  const m = /prompt\s*:\s*"([^"]*)"/.exec(argsText);
+  return m ? m[1]! : stripQuotes(argsText);
+}
+
+/** The prompt to speak before a pause, or "" when `speak: false`. */
+function spokenPausePrompt(argsText: string): string {
+  if (/\bspeak\s*:\s*false\b/.test(argsText)) return "";
+  return pausePromptText(argsText);
 }

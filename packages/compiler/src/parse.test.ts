@@ -20,6 +20,8 @@ describe("parseScript — narration stripping (golden)", () => {
         "le point fait le tour complet du cercle.\n\n" +
         "Projetons maintenant ce point sur l'axe horizontal. La longueur obtenue, " +
         "c'est le cosinus de thêta.\n\n" +
+        // @pause narrates its prompt just before the checkpoint:
+        "Déplacez le point rouge vous-même et observez le cosinus. " +
         "Reprenons. À quatre-vingt-dix degrés…",
     );
   });
@@ -91,5 +93,14 @@ describe("parseScript — escapes and edge cases", () => {
   it("leaves an unknown @name(...) as an 'unknown' directive for check to flag", () => {
     const p = parseScript("Texte @wiggle(x) fin.");
     expect(p.directives[0]).toMatchObject({ kind: "unknown", name: "wiggle" });
+  });
+
+  it("narrates a @pause prompt (spoken before the checkpoint), and speak:false opts out", () => {
+    const spoken = parseScript('Avant.\n\n@pause(prompt: "Essayez vous-même.")\n\nAprès.');
+    expect(spoken.narration).toBe("Avant.\n\nEssayez vous-même. Après.");
+    const silent = parseScript('Avant.\n\n@pause(prompt: "Essayez vous-même.", speak: false)\n\nAprès.');
+    expect(silent.narration).toBe("Avant.\n\nAprès.");
+    // The box prompt is parsed either way.
+    expect(silent.directives.find((d) => d.kind === "pause")).toMatchObject({ prompt: "Essayez vous-même.", speak: false });
   });
 });

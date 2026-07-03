@@ -11,11 +11,12 @@ export class FakeTtsAdapter implements TtsAdapter {
 
   async synthesize(req: TtsRequest): Promise<TtsResult> {
     const text = req.text;
+    const perChar = SEC_PER_CHAR / (req.speed ?? 1); // slower speed → longer duration
     const charTimes = Array.from({ length: text.length }, (_, i) => ({
-      start: i * SEC_PER_CHAR,
-      end: (i + 1) * SEC_PER_CHAR,
+      start: i * perChar,
+      end: (i + 1) * perChar,
     }));
-    const duration = text.length * SEC_PER_CHAR;
+    const duration = text.length * perChar;
 
     const wordTimes: WordTime[] = [];
     for (const m of text.matchAll(/\S+/g)) {

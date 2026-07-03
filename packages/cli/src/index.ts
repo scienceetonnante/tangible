@@ -125,6 +125,7 @@ async function buildLanguage(lessonDir: string, manifest: Manifest, scene: Scene
     voice,
     language: lang,
     cacheDir: join(lessonDir, ".cache", "tts"),
+    speed: manifest.tts?.speed,
   });
 
   const audioHash = createHash("sha256").update(result.audio).digest("hex").slice(0, 16);

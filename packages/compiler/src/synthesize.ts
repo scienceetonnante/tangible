@@ -11,12 +11,13 @@ export interface SynthesizeParams {
   voice: string;
   language: string;
   cacheDir: string; // lessons/<id>/.cache/tts
+  speed?: number;
 }
 
-/** Content-addressed cache key: adapter identity + voice + model + stripped text. */
-export function cacheKey(adapter: TtsAdapter, voice: string, text: string): string {
+/** Content-addressed cache key: adapter identity + voice + model + speed + stripped text. */
+export function cacheKey(adapter: TtsAdapter, voice: string, text: string, speed?: number): string {
   const h = createHash("sha256");
-  h.update(`${adapter.id}|${voice}|${adapter.modelId ?? ""}|${text}`);
+  h.update(`${adapter.id}|${voice}|${adapter.modelId ?? ""}|speed=${speed ?? ""}|${text}`);
   return h.digest("hex");
 }
 
@@ -28,14 +29,14 @@ interface CachedTiming {
 }
 
 export async function synthesize(adapter: TtsAdapter, text: string, params: SynthesizeParams): Promise<TtsResult> {
-  const key = cacheKey(adapter, params.voice, text);
+  const key = cacheKey(adapter, params.voice, text, params.speed);
   const jsonPath = join(params.cacheDir, `${key}.json`);
   const audioPath = join(params.cacheDir, `${key}.audio`);
 
   const cached = await readCache(jsonPath, audioPath);
   if (cached) return cached;
 
-  const result = await adapter.synthesize({ text, voice: params.voice, language: params.language });
+  const result = await adapter.synthesize({ text, voice: params.voice, language: params.language, speed: params.speed });
   await mkdir(params.cacheDir, { recursive: true });
   const timing: CachedTiming = { format: result.format, charTimes: result.charTimes, wordTimes: result.wordTimes, duration: result.duration };
   await writeFile(jsonPath, JSON.stringify(timing));

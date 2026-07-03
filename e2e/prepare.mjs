@@ -15,7 +15,8 @@ const run = (cmd, args) => {
 
 export default async function prepare() {
   run("node", ["node_modules/typescript/bin/tsc", "--build"]);
-  run("node", ["packages/cli/dist/index.js", "build", "--lesson", "lessons/unit-circle", "--lang", "fr"]);
+  // --fake keeps e2e hermetic: deterministic timing, no API key, no credits, WAV.
+  run("node", ["packages/cli/dist/index.js", "build", "--fake", "--lesson", "lessons/unit-circle", "--lang", "fr"]);
 
   const buildDir = join(root, "lessons/unit-circle/build/fr");
   const tracks = await readFile(join(buildDir, "tracks.json"), "utf8");
