@@ -24,6 +24,8 @@ async function main() {
   const cmd = argv[0];
   const flags = parseFlags(argv.slice(1));
 
+  loadDotenv(flags.lesson ?? process.cwd()); // pick up ELEVENLABS_API_KEY etc. from .env
+
   switch (cmd) {
     case "new":
       await scaffold(argv[1] ?? die("usage: lesson new <id>"));
@@ -212,6 +214,13 @@ function parseFlags(args: string[]): Flags {
     else if (args[i] === "--size") f.size = args[++i];
   }
   return f;
+}
+
+/** Load .env from the current dir and the lesson dir (built-in, no dependency). */
+function loadDotenv(lessonDir: string): void {
+  for (const p of new Set([join(process.cwd(), ".env"), join(lessonDir, ".env")])) {
+    if (existsSync(p)) process.loadEnvFile(p);
+  }
 }
 
 function die(msg: string): never {
