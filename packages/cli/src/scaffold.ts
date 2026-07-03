@@ -1,26 +1,32 @@
 // `lesson new <id>` — scaffold a lesson directory with a manifest, a template scene,
-// and a script skeleton.
+// and a script skeleton. Honors --lesson <dir> (target location) and --lang <code>.
 
 import { mkdir, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 
-export async function scaffold(id: string): Promise<void> {
-  const dir = join(process.cwd(), id);
-  await mkdir(join(dir, "assets"), { recursive: true });
-
-  await writeFile(join(dir, "lesson.yaml"), MANIFEST(id));
-  await writeFile(join(dir, "scene.ts"), SCENE);
-  await writeFile(join(dir, "script.fr.md"), SCRIPT);
-  console.error(`scaffolded lessons/${id}/ (lesson.yaml, scene.ts, script.fr.md)`);
+export interface ScaffoldOptions {
+  dir?: string; // target directory (default: <cwd>/<id>)
+  lang?: string; // skeleton language (default: en)
 }
 
-const MANIFEST = (id: string) => `id: ${id}
+export async function scaffold(id: string, opts: ScaffoldOptions = {}): Promise<void> {
+  const lang = opts.lang ?? "en";
+  const dir = opts.dir ?? join(process.cwd(), id);
+  await mkdir(join(dir, "assets"), { recursive: true });
+
+  await writeFile(join(dir, "lesson.yaml"), MANIFEST(id, lang));
+  await writeFile(join(dir, "scene.ts"), SCENE);
+  await writeFile(join(dir, `script.${lang}.md`), SCRIPT(lang));
+  console.error(`scaffolded ${dir}/ (lesson.yaml, scene.ts, script.${lang}.md)`);
+}
+
+const MANIFEST = (id: string, lang: string) => `id: ${id}
 title:
-  fr: ${id}
+  ${lang}: ${id}
 scene: ./scene.ts
-languages: [fr]
+languages: [${lang}]
 voice:
-  fr: elevenlabs:VOICE_ID_FR
+  ${lang}: elevenlabs:VOICE_ID
 defaults:
   anticipation: -0.2
   ease: inOutCubic
@@ -37,14 +43,14 @@ export const schema: Schema = {
 export const constants: Record<string, number | number[]> = {};
 `;
 
-const SCRIPT = `---
-title: Titre
-language: fr
+const SCRIPT = (lang: string) => `---
+title: Title
+language: ${lang}
 ---
 
 @scene(main)
 @chapter(Introduction)
 
-Écrivez la narration ici. Les directives comme @show(quelque_chose) sont
-retirées avant la synthèse vocale et ancrées au mot qui les suit.
+Write the narration here. Directives like \\@show(something) are stripped
+before speech synthesis and anchored to the word that follows them.
 `;

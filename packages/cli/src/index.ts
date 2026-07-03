@@ -30,7 +30,7 @@ async function main() {
 
   switch (cmd) {
     case "new":
-      await scaffold(argv[1] ?? die("usage: lesson new <id>"));
+      await scaffold(argv[1] ?? die("usage: lesson new <id> [--lesson dir] [--lang code]"), { dir: flags.lesson, lang: flags.lang });
       return;
     case "check":
       process.exit(await cmdCheck(flags));
