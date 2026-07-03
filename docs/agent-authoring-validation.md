@@ -50,7 +50,7 @@ Frame review across the timeline (`lesson frame` at 6 timestamps) caught two leg
 ## Recommendations (ranked)
 
 1. **Let the agent verify interaction, not just scripted state** — e.g. `state --at <t> --drag w11=0.9` that runs the reconciler, so the interactive payoff is checkable headlessly. (Biggest gap.)
-2. **A first-class way to animate a computed process** — a build-time computed cue value evaluated from scene-exported functions, or a `@bake` directive that asks the scene for a `Keyframe[]` given a start state and a step count. At minimum, a lint that recomputes and warns when pasted literals don't match a declared update rule.
+2. **A first-class way to animate a computed process** — a build-time computed cue value evaluated from scene-exported functions, or a `@bake` directive that asks the scene for a `Keyframe[]` given a start state and a step count. At minimum, a lint that recomputes and warns when pasted literals don't match a declared update rule. **Designed:** see [computed-cues-design-note.md](./computed-cues-design-note.md) — recommends a `@bake` directive (build-time, checkable, preserves value-at-time).
 3. **Fix the overlap warning** — dedupe per cue, use the real filename, name the truncated cue's source line.
 4. **Make a visual check work in-sandbox** — `frame` binds a local server socket the sandbox blocks, so the agent's only *visual* check is unavailable; document a supported stub-canvas smoke-test pattern otherwise.
 5. **`lesson new`** should honor `--lesson` and language; **multi-assignment cue** sugar (array/group form) would keep a step from burying its sentence.
