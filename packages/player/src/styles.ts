@@ -5,10 +5,10 @@ export const PLAYER_CSS = `
 .xv-player { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #fafafa; overflow: hidden; user-select: none; }
 .xv-player > canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 .xv-overlay { position: absolute; inset: 0; pointer-events: none; }
-.xv-board { position: absolute; top: 0; right: 0; width: 28%; height: 100%; padding: 12px; box-sizing: border-box; overflow: auto; }
+.xv-board { position: absolute; top: 0; right: 0; width: 28%; height: 100%; padding: 12px; box-sizing: border-box; overflow: auto; pointer-events: none; }
 .xv-captions { position: absolute; left: 0; right: 0; bottom: 48px; text-align: center; font: 18px/1.4 sans-serif; color: #111; text-shadow: 0 1px 2px #fff; }
 .xv-board-inner { display: flex; flex-direction: column; gap: 10px; }
-.xv-board-item { transition: opacity 200ms ease; }
+.xv-board-item { transition: opacity 200ms ease; pointer-events: auto; }
 .xv-board-item.xv-hidden { display: none; }
 .xv-board-item.xv-shown { opacity: 1; }
 .xv-board-item.xv-dimmed { opacity: 0.4; }

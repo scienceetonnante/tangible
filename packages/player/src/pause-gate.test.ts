@@ -60,4 +60,16 @@ describe("PauseGate", () => {
     gate.update(5.1);
     expect(media.paused).toBe(true);
   });
+
+  it("re-arms after resuming, then seeking back to just before the gate", () => {
+    gate.update(4.9);
+    gate.update(5.1); // triggered
+    gate.el.querySelector("button")!.click(); // resume → satisfied
+    gate.update(6); // playing on past it
+    gate.update(4); // seek back to before the gate (not the start) → re-arm
+    gate.update(4.9);
+    gate.update(5.1); // re-cross
+    expect(media.paused).toBe(true);
+    expect(gate.el.style.display).toBe("flex");
+  });
 });

@@ -1,6 +1,7 @@
 // PauseGate — when playback crosses a checkpoint, pause and show a non-modal prompt
-// (the scene stays fully interactive). Satisfied on resume; seeking past satisfies
-// it; gates reset when seeking back to the start. Gates are per-playthrough.
+// (the scene stays fully interactive). Satisfied on resume; seeking forward past a
+// gate satisfies it silently; a gate re-arms whenever playback goes back before it,
+// so re-crossing triggers it again.
 
 import type { AudioClock } from "./clock.js";
 
@@ -39,16 +40,17 @@ export class PauseGate {
   }
 
   update(t: number): void {
-    const dt = t - this.lastT;
-    if (t < 0.5 && dt < 0) this.satisfied.clear(); // seek to start → new playthrough
-    const seeked = Math.abs(dt) >= 0.5;
+    const seeked = Math.abs(t - this.lastT) >= 0.5;
 
     for (const p of this.pauses) {
-      if (this.satisfied.has(p.id)) continue;
-      if (seeked && p.t <= t) {
-        this.satisfied.add(p.id); // seeking past a gate satisfies it silently
-      } else if (!seeked && this.lastT <= p.t && p.t <= t && !this.active) {
-        this.trigger(p);
+      if (t < p.t) {
+        this.satisfied.delete(p.id); // back before the gate → re-arm for the next crossing
+      } else if (this.satisfied.has(p.id)) {
+        continue;
+      } else if (seeked) {
+        this.satisfied.add(p.id); // seeking forward past a gate satisfies it silently
+      } else if (this.lastT <= p.t && p.t <= t && !this.active) {
+        this.trigger(p); // played across it
         break;
       }
     }
