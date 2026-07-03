@@ -62,6 +62,10 @@ export class PauseGate {
     this.promptText.textContent = p.prompt;
     this.el.style.display = "flex";
     this.clock.pause();
+    // Snap to the exact checkpoint. The frame loop crosses p.t a little late
+    // (rAF granularity + audio-output latency, larger on Safari), so without this
+    // the pause lands slightly into the next word and resume replays it clipped.
+    this.clock.seek(p.t);
   }
 
   /** User asked to continue (button): satisfy and play. */

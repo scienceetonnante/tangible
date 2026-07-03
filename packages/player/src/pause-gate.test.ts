@@ -27,12 +27,13 @@ beforeEach(() => {
 });
 
 describe("PauseGate", () => {
-  it("triggers on normal crossing: pauses and shows the prompt", () => {
+  it("triggers on normal crossing: pauses, shows the prompt, snaps to the checkpoint", () => {
     gate.update(4.9);
     gate.update(5.1);
     expect(media.paused).toBe(true);
     expect(gate.el.style.display).toBe("flex");
     expect(gate.el.querySelector("p")!.textContent).toBe("Try it");
+    expect(media.currentTime).toBe(5); // snapped back to the exact checkpoint
   });
 
   it("resumes and stays satisfied (no re-trigger) via the Continue button", () => {
