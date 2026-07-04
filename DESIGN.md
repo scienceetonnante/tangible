@@ -1,6 +1,6 @@
 # Interactive ("Explorable") Video
 
-*A primer on the medium pioneered by the 3blue1brown + Ben Eater quaternion series ([eater.net/quaternions](https://eater.net/quaternions), 2018), together with a technical dissection of that platform (from an inspection of the deployed site, February 2026 build) and a proposed architecture for producing lessons in this medium on arbitrary topics, from a single authored script. The implementation-level companion is [architecture.md](./architecture.md).*
+*A primer on the medium pioneered by the 3blue1brown + Ben Eater quaternion series ([eater.net/quaternions](https://eater.net/quaternions), 2018), together with a technical dissection of that platform (from an inspection of the deployed site, February 2026 build) and a proposed architecture for producing lessons in this medium on arbitrary topics, from a single authored script. The platform described here has since been built; see [PLAN.md](./PLAN.md) for build status and [README.md](./README.md) for how to run it. §10 below records the normative invariants the implementation upholds.*
 
 ---
 
@@ -330,6 +330,22 @@ With synchronization automated and the player built once, the per-lesson cost co
 2. **Direction** — deciding what the scene should do at each sentence. The markup makes choreography cheap to *express and iterate*, not cheap to *conceive*. This is the editorial craft that remains, and should remain, expensive.
 
 **First milestone: one vertical slice, then extract the platform from it.** Pick a forgiving 2D topic (the unit circle, a Fourier construction, a random walk) rather than starting at quaternion difficulty. Build: a script with ~10 cues → TTS synthesis with timestamps → compiled tracks → a player with the audio clock, the interpolator, one interactive parameter with the catch-up recipe, captions, a scrubber, and a board with two or three synchronized equations. Include the agent-facing tools (§5.7) from day one — `--check`, the state dump, the headless frame render — and have an AI agent write the first draft of the script and choreography from the scene's cue-reference sheet: whether an agent can produce a competent lesson draft is a core validation target of the slice, not an afterthought. The slice validates every architectural decision at small scale — the markup ergonomics, the anticipation default, the feel of the hold-and-blend, the agent loop — before any generalization is designed. The platform is then extracted from a working lesson, not designed in the abstract.
+
+## 10. Implementation invariants (normative)
+
+*The rules the built platform upholds — violations are bugs. Detailed data-format contracts, the interpolator, and the reconciler algorithm now live in the code (`packages/core` and its tests); this section is the durable statement of intent behind them.*
+
+**Fixed decisions.** Runtime is vanilla TypeScript with `@preact/signals-core` for reactivity — no React, no framework in the hot path. TTS is ElevenLabs (`with-timestamps`) behind a provider-adapter interface, with forced alignment of human recordings as a planned second adapter. Each lesson builds to a fully static bundle (HTML + JS + audio + JSON), deployable to any static host.
+
+**Guiding principles.**
+
+1. **Value-at-time.** Every parameter's value is computable directly from time `t`; nothing accumulates frame by frame. This is what makes seeking, catch-up, state-dump, and headless frame rendering possible.
+2. **Everything is text.** All authored artifacts are diffable text files; all generated artifacts are JSON/VTT/audio. No state lives only in a GUI.
+3. **Deterministic builds.** Same inputs (script + cached audio) → byte-identical outputs.
+4. **The compiler is the feedback loop.** Errors are precise, actionable, and produced without network access whenever possible (`check`).
+5. **The hot path is framework-free.** The per-frame loop touches plain objects and typed arrays; signals are used only at the boundary to the DOM (board, readouts, captions, chrome).
+
+**Parameter ownership** (the reconciliation policy, per §5.2): `script` — the viewer may perturb, and after a short hold the value glides back to the scripted track; `shared` — the viewer's value holds until the script next writes that parameter; `viewer` — once touched, the scripted track is ignored for the rest of the session. The catch-up envelope (≈3 s hold, exponential return, discrete channels revert instantly) is described concretely in §3 and §5.4.
 
 ---
 

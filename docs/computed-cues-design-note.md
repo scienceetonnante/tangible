@@ -20,7 +20,7 @@ For a platform whose whole point is ML/physics explorables, this is the dominant
 
 ## The invariant a solution must preserve
 
-Whatever we add, it must not weaken these (ARCHITECTURE §intro):
+Whatever we add, it must not weaken these ([DESIGN §10](../DESIGN.md)):
 
 - **Value-at-time.** The emitted artifact stays dense static keyframes; the runtime stays a dumb interpolator. So **all computation happens at build time, in the compiler** — never at runtime. Runtime computation would break seeking, catch-up, and headless render.
 - **Determinism / repeatability.** Emit is a pure function of (script, scene, cache); re-runs are byte-identical (guarded by the C0.7 test). Any computation we invoke must be pure — no `Date`/random, same rule scripts already follow.

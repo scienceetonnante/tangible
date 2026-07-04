@@ -2,9 +2,9 @@
 
 A platform for **interactive ("explorable") narrated video** — lessons that are a live 2D/3D scene driven by a recorded voiceover, where the learner can grab the canvas, drag a parameter, or scrub a value at any time and watch everything recompute, then glides back to whatever the narration has reached. Think of the 3blue1brown + Ben Eater quaternion series, but authored from a single **text script** instead of performance capture.
 
-- **[DESIGN.md](./DESIGN.md)** — what the medium is and why (primer + architecture rationale).
-- **[ARCHITECTURE.md](./ARCHITECTURE.md)** — the implementation blueprint (data formats, modules, algorithms).
-- **[PLAN.md](./PLAN.md)** — phased build plan with current status.
+- **[DESIGN.md](./DESIGN.md)** — what the medium is and why: the primer, the architecture rationale, and (§10) the normative implementation invariants.
+- **[PLAN.md](./PLAN.md)** — phased build plan with current status and locked/deferred decisions.
+- **[docs/](./docs/)** — dated notes and records (design proposals, validation reports).
 
 > Naming note: the project's package scope is `@narrable/*`; the CLI command is `lesson`.
 

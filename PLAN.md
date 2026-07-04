@@ -1,6 +1,6 @@
 # Implementation Plan — Explorable Video Platform
 
-*The build blueprint derived from [ARCHITECTURE.md](./ARCHITECTURE.md) and [DESIGN.md](./DESIGN.md). This document sequences the work into phases, with explicit commit points, test rounds, and exit criteria. It is written so an agent can execute it autonomously, checking off commits in order.*
+*The build blueprint derived from [DESIGN.md](./DESIGN.md) (whose §10 states the normative invariants). This document sequences the work into phases, with explicit commit points, test rounds, and exit criteria, and is now also the home of record for the phase, decision, and deferred-decision detail that the original implementation blueprint carried. It is written so an agent can execute it autonomously, checking off commits in order.*
 
 ---
 
@@ -27,12 +27,12 @@ These were chosen as defaults (the interview timed out); flag any you want chang
 | # | Decision | Choice | Rationale |
 |---|---|---|---|
 | D1 | Plan depth | **Deep on M0–M3, lighter M4–M5** | DESIGN §9: build the vertical slice, *then* extract/generalize. M4–M5 shape depends on slice learnings. |
-| D2 | Package scope / CLI name | **`@narrable/*` and `lesson` (placeholders)** | ARCHITECTURE Deferred Decisions default; rename before first publish. |
-| D3 | Test rigor | **Full rigor as specified (ARCHITECTURE §7)** | The seekability property tests and compiler goldens are load-bearing, not optional. Sequenced pragmatically *within* phases (math tests first, browser suites once the surface stabilizes). |
+| D2 | Package scope / CLI name | **`@narrable/*` and `lesson` (placeholders)** | Deferred-decision default; rename before first publish. |
+| D3 | Test rigor | **Full rigor as specified** | The seekability property tests and compiler goldens are load-bearing, not optional. Sequenced pragmatically *within* phases (math tests first, browser suites once the surface stabilizes). |
 | D4 | Repo root / first lesson | **This repo (`mva_eater`) as monorepo root; `unit-circle` first lesson** | Repo is a clean slate; docs name unit-circle. |
-| D5 | Monorepo tooling | **pnpm workspaces alone** | ARCHITECTURE Deferred default; add turborepo only if build times hurt. |
-| D6 | Interpolator lookup | **Binary search + last-segment cursor** | ARCHITECTURE Deferred default; simpler than the 10 ms table, measure before optimizing. |
-| D7 | Audio | **Direct `<audio>`, no Howler** | ARCHITECTURE Deferred default; add a shim only if Safari misbehaves. |
+| D5 | Monorepo tooling | **pnpm workspaces alone** | Deferred-decision default; add turborepo only if build times hurt. |
+| D6 | Interpolator lookup | **Binary search + last-segment cursor** | Deferred-decision default; simpler than the 10 ms table, measure before optimizing. |
+| D7 | Audio | **Direct `<audio>`, no Howler** | Deferred-decision default; add a shim only if Safari misbehaves. |
 | D8 | Slice voiceover | **ElevenLabs draft only through M3** *(confirmed)* | Validate the medium with synthetic voice; the `align` adapter (forced alignment of a human recording) stays a later drop-in upgrade — the pipeline downstream is identical, so nothing is re-done when the real voice arrives. |
 | D9 | M3 deploy target | **Hugging Face Space (static)** *(confirmed)* | The static bundle already targets "any static host"; a static HF Space is the deploy of record for C3.7. |
 
@@ -40,13 +40,13 @@ These were chosen as defaults (the interview timed out); flag any you want chang
 - TypeScript strict mode, Node ≥ 22, ESM throughout. Vite for bundling/dev-server, Vitest for unit, Playwright for browser.
 - Dependency rule (enforced, violations are review-blockers): `core` → nothing; `compiler`/`player` → `core` only; `ingredients` → `core` (+three); `cli` → everything. **`player` must never import `compiler` or `tts`.**
 - Every commit builds and passes its gating tests. Commit messages reference the commit ID below (e.g. `C1.3`).
-- The five guiding principles (ARCHITECTURE §intro) are treated as invariants; any commit that violates value-at-time, text-only artifacts, or hot-path-framework-free is a bug.
+- The five guiding principles (DESIGN §10) are treated as invariants; any commit that violates value-at-time, text-only artifacts, or hot-path-framework-free is a bug.
 
 ---
 
 ## 1. Milestone map
 
-| Phase | Deliverable | Exit criterion (ARCHITECTURE §8) | Depth | Status |
+| Phase | Deliverable | Exit criterion | Depth | Status |
 |---|---|---|---|---|
 | **M0** | `core` + `compiler` (fake TTS) + `lesson check/build/state/ref` | Golden tests green; `state --at` correct on fixture | Full | ✅ (tag `m0`) |
 | **M1** | `player` core: clock, timeline driver, store, scene host, chrome; unit-circle 2D scene | Plays/seeks correctly with fake-TTS audio | Full | ✅ (tag `m1`) |
@@ -87,7 +87,7 @@ The compiler-as-feedback-loop and value-at-time land here, provable without a br
 ### M0.A — `@narrable/core` types, schema, easing
 
 **Tasks**
-- Data shapes (ARCHITECTURE §2): `ParamType`, `ParamSpec`, `ParamValue`, `Schema`, `Keyframe`, `LessonTracks`, `ScriptDoc`/`Segment`, `ResolvedCue`.
+- Data shapes: `ParamType`, `ParamSpec`, `ParamValue`, `Schema`, `Keyframe`, `LessonTracks`, `ScriptDoc`/`Segment`, `ResolvedCue`.
 - Schema utilities: legal `interpolate`-for-type validation, per-type value validation/clamping, `schemaHash()` (stable, order-independent).
 - Easing registry: `linear`, `inCubic`, `outCubic`, `inOutCubic`, `spring` (one fixed preset — pick and document it; it's part of the format once shipped).
 
@@ -103,7 +103,7 @@ The compiler-as-feedback-loop and value-at-time land here, provable without a br
 - Kernels: `lerp` (scalar/vec per-component), `nlerp` (quaternion/axis, shortest-path sign fix), `orbit` (direction-nlerp + distance/target lerp), `snap`.
 - Track semantics: ease-into-keyframe vs hold-then-snap; schema default before first keyframe; hold after last.
 
-**Tests** — the seekability guarantees (ARCHITECTURE §7):
+**Tests** — the seekability guarantees:
 - Property-based: for random tracks, `evaluate(t)` is **independent of call order** (seek property) and continuous in `t` except at snap boundaries.
 - Quaternion shortest-path cases (antipodal, near-identical).
 - Orbit interpolation **never crosses the target**.
@@ -304,12 +304,12 @@ Everything real: true voice, two languages, headless frames, a shippable bundle,
 **Tests** — bundle build produces a self-contained `site/` that loads offline (Playwright loads `index.html` from disk and plays).
 
 - `C3.4` — static bundle emit. ✅
-- `C3.5` — `preview` HMR + auto-rebuild. 🔶 *Done as a range-capable static server + file watch + SSE live-reload (full-page reload on save), not Vite module-level HMR. Sufficient for the authoring loop; revisit if HMR granularity is wanted.*
+- `C3.5` ✅ — `preview` auto-rebuild + live-reload. *Deviation: built as a range-capable static server + file watch + SSE live-reload (full-page reload on save), not Vite module-level HMR. Sufficient for the authoring loop; module-level HMR remains a deferred nicety.*
 
 ### M3.E — End-to-end agent-loop smoke test + agent-authoring validation
 
 **Tasks**
-- **Agent-loop smoke test** (ARCHITECTURE §7, this *is* the DESIGN §5.7 guarantee): script edit → `check` catches an injected error → fix → `build` (fake TTS) → `state` + `frame` assertions. Runs in CI.
+- **Agent-loop smoke test** (this *is* the DESIGN §5.7 guarantee): script edit → `check` catches an injected error → fix → `build` (fake TTS) → `state` + `frame` assertions. Runs in CI.
 - **Agent-authoring validation** (the core slice validation target): give an agent only `lesson ref` output for the unit-circle scene and have it draft the script + choreography; human directs. Capture findings on markup ergonomics, anticipation default, hold-and-blend feel.
 
 - `C3.6` — agent-loop smoke test in CI.
@@ -393,7 +393,7 @@ export const bakers: Record<string, Baker> = {
 
 **Diagnostics are a public API** — error-message snapshot tests (C0.3) are updated deliberately, reviewed like interface changes, because the agent iterates against them.
 
-**Deferred decisions** (ARCHITECTURE §9) — defaults taken as noted (D5–D7 above, plus: sentence-level VTT first, hand-rolled VTT parser, one `spring` preset, overlay-div fake cursor, touch from M2). Revisit triggers: turborepo if build times hurt; Howler if Safari time-resolution breaks; word-level karaoke as an emit-stage extension; MFA if stable-ts alignment (the later `align` adapter) proves too coarse.
+**Deferred decisions** — defaults taken as noted (D5–D7 above, plus: sentence-level VTT first, hand-rolled VTT parser, one `spring` preset, overlay-div fake cursor, touch from M2). Revisit triggers: turborepo if build times hurt; Howler if Safari time-resolution breaks; word-level karaoke as an emit-stage extension; MFA if stable-ts alignment (the later `align` adapter) proves too coarse.
 
 **Rename gate** — ✅ cleared. The `@xv/*` placeholder scope was renamed to `@narrable/*`; the CLI stays `lesson` (kept intentionally, not renamed). Done before the C3.7 public deploy as required.
 
@@ -429,7 +429,7 @@ export const bakers: Record<string, Baker> = {
 ✅ C3.2 FR + EN scripts + both-language build
 ✅ C3.3 frame command + determinism
 ✅ C3.4 static bundle
-🔶 C3.5 preview: static serve + watch + live-reload (not Vite HMR)
+✅ C3.5 preview: static serve + watch + live-reload (deviation: not Vite HMR)
 ✅ C3.6 agent-loop smoke test in CI
 ✅ C3.7 deploy (live HF Space, both langs, real voice, verified) + agent-authoring validation (backprop lesson)  [R3, tag v0.1.0]
 ⬜ CBK.1 Baker type + scene-loader/SceneInfo + ref lists bakers
