@@ -12,7 +12,7 @@
 
 **Validation findings acted on** (see [Post-validation follow-ups](#post-validation-follow-ups)): headless interaction check (`state --drag`), sharpened overlap warning, `lesson new` flags, and named parameter groups all shipped; the anticipation default is accepted as-is. The one open item is **`@bake`** — animating a *computed* process at build time (design note written, implementation pending).
 
-**Not started:** M4 (record mode + fake cursor), M5 (ingredients library + 3D lesson).
+**Not started:** M-bake (the `@bake` computed-process directive — next up, see [M-bake](#m-bake--computed-cues-bake)), then M4 (record mode + fake cursor), M5 (ingredients library + 3D lesson).
 
 **Beyond the original plan** (done while iterating on the slice — see [Post-slice additions](#post-slice-additions)): Safari/HTTP-Range playback fix + dual-browser e2e, device-pixel-ratio crispness + fullscreen toggle, `.env` auto-loading, audio-format (mp3/wav) handling, a narration-speed knob, and spoken `@pause` prompts.
 
@@ -52,6 +52,7 @@ These were chosen as defaults (the interview timed out); flag any you want chang
 | **M1** | `player` core: clock, timeline driver, store, scene host, chrome; unit-circle 2D scene | Plays/seeks correctly with fake-TTS audio | Full | ✅ (tag `m1`) |
 | **M2** | Reconciler + interaction (handles, camera-orbit); board; captions; pause gates | Catch-up feels right; Playwright green | Full | ✅ (tag `m2`) |
 | **M3** | ElevenLabs adapter + caching; FR+EN unit-circle; `frame`; static bundle; **agent-authoring validation** | Published static demo, both languages, one script pair; agent drafts a competent lesson | Full | ✅ deployed & verified (both langs, real voice); agent-authoring validation done (backprop lesson) |
+| **M-bake** | `@bake` — animate a computed process at build time (compiler-only) | Backprop descent written as one `@bake` produces byte-identical tracks; produced values are `check`-validated | Full | ⬜ **next** |
 | **M4** | Record mode + recorded-track merging; fake cursor | Camera choreography recorded, trimmed, replayed | Sketch | ⬜ |
 | **M5** | `ingredients` growth + second lesson (3D, three.js) | Second lesson built with < 30% platform changes | Sketch | ⬜ |
 
@@ -321,6 +322,46 @@ Everything real: true voice, two languages, headless frames, a shippable bundle,
 
 ---
 
+## M-bake — Computed cues (`@bake`)
+
+*The top C3.7b follow-up (finding #2). Design note: [docs/computed-cues-design-note.md](./docs/computed-cues-design-note.md); motivation in [docs/agent-authoring-validation.md](./docs/agent-authoring-validation.md).*
+
+**Why.** Value-at-time forbids deltas, so a lesson whose subject is a computed process (gradient descent, an ODE step, an iteration) can't say "advance one step" — the backprop author had to run the descent in a throwaway offline script and paste the resulting weights as literals `check` can't validate. `@bake` lets the **scene** compute the sequence at **build time**; the compiler lays it out as ordinary keyframes. Everything stays value-at-time — this is a **compiler-only** feature, **no runtime/player changes**.
+
+**Shape** (from the design note). A scene exports pure, Node-loadable **bakers**:
+
+```ts
+export const bakers: Record<string, Baker> = {
+  descent: (state, { steps }) => { /* returns steps × (param → value) */ },
+};
+```
+```markdown
+@bake(descent, steps: 3, over: 6s, ease: inOutCubic)
+```
+
+**Invariants preserved** — value-at-time (still dense static keyframes), determinism (baker is pure; reuse the scripts' `Date`/random ban), text-only artifacts, the Node-load-without-DOM scene contract. Because the produced values are **timing-independent**, `check` can run the baker with no audio and validate every value — the thing that was un-checkable becomes checked.
+
+**Tasks**
+- **core**: a `Baker` type — `(state: PlainState, opts: { steps: number }) => Array<Record<string, ParamValue>>` — importable by scene authors.
+- **scene export + loader**: `bakers` alongside `schema`/`presets`/`constants`/`groups`; `scene-loader` reads it; `SceneInfo` gains `bakers`; `ref` lists them (name + params written).
+- **parse**: a `@bake(name, steps:, over:, ease:, at:)` directive kind (reuses the option grammar).
+- **check**: baker name exists (did-you-mean); run the baker at check time and validate each produced value against its param's type/range; catch a throwing/impure baker (run twice, diff).
+- **expand**: at the directive's resolved time, snapshot the **current expanded state** (schema defaults overlaid with prior cues' values), call the baker, and fan the returned states out over `over:` via the existing `setAnimate` path — so the conflict/truncation rule and `shared` ownership keep working unchanged.
+- **demonstrate**: replace the backprop lesson's three hand-computed descent cues with one `@bake(descent, steps: 3, over: 6s)`; the scene grows a `descent` baker (the offline script becomes a scene function). Verify identical choreography.
+- **docs**: README grammar + DESIGN §6; flip the design note's status to *implemented*.
+
+**Tests** — check diagnostics snapshots (unknown baker, out-of-range produced value, impure baker); expand fan-out unit test (baker → keyframes); determinism re-run; **parity test**: the `@bake` backprop build produces byte-identical `weights` tracks to the literal cues it replaces (`state --at` at the step boundaries matches the pre-bake values).
+
+**Commit points**
+- `CBK.1` — `Baker` type in core + scene-loader/`SceneInfo` plumbing + `ref` lists bakers.
+- `CBK.2` — `@bake` parse + check (name, run-and-validate values, purity guard), diagnostics snapshots green.
+- `CBK.3` — expand: state snapshot + fan-out through `setAnimate` (conflict rule applies), unit tests green.
+- `CBK.4` — demonstrate on backprop (descent baker replaces the literal cues), parity + determinism tests green; docs updated.
+
+**Exit criterion** — `@bake(descent, steps: 3, over: 6s)` in the backprop lesson yields byte-identical tracks to the literals it replaces; `check` validates the produced values; no player changes; determinism re-run byte-identical.
+
+---
+
 ## M4 — Record mode + recorded-track merging *(sketch)*
 
 *Detailed after M3 learnings. Dev-only; never ships in production bundles.*
@@ -391,6 +432,10 @@ Everything real: true voice, two languages, headless frames, a shippable bundle,
 🔶 C3.5 preview: static serve + watch + live-reload (not Vite HMR)
 ✅ C3.6 agent-loop smoke test in CI
 ✅ C3.7 deploy (live HF Space, both langs, real voice, verified) + agent-authoring validation (backprop lesson)  [R3, tag v0.1.0]
+⬜ CBK.1 Baker type + scene-loader/SceneInfo + ref lists bakers
+⬜ CBK.2 @bake parse + check (run-and-validate, purity guard)
+⬜ CBK.3 expand: state snapshot + fan-out (conflict rule)
+⬜ CBK.4 demonstrate on backprop (descent baker) + parity/determinism + docs
 ⬜ C4.* record mode + recorded-track merge (sketch)
 ⬜ C5.* ingredients + second 3D lesson (sketch)
 ```
@@ -426,13 +471,13 @@ Acting on the C3.7b findings (see [docs/agent-authoring-validation.md](./docs/ag
 - ✅ **`lesson new` flags** — honors `--lesson <dir>` and `--lang`; a fresh scaffold passes `check` cleanly.
 - ✅ **Named parameter groups** — a scene exports `groups`; `@cue(weights -> […])` sets a whole group in one cue (checked, shown by `ref`, expands identically). Addresses the multi-assignment-cue readability finding; the backprop descent cues use it.
 - ✅ **`.env` load guard** — an unreadable `.env` no longer crashes the CLI.
-- ⬜ **`@bake`** — design note only; the one open follow-up (see [What remains](#what-remains)).
+- ⬜ **`@bake`** — design note written; now scheduled as its own phase [M-bake](#m-bake--computed-cues-bake) (next up, before M4/M5).
 
 ---
 
 ## What remains
 
-1. **`@bake` (animate a computed process)** — the one open validation follow-up. Design note: [docs/computed-cues-design-note.md](./docs/computed-cues-design-note.md) (recommends a build-time, checkable `@bake` directive; scene exports pure "baker" functions the compiler runs to fan out static keyframes). Not yet built.
+1. **M-bake — `@bake`** (next up): animate a computed process at build time. Fully specced above ([M-bake](#m-bake--computed-cues-bake), commits `CBK.1`–`CBK.4`); design note [docs/computed-cues-design-note.md](./docs/computed-cues-design-note.md).
 2. **Optional: real-voice backprop build + HF Space deploy** — put the new lesson live alongside unit-circle. (Adapter + caching ready; anticipation default accepted as-is.)
 3. **M4** — record mode + recorded-track merging + fake cursor.
 4. **M5** — grow `ingredients` (axes, arrows, draggable points, scrub-able KaTeX numbers) + a second, 3D (three.js) lesson to force the abstractions.
