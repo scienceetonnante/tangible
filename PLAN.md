@@ -4,11 +4,13 @@
 
 ---
 
-## Status — 2026-07-03
+## Status — 2026-07-04
 
-**Done:** M-bootstrap, M0, M1, M2 (tagged `m0`/`m1`/`m2`) and **all of M3** — the vertical slice works end to end (build → play → seek → catch-up → pause gate → board → captions) and is **deployed live to a static HF Space** ([dlouapre/unit-circle](https://huggingface.co/spaces/dlouapre/unit-circle)), both languages, real ElevenLabs voice, verified on Chrome, Safari (macOS), and iPad. Gate: `CI=true pnpm check` = **125 unit tests / 24 files**; **12 Playwright e2e on Chromium + WebKit**.
+**Done:** M-bootstrap, M0, M1, M2 (tagged `m0`/`m1`/`m2`) and **all of M3** — the vertical slice works end to end (build → play → seek → catch-up → pause gate → board → captions) and is **deployed live to a static HF Space** ([dlouapre/unit-circle](https://huggingface.co/spaces/dlouapre/unit-circle)), both languages, real ElevenLabs voice, verified on Chrome, Safari (macOS), and iPad. Gate: `CI=true pnpm check` = **130 unit tests / 24 files**; **12 Playwright e2e on Chromium + WebKit**.
 
-**Agent-authoring validation (`C3.7b`) — ✅ done.** Ran harder than planned: instead of drafting a script against the existing scene, one Opus agent authored a **whole new lesson end to end** (scene + script + choreography) on **backpropagation** ([`lessons/backprop/`](./lessons/backprop/)), from the docs alone. It passed `check` first try, exercised the previously-untested `shared` ownership / reconciliation path, and converges (loss 0.383 → 0.008). Verdict: **pass**. Full writeup in [docs/agent-authoring-validation.md](./docs/agent-authoring-validation.md); raw agent log in [lessons/backprop/FINDINGS.md](./lessons/backprop/FINDINGS.md). Two structural findings stand out as the next priorities: (1) interaction/reconciliation can't be verified headlessly (only scripted state via `state --at`), and (2) there's no way to animate a *computed* process — gradient descent had to be simulated offline and pasted as literals `check` can't validate. **M3 is complete; `v0.1.0` is tag-able.** The **rename gate** is cleared — scope is `@narrable/*`, CLI stays `lesson`.
+**Agent-authoring validation (`C3.7b`) — ✅ done.** Ran harder than planned: instead of drafting a script against the existing scene, one Opus agent authored a **whole new lesson end to end** (scene + script + choreography) on **backpropagation** ([`lessons/backprop/`](./lessons/backprop/)), from the docs alone. It passed `check` first try, exercised the previously-untested `shared` ownership / reconciliation path, and converges (loss 0.383 → 0.008). Verdict: **pass**. Full writeup in [docs/agent-authoring-validation.md](./docs/agent-authoring-validation.md); raw agent log in [lessons/backprop/FINDINGS.md](./lessons/backprop/FINDINGS.md). **M3 is complete; tagged `v0.1.0`.** The **rename gate** is cleared — scope is `@narrable/*`, CLI stays `lesson`.
+
+**Validation findings acted on** (see [Post-validation follow-ups](#post-validation-follow-ups)): headless interaction check (`state --drag`), sharpened overlap warning, `lesson new` flags, and named parameter groups all shipped; the anticipation default is accepted as-is. The one open item is **`@bake`** — animating a *computed* process at build time (design note written, implementation pending).
 
 **Not started:** M4 (record mode + fake cursor), M5 (ingredients library + 3D lesson).
 
@@ -415,11 +417,23 @@ Work done while iterating on the running slice, not in the original plan. All co
 
 ---
 
+## Post-validation follow-ups
+
+Acting on the C3.7b findings (see [docs/agent-authoring-validation.md](./docs/agent-authoring-validation.md)). All committed on `master`; `CI=true pnpm check` = 130 unit tests / 24 files.
+
+- ✅ **Overlap warning sharpened** — one warning per truncating cue (not per assignment), the real filename (was `<script>` on the build path), and the source line where the truncated transition began.
+- ✅ **`lesson state --drag`** — headless interaction check: simulates a viewer grabbing a param at `t` and prints the reconciled hold-then-glide trajectory (scripted vs displayed), reusing the real `StateStore`+`Reconciler` in Node. Closes the biggest agent-loop blind spot (finding #1).
+- ✅ **`lesson new` flags** — honors `--lesson <dir>` and `--lang`; a fresh scaffold passes `check` cleanly.
+- ✅ **Named parameter groups** — a scene exports `groups`; `@cue(weights -> […])` sets a whole group in one cue (checked, shown by `ref`, expands identically). Addresses the multi-assignment-cue readability finding; the backprop descent cues use it.
+- ✅ **`.env` load guard** — an unreadable `.env` no longer crashes the CLI.
+- ⬜ **`@bake`** — design note only; the one open follow-up (see [What remains](#what-remains)).
+
+---
+
 ## What remains
 
-1. **`v0.1.0` tag** — M3 is complete; the milestone is tag-able. (Agent-authoring validation done via the backprop lesson; see [docs/agent-authoring-validation.md](./docs/agent-authoring-validation.md).)
-2. **Act on the validation findings** — ranked in the writeup. Highest-value: (a) let the agent verify *interaction* headlessly (a `state --at --drag` that runs the reconciler), and (b) a first-class way to animate a *computed* process (build-time computed cue / `@bake`), so ML/physics choreography isn't simulated offline and pasted as un-checkable literals. Plus papercuts: the overlap warning, `lesson new` flags.
-3. **Optional real-voice tuning** — the anticipation default (`-0.2s`) can't be judged under fake TTS; fine-tune `tts.speed`/anticipation by ear on a real-voice build if desired. (Adapter + caching ready.)
-4. **M4** — record mode + recorded-track merging + fake cursor.
-5. **M5** — grow `ingredients` (axes, arrows, draggable points, scrub-able KaTeX numbers) + a second, 3D (three.js) lesson to force the abstractions.
-6. **Deferred niceties** — Vite module-level HMR for `preview`; word-level (karaoke) captions; the `align` adapter (forced alignment of a human recording).
+1. **`@bake` (animate a computed process)** — the one open validation follow-up. Design note: [docs/computed-cues-design-note.md](./docs/computed-cues-design-note.md) (recommends a build-time, checkable `@bake` directive; scene exports pure "baker" functions the compiler runs to fan out static keyframes). Not yet built.
+2. **Optional: real-voice backprop build + HF Space deploy** — put the new lesson live alongside unit-circle. (Adapter + caching ready; anticipation default accepted as-is.)
+3. **M4** — record mode + recorded-track merging + fake cursor.
+4. **M5** — grow `ingredients` (axes, arrows, draggable points, scrub-able KaTeX numbers) + a second, 3D (three.js) lesson to force the abstractions.
+5. **Deferred niceties** — Vite module-level HMR for `preview`; word-level (karaoke) captions; the `align` adapter (forced alignment of a human recording).
