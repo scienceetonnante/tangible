@@ -24,6 +24,11 @@ function instance(width = 1000, height = 600) {
 }
 
 describe("optimizer scene", () => {
+  it("opens with a visible trajectory inside a sixty-step horizon", () => {
+    expect(schema.step.default).toBe(40);
+    expect(schema.step.type).toEqual({ kind: "scalar", range: [0, 60] });
+  });
+
   it("renders the terrain, trajectories, plots, and controls", () => {
     const { created, calls } = instance();
     const state = {

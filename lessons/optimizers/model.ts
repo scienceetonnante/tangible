@@ -27,7 +27,7 @@ export interface Trajectory {
   divergedAt?: number;
 }
 
-export const MAX_STEPS = 80;
+export const MAX_STEPS = 60;
 export const DOMAIN = 2;
 export const ADAM_BETA_1 = 0.7;
 export const ADAM_BETA_2 = 0.95;

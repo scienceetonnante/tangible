@@ -48,7 +48,7 @@ export function landscapeBox(view: View) {
 }
 
 export function lossPlotBox(view: View) {
-  return { x: view.width * 0.48, y: view.height * 0.695, width: view.width * 0.505, height: view.height * 0.075 };
+  return { x: view.width * 0.48, y: view.height * 0.685, width: view.width * 0.505, height: view.height * 0.115 };
 }
 
 export function sliderBox(view: View, definition: SliderDefinition) {
@@ -58,7 +58,7 @@ export function sliderBox(view: View, definition: SliderDefinition) {
 }
 
 export function stepBox(view: View) {
-  return { x0: view.width * 0.48, x1: view.width * 0.985, y: view.height * 0.815 };
+  return { x0: view.width * 0.48, x1: view.width * 0.985, y: view.height * 0.825 };
 }
 
 export function toggleBox(view: View, index: number) {
@@ -72,9 +72,9 @@ export function toggleBox(view: View, index: number) {
 
 export function algorithmGroupBox(view: View, optimizer: OptimizerName) {
   const vertical = {
-    sgd: [0.11, 0.14],
-    momentum: [0.27, 0.19],
-    adamw: [0.48, 0.14],
+    sgd: [0.115, 0.13],
+    momentum: [0.275, 0.18],
+    adamw: [0.49, 0.125],
   }[optimizer]!;
-  return { x: view.width * 0.475, y: view.height * vertical[0], width: view.width * 0.265, height: view.height * vertical[1] };
+  return { x: view.width * 0.482, y: view.height * vertical[0], width: view.width * 0.25, height: view.height * vertical[1] };
 }

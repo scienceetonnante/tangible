@@ -50,7 +50,7 @@ scale for each coordinate, then divides by that scale. A consistently
 large vertical gradient no longer gets to dominate the update just
 because its units are larger.
 
-@board(rules: $\begin{aligned}\text{SGD: }&\Delta w=-\eta g\\\text{Momentum: }&v=\beta v+(1-\beta)g\\&\Delta w=-\eta v\\\text{AdamW: }&a=\hat m/(\sqrt{\hat v}+\epsilon)\\&\Delta w=-\eta a-\eta\lambda w\end{aligned}$)
+@board(rules: $\begin{aligned}\text{SGD: }&\Delta w=-\eta g\\\text{Momentum: }&v=\beta v+(1-\beta)g\\&\Delta w=-\eta v\\\text{AdamW: }&a=m_t/(\sqrt{v_t}+\epsilon)\\&\Delta w=-\eta a-\eta\lambda w\end{aligned}$)
 These are not three arbitrary recipes. Momentum is a temporal fix: it
 smooths gradients across steps. AdamW is a coordinate-wise fix: it
 rescales directions. The path shapes and the loss curves are their

@@ -196,7 +196,7 @@ function drawLossPlot(g: CanvasRenderingContext2D, view: View, trajectories: Tra
   const left = box.x + unit * 0.038;
   const right = box.x + box.width;
   const top = box.y;
-  const bottom = box.y + box.height - unit * 0.018;
+  const bottom = box.y + box.height;
   const losses = trajectories.flatMap((trajectory) => trajectory.points.map((point) => point.loss));
   const logTop = Math.max(1, Math.ceil(Math.log10(Math.max(1, ...losses))));
   const logBottom = -5;
@@ -224,11 +224,6 @@ function drawLossPlot(g: CanvasRenderingContext2D, view: View, trajectories: Tra
   g.strokeStyle = FOREGROUND;
   g.lineWidth = unit * 0.0025;
   line(g, xAt(step), top, xAt(step), bottom);
-  g.fillStyle = MUTED;
-  g.font = `${unit * 0.018}px sans-serif`;
-  g.textAlign = "left";
-  g.textBaseline = "bottom";
-  g.fillText("loss · log scale", box.x, box.y - unit * 0.008);
 }
 
 function drawMarker(g: CanvasRenderingContext2D, name: OptimizerName, x: number, y: number, radius: number): void {

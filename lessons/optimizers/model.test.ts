@@ -27,7 +27,7 @@ describe("optimizer lesson model", () => {
     const unstable = simulate("sgd", { ...problem, kappa: 32 }, settings);
 
     expect(stable.divergedAt).toBeUndefined();
-    expect(stable.points.at(-1)!.loss).toBeLessThan(1e-4);
+    expect(stable.points.at(-1)!.loss).toBeLessThan(2e-4);
     expect(unstable.divergedAt).toBeDefined();
   });
 

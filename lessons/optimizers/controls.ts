@@ -53,11 +53,6 @@ export function drawStep(g: CanvasRenderingContext2D, view: View, step: number):
   disc(g, x, box.y, unit * 0.015);
   g.fill();
   g.stroke();
-  g.fillStyle = FOREGROUND;
-  g.font = `500 ${unit * 0.021}px sans-serif`;
-  g.textAlign = "left";
-  g.textBaseline = "bottom";
-  g.fillText(`matched step ${Math.round(step)} / ${MAX_STEPS}`, box.x0, box.y - unit * 0.018);
 }
 
 function drawAlgorithmGroups(
@@ -82,7 +77,7 @@ function drawAlgorithmGroups(
     g.font = `500 ${unit * 0.018}px sans-serif`;
     g.textAlign = "left";
     g.textBaseline = "top";
-    g.fillText(SERIES[name].label, box.x + unit * 0.018, box.y + unit * 0.012);
+    g.fillText(SERIES[name].label, box.x + unit * 0.012, box.y + unit * 0.009);
     const trajectory = trajectories.find((candidate) => candidate.name === name);
     const current = trajectory && sample(trajectory, Math.min(currentStep, trajectory.points.length - 1));
     const value = trajectory?.divergedAt !== undefined && currentStep >= trajectory.divergedAt
@@ -93,7 +88,7 @@ function drawAlgorithmGroups(
     g.fillStyle = active ? FOREGROUND : DISABLED;
     g.font = `${unit * 0.015}px sans-serif`;
     g.textAlign = "right";
-    g.fillText(value, box.x + box.width - unit * 0.014, box.y + unit * 0.014);
+    g.fillText(value, box.x + box.width - unit * 0.01, box.y + unit * 0.011);
   }
 }
 

@@ -26,7 +26,7 @@ export const schema: Schema = {
   roughness: sharedScalar([0, 0.35], 0, "ripple amplitude"),
   "start.x": sharedScalar([-DOMAIN, 0], -1.65, "mirrored start x-coordinate"),
   "start.y": sharedScalar([0, DOMAIN], 1.15, "mirrored start y-coordinate"),
-  step: sharedScalar([0, MAX_STEPS], 0, "matched optimizer step"),
+  step: sharedScalar([0, MAX_STEPS], 40, "optimizer step"),
   "active.sgd": sharedBoolean(true, "show SGD"),
   "active.momentum": sharedBoolean(false, "show SGD with momentum"),
   "active.adamw": sharedBoolean(false, "show AdamW"),
