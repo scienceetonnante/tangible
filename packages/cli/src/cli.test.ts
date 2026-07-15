@@ -23,4 +23,20 @@ describe("refSheet", () => {
     expect(md).toContain("- `sideView`");
     expect(md).toContain("- `HALF_PI` = `1.5708`");
   });
+
+  it("renders baker dependencies as Markdown", async () => {
+    const scene = await loadScene(SCENE_PATH);
+    const md = refSheet("unit-circle", {
+      ...scene,
+      bakers: {
+        advance: {
+          reads: ["theta"],
+          writes: ["theta"],
+          run: (input) => [{ theta: input.theta! }],
+        },
+      },
+    });
+    expect(md).toContain("## Bakers");
+    expect(md).toContain("- `advance`: reads [`theta`] → writes [`theta`]");
+  });
 });

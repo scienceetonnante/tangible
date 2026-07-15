@@ -35,7 +35,24 @@ export function refSheet(sceneName: string, scene: SceneInfo): string {
       "",
     );
 
+  const bakers = Object.entries(scene.bakers ?? {});
+  if (bakers.length)
+    lines.push(
+      "## Bakers",
+      "",
+      "Run a build-time computed process: `@bake(<name>, steps: 1, over: 1s)`.",
+      "",
+      bakers
+        .map(([name, baker]) => `- \`${name}\`: reads [${refs(baker.reads)}] → writes [${refs(baker.writes)}]`)
+        .join("\n"),
+      "",
+    );
+
   return lines.join("\n") + "\n";
+}
+
+function refs(params: string[]): string {
+  return params.map((param) => `\`${param}\``).join(", ");
 }
 
 function typeExtras(t: ParamType): string {

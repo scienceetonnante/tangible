@@ -23,6 +23,18 @@ export type BoardItemState = "hidden" | "shown" | "dimmed";
 
 export type ParamValue = number | boolean | string | number[] | OrbitState;
 
+/** Build-time computed process exported by a scene module. */
+export interface BakerDefinition {
+  reads: string[];
+  writes: string[];
+  run(
+    input: Readonly<Record<string, ParamValue>>,
+    options: { steps: number },
+  ): Array<Record<string, ParamValue>>;
+}
+
+export type Bakers = Record<string, BakerDefinition>;
+
 export type InterpolateMode = "lerp" | "nlerp" | "orbit" | "snap";
 export type Ownership = "script" | "shared" | "viewer";
 

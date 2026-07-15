@@ -1,4 +1,4 @@
-// Load a scene module's data exports (schema/presets/constants) in Node by
+// Load a scene module's data exports (schema/presets/constants/groups/bakers) in Node by
 // transpiling scene.ts with esbuild to a temp ESM file and importing it. The
 // schema export must not require a DOM (DESIGN §5.2).
 
@@ -27,9 +27,10 @@ export async function loadScene(scenePath: string): Promise<SceneInfo> {
       presets?: SceneInfo["presets"];
       constants?: SceneInfo["constants"];
       groups?: SceneInfo["groups"];
+      bakers?: SceneInfo["bakers"];
     };
     if (!mod.schema) throw new Error(`${scenePath} does not export a "schema"`);
-    return { schema: mod.schema, presets: mod.presets, constants: mod.constants, groups: mod.groups };
+    return { schema: mod.schema, presets: mod.presets, constants: mod.constants, groups: mod.groups, bakers: mod.bakers };
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

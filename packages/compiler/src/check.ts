@@ -2,7 +2,7 @@
 // constants, and board items. No network. Produces precise, actionable diagnostics
 // (the agent's feedback loop).
 
-import type { Schema, ParamValue } from "@narrable/core";
+import type { Schema, ParamValue, Bakers } from "@narrable/core";
 import { isEasing } from "@narrable/core";
 import type { ParsedScript, Options } from "./parse.js";
 import { parseValue, parseGroup, type Constants } from "./value.js";
@@ -13,6 +13,7 @@ export interface SceneInfo {
   presets?: Record<string, Record<string, ParamValue>>;
   constants?: Constants;
   groups?: Record<string, string[]>; // named parameter groups: `@cue(name -> [v1, v2, ...])`
+  bakers?: Bakers;
 }
 
 export interface CheckOptions {
