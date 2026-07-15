@@ -1,4 +1,4 @@
-// The agent-loop guarantee (DESIGN §5.7 / ARCHITECTURE §7): a script edit is
+// The agent-loop guarantee (DESIGN §5.7): a script edit is
 // caught by `check` with an actionable diagnostic, and after the fix the lesson
 // builds and is inspectable via `state` and `frame` — all from plain text.
 

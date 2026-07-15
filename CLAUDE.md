@@ -1,8 +1,9 @@
 # CLAUDE.md
 
 ## Project documents
-- DESIGN.md for high level design
-- ARCHITECTURE.md for implementation architecture.
+- README.md for setup and current capabilities
+- DESIGN.md for architecture and normative invariants
+- PLAN.md for remaining work only
 
 ## General Guidelines
 

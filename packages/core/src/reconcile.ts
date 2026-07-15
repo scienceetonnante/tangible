@@ -1,5 +1,5 @@
-// Pure reconciliation math (ARCHITECTURE §3.3), consumed by the player's Reconciler
-// (§5.5) and by CLI "state including a hypothetical interaction". Frame-rate
+// Pure reconciliation math (DESIGN §5.4), consumed by the player's Reconciler
+// and by CLI "state including a hypothetical interaction". Frame-rate
 // independent: an exponential approach that composes over subdivided dt.
 
 // Defaults from the exemplar; the player may override per-instance.

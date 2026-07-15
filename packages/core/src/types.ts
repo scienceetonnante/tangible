@@ -1,4 +1,4 @@
-// Core data contracts shared by all modules (ARCHITECTURE §2). The most stable
+// Core data contracts shared by all modules (DESIGN §5). The most stable
 // part of the system — change deliberately.
 
 /** Camera orbit state; interpolated by direction + magnitude, never through the target. */

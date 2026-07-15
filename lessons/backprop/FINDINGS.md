@@ -87,7 +87,7 @@ what numbers to type, with no check that the typed numbers match it.
 - I made the six weights `ownership: "shared"` (script animates them during the
   descent steps; learner can also grab them) and the learning rate `viewer` (once
   touched, it sticks).
-- **I understood the model from ARCHITECTURE §5.5 — but I could not observe it.** The
+- **I understood the reconciliation model from the design docs — but I could not observe it.** The
   rule ("the viewer's value holds until the scripted track's next keyframe at/after
   the touch, then script resumes with an exponential glide") is clear on paper. The
   subtlety I only realized while authoring: for most of the timeline the weight

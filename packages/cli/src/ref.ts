@@ -1,5 +1,5 @@
 // Emit the scene's cue-reference sheet (Markdown) — the context an agent needs to
-// write cues for a scene (ARCHITECTURE §6, `lesson ref`).
+// write cues for a scene (DESIGN §5.7, `lesson ref`).
 
 import type { SceneInfo } from "@narrable/compiler";
 import type { ParamType } from "@narrable/core";

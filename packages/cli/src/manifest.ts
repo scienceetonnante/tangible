@@ -1,4 +1,4 @@
-// Load and type the lesson.yaml manifest (ARCHITECTURE §2.5).
+// Load and type the lesson.yaml manifest.
 
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";

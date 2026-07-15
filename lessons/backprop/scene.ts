@@ -2,7 +2,7 @@
 // drawn in 2D as nodes + weighted edges. Activations, gradients and the loss are all
 // pure functions of the six weights, so dragging a weight recomputes everything for free.
 
-import type { Schema, ParamValue, PlainState, Handle } from "@narrable/core";
+import type { Schema, PlainState, Handle } from "@narrable/core";
 import type { SceneModule, SceneInstance, SceneContext } from "@narrable/player";
 
 // Fixed inputs and training target (also exported as constants for the cue sheet).

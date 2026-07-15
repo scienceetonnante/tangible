@@ -1,7 +1,7 @@
 {
   "name": "@narrable/tts",
-  "version": "0.0.0",
-  "description": "TTS provider adapters (fake, elevenlabs, align).",
+  "version": "0.1.0",
+  "description": "TTS provider adapters (fake and ElevenLabs).",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

@@ -1,6 +1,6 @@
 {
   "name": "@narrable/player",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Browser runtime: clock, store, timeline, reconciler, scene host.",
   "type": "module",
   "main": "./dist/index.js",

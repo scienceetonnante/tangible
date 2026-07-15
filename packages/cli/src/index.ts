@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// @narrable/cli — the `lesson` command. Wires the compiler + fake TTS for M0
-// (check/build/state/ref/new). ElevenLabs selection arrives in M3.
+// @narrable/cli — the `lesson` command. Wires authoring, compilation, TTS,
+// inspection, preview, and static bundling.
 
 import { readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";

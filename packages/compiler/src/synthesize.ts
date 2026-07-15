@@ -1,6 +1,6 @@
 // Stage 3: synthesize — run narration text through a TTS adapter, cached on the
 // content of the *stripped text* so editing a directive's parameters (not prose)
-// rebuilds with zero API calls and zero timing changes (ARCHITECTURE §4.3).
+// rebuilds with zero API calls and zero timing changes.
 
 import { createHash } from "node:crypto";
 import { readFile, writeFile, mkdir } from "node:fs/promises";

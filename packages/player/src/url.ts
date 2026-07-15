@@ -1,4 +1,4 @@
-// Dev/agent URL parameters (ARCHITECTURE §5.10), honored in dev builds:
+// Dev/agent URL parameters, honored in dev builds:
 //   ?t=14.2   seek and pause on load
 //   &nochrome hide the controls
 //   &state    dump displayed state to window.__XV_STATE__ and console

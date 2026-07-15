@@ -10,7 +10,7 @@ A platform for **interactive ("explorable") narrated video** — lessons that ar
 
 ## Status
 
-The vertical slice (a "unit circle" lesson) works end to end: compile a script → synthesize audio (ElevenLabs or a fake adapter) → play, seek, drag-and-catch-up, board equations, captions, and narrated pause checkpoints — verified in Chromium and WebKit (Safari's engine). Deploy and the second lesson are still to come. See **[PLAN.md](./PLAN.md)** for the detailed checklist.
+The v0.1 vertical slice works end to end: compile a script → synthesize audio (ElevenLabs or a fake adapter) → play, seek, drag-and-catch-up, board equations, captions, and narrated pause checkpoints. The bilingual **unit-circle** lesson is deployed with real voice and verified on Chrome, Safari, and iPad. A second 2D **backpropagation** lesson validates agent authoring and live recomputation; its gradient-descent targets are still pasted literals, so the next milestone is the build-time `@bake` directive described in **[PLAN.md](./PLAN.md)**.
 
 ## How it works
 
@@ -41,6 +41,7 @@ packages/
   cli/          the `lesson` command
 lessons/
   unit-circle/  the first lesson: lesson.yaml, scene.ts, script.en.md (+ script.fr.md)
+  backprop/     the second 2D lesson: agent-authored network, gradients, draggable weights
 e2e/            Playwright browser tests (Chromium + WebKit)
 ```
 
@@ -144,6 +145,6 @@ pnpm test       # Vitest unit tests
 pnpm test:e2e   # Playwright browser tests (Chromium + WebKit)
 ```
 
-CI (`.github/workflows/ci.yml`) runs the same, hermetically — **fake TTS, no network, no API keys**. Real ElevenLabs synthesis only happens on a local `build` when a key is present.
+CI (`.github/workflows/ci.yml`) runs the hermetic checks plus the Playwright suite — **fake TTS, no network, no API keys**. Real ElevenLabs synthesis only happens on a local `build` when a key is present.
 
 Handy checks without a browser: `lesson state --at <t>` (numeric state) and `lesson frame --at <t> -o f.png` (visual). Because state is a pure function of `t`, both are deterministic.

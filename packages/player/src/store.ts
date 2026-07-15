@@ -1,7 +1,6 @@
 // StateStore — a signal per parameter for the DOM layers, plus a plain-object
 // mirror for the hot render path. Signals are written only on actual change to
-// avoid churn. Also holds per-parameter interaction metadata (used by the M2
-// Reconciler).
+// avoid churn. Also holds per-parameter interaction metadata for reconciliation.
 
 import { signal, type Signal } from "@preact/signals-core";
 import type { Schema, ParamValue, PlainState, OrbitState } from "@narrable/core";

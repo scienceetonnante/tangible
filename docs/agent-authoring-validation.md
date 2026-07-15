@@ -6,7 +6,7 @@
 
 We deliberately went **harder than the original plan**. Rather than have an agent draft a *script* against the existing unit-circle scene, one strong agent (Claude Opus) authored a **brand-new lesson end to end** — both the `scene.ts` visualization *and* the `script.en.md` narration + choreography — on a topic the slice was never shaped for: **backpropagation in a small MLP**.
 
-The agent was given: the authoring docs (scene contract + directive grammar), the `unit-circle` lesson as a worked example, `DESIGN.md`/`ARCHITECTURE.md`, and the CLI loop (`ref` → `check` → `build --fake` → `state --at`). It was **not** given a scene to start from, human choreography, or real TTS. It kept an honest friction log as it worked.
+The agent was given: the authoring docs (scene contract + directive grammar), the `unit-circle` lesson as a worked example, the project design documents available at the time, and the CLI loop (`ref` → `check` → `build --fake` → `state --at`). It was **not** given a scene to start from, human choreography, or real TTS. It kept an honest friction log as it worked.
 
 Deliverable lesson: [`lessons/backprop/`](../lessons/backprop/) — `lesson.yaml`, `scene.ts` (~290 lines), `script.en.md`, and the raw agent log [`FINDINGS.md`](../lessons/backprop/FINDINGS.md).
 
@@ -55,9 +55,10 @@ Frame review across the timeline (`lesson frame` at 6 timestamps) caught two leg
 4. **Make a visual check work in-sandbox** — `frame` binds a local server socket the sandbox blocks, so the agent's only *visual* check is unavailable; document a supported stub-canvas smoke-test pattern otherwise.
 5. **`lesson new`** should honor `--lesson` and language; **multi-assignment cue** sugar (array/group form) would keep a step from burying its sentence.
 
-## Follow-up — findings acted on
+## Follow-up — current status
 
-All five findings were addressed after the validation:
+The immediately actionable findings shipped after validation; the computed-process
+finding was designed and scheduled as the next implementation phase:
 
 - **#1 headless interaction** → `lesson state --at <t> --drag <param>=<value>` now runs the real reconciler in Node and prints the hold-then-glide trajectory (scripted vs displayed). The `shared` behaviors above are now checkable without a browser.
 - **#2 computed process** → design note [computed-cues-design-note.md](./computed-cues-design-note.md) (recommends a build-time, checkable `@bake` directive). Design only; not yet built.

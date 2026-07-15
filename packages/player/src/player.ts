@@ -1,6 +1,6 @@
 // Player — composes the runtime: DOM layers, store, clock, timeline driver, scene
 // host, reconciler, interaction, board, captions, pause gates, and chrome. One
-// Player per lesson page (ARCHITECTURE §5.1).
+// Player per lesson page (DESIGN §5.4).
 
 import { buildIndex, type LessonTracks, type Schema, type PlainState, type TrackIndex } from "@narrable/core";
 import { AudioClock } from "./clock.js";
@@ -57,7 +57,7 @@ export class Player {
     this.index = buildIndex(opts.tracks.tracks, schema);
     this.store = new StateStore(schema);
 
-    // DOM layers, bottom to top (ARCHITECTURE §5.1).
+    // DOM layers, bottom to top.
     this.container = el("div", "xv-player");
     this.canvas = el("canvas", "") as HTMLCanvasElement;
     const overlay = el("div", "xv-overlay");
