@@ -2,7 +2,7 @@
 // drawn in 2D as nodes + weighted edges. Activations, gradients and the loss are all
 // pure functions of the six weights, so dragging a weight recomputes everything for free.
 
-import type { Schema, PlainState, Handle } from "@narrable/core";
+import type { Bakers, Schema, PlainState, Handle } from "@narrable/core";
 import type { SceneModule, SceneInstance, SceneContext } from "@narrable/player";
 
 // Fixed inputs and training target (also exported as constants for the cue sheet).
@@ -11,6 +11,7 @@ const X2 = 0.5;
 const TARGET = 1.0;
 
 const W: [number, number] = [-2, 2]; // weight range
+const WEIGHTS = ["w11", "w12", "w21", "w22", "wo1", "wo2"] as const;
 
 export const schema: Schema = {
   scene: { type: { kind: "enum", values: ["net"] }, default: "net", interpolate: "snap", ownership: "script" },
@@ -36,10 +37,9 @@ export const schema: Schema = {
 
 export const constants: Record<string, number | number[]> = { X1, X2, TARGET };
 
-// Named group so a whole gradient-descent step is one readable cue:
-// `@cue(weights -> [w11, w12, w21, w22, wo1, wo2], over: 2s)`.
+// Named group for setting a complete authored weight snapshot in one cue.
 export const groups: Record<string, string[]> = {
-  weights: ["w11", "w12", "w21", "w22", "wo1", "wo2"],
+  weights: [...WEIGHTS],
 };
 
 // --- the maths, as pure functions of the weight state ---
@@ -63,6 +63,24 @@ export function gradients(w: Record<string, number>): Record<string, number> {
   const dz2 = dy * w.wo2! * (1 - h2 * h2);
   return { w11: dz1 * X1, w12: dz1 * X2, w21: dz2 * X1, w22: dz2 * X2, wo1: dy * h1, wo2: dy * h2 };
 }
+
+export const bakers: Bakers = {
+  descent: {
+    reads: [...WEIGHTS, "lr"],
+    writes: [...WEIGHTS],
+    run(input, { steps }) {
+      const weights = Object.fromEntries(WEIGHTS.map((weight) => [weight, input[weight] as number]));
+      const learningRate = input.lr as number;
+      const result: Record<string, number>[] = [];
+      for (let step = 0; step < steps; step++) {
+        const grad = gradients(weights);
+        for (const weight of WEIGHTS) weights[weight] -= learningRate * grad[weight]!;
+        result.push({ ...weights });
+      }
+      return result;
+    },
+  },
+};
 
 // --- layout: node positions and the weighted edges between them ---
 

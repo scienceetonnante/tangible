@@ -1,7 +1,7 @@
 # Design note — animating a computed process
 
-*Status: accepted design, implementation pending. The normative implementation
-contract and acceptance criteria are in [PLAN.md](../PLAN.md#m-bake--computed-processes).*
+*Status: implemented. The durable contract is documented in [DESIGN.md](../DESIGN.md)
+and the authoring guide in [README.md](../README.md).*
 
 ## Problem
 

@@ -57,17 +57,17 @@ Frame review across the timeline (`lesson frame` at 6 timestamps) caught two leg
 
 ## Follow-up — current status
 
-The immediately actionable findings shipped after validation; the computed-process
-finding was designed and scheduled as the next implementation phase:
+The immediately actionable findings and the later computed-process milestone have
+shipped:
 
 - **#1 headless interaction** → `lesson state --at <t> --drag <param>=<value>` now runs the real reconciler in Node and prints the hold-then-glide trajectory (scripted vs displayed). The `shared` behaviors above are now checkable without a browser.
-- **#2 computed process** → design note [computed-cues-design-note.md](./computed-cues-design-note.md) (recommends a build-time, checkable `@bake` directive). Design only; not yet built.
+- **#2 computed process** → the build-time, checkable `@bake` directive is implemented. Backprop now calls its real descent function at all three narration anchors and contains no pasted weight targets; see [computed-cues-design-note.md](./computed-cues-design-note.md).
 - **overlap warning** → now one warning per cue, with the real filename and the truncated cue's source line.
 - **`lesson new`** → honors `--lesson <dir>` and `--lang`; the scaffold passes `check` cleanly.
-- **#6 multi-assignment cue** → named parameter **groups**: a scene exports `groups`, and `@cue(weights -> [ … ])` sets the whole group in one readable cue (validated by `check`, shown by `ref`). The backprop descent cues now use it.
+- **#6 multi-assignment cue** → named parameter **groups**: a scene exports `groups`, and `@cue(weights -> [ … ])` sets the whole group in one readable cue (validated by `check`, shown by `ref`). Backprop retains its `weights` group for authored snapshots, while descent now uses `@bake`.
 
 The anticipation default (#3) remains open — it needs a real-voice build to judge.
 
 ## Bottom line
 
-The medium and its authoring loop are sound enough that a strong agent can build a competent, genuinely interactive lesson on a new topic from the docs alone. The gaps that remain are specific and actionable, and two of them (headless interaction verification; animating a computed process) are the clearest priorities for making agent-authoring scale beyond hand-tuned slices.
+The medium and its authoring loop are sound enough that a strong agent can build a competent, genuinely interactive lesson on a new topic from the docs alone. Its two largest structural findings—headless interaction verification and build-time computed processes—have since shipped; the remaining gaps are the narrower production and visual-review items recorded above.

@@ -10,7 +10,7 @@ A platform for **interactive ("explorable") narrated video** — lessons that ar
 
 ## Status
 
-The v0.1 vertical slice works end to end: compile a script → synthesize audio (ElevenLabs or a fake adapter) → play, seek, drag-and-catch-up, board equations, captions, and narrated pause checkpoints. The bilingual **unit-circle** lesson is deployed with real voice and verified on Chrome, Safari, and iPad. A second 2D **backpropagation** lesson validates agent authoring and live recomputation; its gradient-descent targets are still pasted literals, so the next milestone is the build-time `@bake` directive described in **[PLAN.md](./PLAN.md)**.
+The v0.1 vertical slice works end to end: compile a script → synthesize audio (ElevenLabs or a fake adapter) → play, seek, drag-and-catch-up, board equations, captions, and narrated pause checkpoints. The bilingual **unit-circle** lesson is deployed with real voice and verified on Chrome, Safari, and iPad. A second 2D **backpropagation** lesson validates agent authoring, live recomputation, and build-time computed processes: its `@bake` directives call the scene's real gradient-descent function and compile the results into ordinary tracks.
 
 ## How it works
 
@@ -34,7 +34,7 @@ Every parameter's value is a pure function of time `t` (**value-at-time**), whic
 ```
 packages/
   core/         shared types, schema, easing, the value-at-time interpolator, reconciliation math
-  compiler/     script.md → tracks.json + captions.vtt (parse→check→synthesize→resolve→expand→emit)
+  compiler/     script.md → tracks.json + captions.vtt (parse→check/bake→synthesize→resolve→expand→emit)
   tts/          TTS adapters: fake (deterministic) and ElevenLabs (with-timestamps)
   player/       browser runtime: clock, store, timeline, reconciler, interaction, board, captions, chrome
   ingredients/  reusable scene helpers (e.g. camera-orbit handle)
@@ -118,7 +118,7 @@ A lesson is a directory with three authored files:
     speed: 0.9           # ElevenLabs speaking rate: 0.7 (slow) .. 1.2 (fast)
   ```
 
-- **`scene.ts`** — the visualization: a parameter `schema`, optional `presets`/`constants`/`groups` (named parameter groups, so one cue can set several params at once — `@cue(weights -> [0.7, -0.3, …])`), and a `scene` module that renders as a pure function of state.
+- **`scene.ts`** — the visualization: a parameter `schema`, optional `presets`/`constants`/`groups`, optional build-time `bakers`, and a `scene` module that renders as a pure function of state. Groups let one cue set several params at once; bakers expose deterministic computed processes such as a gradient step.
 
 - **`script.<lang>.md`** — narration prose with embedded directives. Prose is spoken verbatim; directives are stripped and anchored to the word that follows them. A taste:
 
@@ -133,9 +133,9 @@ A lesson is a directory with three authored files:
   @pause(prompt: "Drag the red point yourself and watch the cosine.")
   ```
 
-  Directives include `@cue` (assign parameters, instant `=` or animated `-> … over: … ease: …`), `@show`/`@hide`, `@camera`, `@scene`, `@chapter`, `@board`/`@highlight`/`@dim`/`@clear`, and `@pause` (a narrated checkpoint — the prompt is spoken, then the box appears; add `speak: false` to keep it silent). Full grammar in [DESIGN.md §6](./DESIGN.md).
+  Directives include `@cue` (assign parameters, instant `=` or animated `-> … over: … ease: …`), `@bake` (run a scene-exported computed process at build time), `@show`/`@hide`, `@camera`, `@scene`, `@chapter`, `@board`/`@highlight`/`@dim`/`@clear`, and `@pause` (a narrated checkpoint — the prompt is spoken, then the box appears; add `speak: false` to keep it silent). Full grammar in [DESIGN.md §6](./DESIGN.md).
 
-Run `lesson ref` on a scene to get the exact parameters, ranges, and presets you can drive.
+Run `lesson ref` on a scene to get the exact parameters, ranges, presets, groups, and bakers you can drive.
 
 ## Development
 

@@ -137,15 +137,21 @@ export function render(state, ctx) { /* three.js / canvas drawing from state */ 
 
 `ownership` encodes the reconciliation policy per parameter: `script` (viewer may perturb; catch-up pulls it back), `viewer` (the script never overwrites it once touched — typically the camera), `shared` (viewer's choice holds until the script next sets it). Getting these right per-parameter is, as the exemplar shows, most of what makes the medium feel correct.
 
+A scene may also export named build-time **bakers**. Each baker declares the schema
+parameters it reads and writes, then returns one absolute state per requested step.
+The compiler supplies only the declared reads, validates every returned write, and
+turns the results into ordinary keyframes; baker code never runs in the player.
+
 ### 5.3 The build step
 
 A compiler that:
 
 1. **Extracts** the plain narration text from the script (per language), noting the character offset of every cue tag.
-2. **Synthesizes** the audio (or force-aligns a provided human recording against the same text) and resolves every cue tag to an absolute time — the timestamp of the word the tag precedes, plus any explicit offset.
-3. **Expands** the sparse cue list into **dense per-parameter keyframe tracks** — essentially generating Eater's JSON format. All easing and transition logic is baked into the tracks at build time, which is what keeps the runtime dumb and perfectly seekable: state at time *t* is a lookup and an interpolation, never "play forward from zero."
-4. **Validates** against the scene schema: unknown parameters, out-of-range values, overlapping transitions on the same parameter, cues addressed to a scene that is not active — all build errors, caught before anyone watches anything.
-5. **Emits** audio, tracks, chapters, and a WebVTT caption file from the word timestamps.
+2. **Checks and evaluates authored state** in script order, including any `@bake` directives. This pass validates names, options, schema values, and baker output using schema defaults and authored cue targets—not audio-time interpolation—so `check` and `build` compute the same values without TTS.
+3. **Synthesizes** the audio (or force-aligns a provided human recording against the same text) and resolves every cue tag to an absolute time — the timestamp of the word the tag precedes, plus any explicit offset.
+4. **Expands** the sparse cue list into **dense per-parameter keyframe tracks** — essentially generating Eater's JSON format. All easing and transition logic is baked into the tracks at build time, which is what keeps the runtime dumb and perfectly seekable: state at time *t* is a lookup and an interpolation, never "play forward from zero."
+5. **Checks resolved choreography** for timing-dependent conflicts such as overlapping transitions or recorded and generated tracks targeting the same parameter.
+6. **Emits** audio, tracks, chapters, and a WebVTT caption file from the word timestamps.
 
 ### 5.4 The runtime player (shared, built once)
 
@@ -224,6 +230,22 @@ Sugar for the common cases:
 **Timing.** A cue's time is the onset of the word immediately following it. An optional `at:` shifts it: `at: +0.8s` (delay), `at: -0.5s` (anticipate), `at: sentence-end`. Experience with the exemplar suggests most cues want to *slightly anticipate* the word they illustrate; a global default anticipation (e.g. −200 ms) can be set in front matter and overridden per cue.
 
 **Values** are typed by the schema: numbers, booleans, enum strings, vectors `[0, 1, 0]`, quaternions `[w, x, y, z]`. Named constants may be defined in the scene module and used in cues (`@cue(theta -> HALF_PI)`).
+
+**Computed processes** use a scene-exported baker:
+
+```
+@bake(descent, steps: 3, over: 6s, ease: inOutCubic)
+```
+
+`steps` is a positive integer (default `1`). `over` is the total duration (default:
+the manifest transition duration times `steps`); endpoints are evenly spaced and
+each segment uses the selected easing. Bakers consume timing-independent authored
+state: schema defaults followed by cue targets and prior baker output in script
+order. Repeat one-step bakes when separate updates need separate narration anchors.
+Every baker must return exactly `steps` records containing exactly its declared
+writes, with schema-valid values. It is run twice from cloned identical input during
+checking to catch obvious nondeterminism; time, randomness, I/O, DOM access, and
+mutable module state are forbidden by contract.
 
 **Easing** names: `linear`, `inOutCubic` (default for `->`), `inCubic`, `outCubic`, `spring`. Defaults settable in front matter.
 
@@ -335,7 +357,7 @@ With synchronization automated and the player built once, the per-lesson cost co
 
 *The rules the built platform upholds — violations are bugs. Detailed data-format contracts, the interpolator, and the reconciler algorithm now live in the code (`packages/core` and its tests); this section is the durable statement of intent behind them.*
 
-**Fixed decisions.** Runtime is vanilla TypeScript with `@preact/signals-core` for reactivity — no React, no framework in the hot path. TTS is ElevenLabs (`with-timestamps`) behind a provider-adapter interface, with forced alignment of human recordings as a planned second adapter. Each lesson builds to a fully static bundle (HTML + JS + audio + JSON), deployable to any static host.
+**Fixed decisions.** Runtime is vanilla TypeScript with `@preact/signals-core` for reactivity — no React, no framework in the hot path. TTS is ElevenLabs (`with-timestamps`) behind a provider-adapter interface, with forced alignment of human recordings as a planned second adapter. Each lesson builds to a fully static bundle (HTML + JS + audio + JSON), deployable to any static host. Computed processes are compiler-only: `@bake` emits ordinary keyframes and requires no player support.
 
 **Guiding principles.**
 

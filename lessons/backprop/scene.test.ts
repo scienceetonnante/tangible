@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { forward, gradients } from "./scene.js";
+import { bakers, forward, gradients } from "./scene.js";
 
 const INITIAL = {
   w11: 0.5,
@@ -31,15 +31,23 @@ describe("backpropagation maths", () => {
     }
   });
 
-  it("converges through the three scripted descent steps", () => {
-    const weights = { ...INITIAL };
-    const losses: number[] = [];
+  it("the descent baker matches the previous authored targets and losses", () => {
+    const steps = bakers.descent!.run({ ...INITIAL, lr: 0.5 }, { steps: 3 });
+    const targets = [
+      [0.74, -0.28, -0.517, 0.692, 0.727, -0.456],
+      [0.878, -0.211, -0.635, 0.633, 0.87, -0.501],
+      [0.949, -0.176, -0.698, 0.601, 0.962, -0.545],
+    ];
 
-    for (let step = 0; step < 3; step++) {
-      const grad = gradients(weights);
-      for (const weight of WEIGHTS) weights[weight] -= 0.5 * grad[weight]!;
-      losses.push(forward(weights).loss);
+    for (let i = 0; i < steps.length; i++) {
+      expect(WEIGHTS.map((weight) => steps[i]![weight] as number)).toEqual(
+        targets[i]!.map((target) => expect.closeTo(target, 3)),
+      );
     }
+
+    const losses = steps.map((step) =>
+      forward(Object.fromEntries(WEIGHTS.map((weight) => [weight, step[weight] as number]))).loss,
+    );
 
     expect(losses[0]).toBeCloseTo(0.141508, 5);
     expect(losses[1]).toBeCloseTo(0.039595, 5);
