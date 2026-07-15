@@ -24,8 +24,8 @@ export const schema: Schema = {
   scene: { type: { kind: "enum", values: ["landscape"] }, default: "landscape", interpolate: "snap", ownership: "script" },
   kappa: sharedScalar([1, 40], 1, "condition number κ"),
   roughness: sharedScalar([0, 0.35], 0, "ripple amplitude"),
-  "start.x": sharedScalar([-DOMAIN, DOMAIN], -1.65, "shared start x-coordinate"),
-  "start.y": sharedScalar([-DOMAIN, DOMAIN], 1.15, "shared start y-coordinate"),
+  "start.x": sharedScalar([-DOMAIN, 0], -1.65, "mirrored start x-coordinate"),
+  "start.y": sharedScalar([0, DOMAIN], 1.15, "mirrored start y-coordinate"),
   step: sharedScalar([0, MAX_STEPS], 0, "matched optimizer step"),
   "active.sgd": sharedBoolean(true, "show SGD"),
   "active.momentum": sharedBoolean(false, "show SGD with momentum"),
@@ -48,10 +48,11 @@ export const scene: SceneModule = {
   schema,
   create(ctx: SceneContext): SceneInstance {
     const canvas = ctx.canvas.getContext("2d")!;
+    const removeTheme = applyNightTheme(ctx);
     return {
       render: (state) => draw(canvas, ctx.viewport(), state),
       handles: () => handles(ctx.viewport),
-      dispose: () => {},
+      dispose: removeTheme,
     };
   },
 };
@@ -77,8 +78,8 @@ function startHandle(viewport: () => View): Handle {
     onDrag(px, py) {
       const box = landscapeBox(viewport());
       return {
-        "start.x": clamp(((px - box.x) / box.width) * DOMAIN * 2 - DOMAIN, -DOMAIN, DOMAIN),
-        "start.y": clamp(DOMAIN - ((py - box.y) / box.height) * DOMAIN * 2, -DOMAIN, DOMAIN),
+        "start.x": clamp(((px - box.x) / box.width) * DOMAIN * 2 - DOMAIN, -DOMAIN, 0),
+        "start.y": clamp(DOMAIN - ((py - box.y) / box.height) * DOMAIN * 2, 0, DOMAIN),
       };
     },
   };
@@ -89,7 +90,8 @@ function sliderHandle(viewport: () => View, param: string, range: [number, numbe
   return {
     id: param,
     params: [param],
-    hitTest(px, py) {
+    hitTest(px, py, state) {
+      if (definition.optimizer && !(state[`active.${definition.optimizer}`] as boolean)) return false;
       const box = sliderBox(viewport(), definition);
       const radius = Math.min(viewport().width, viewport().height) * 0.035;
       return px >= box.x0 - radius && px <= box.x1 + radius && Math.abs(py - box.y) <= radius;
@@ -142,4 +144,31 @@ function toScreen(box: { x: number; y: number; width: number; height: number }, 
 
 function clamp(value: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, value));
+}
+
+const NIGHT_CSS = `
+.xv-player.optimizers-night { background: #050609; color: #f5f7fa; }
+.xv-player.optimizers-night .xv-board { color: #f5f7fa; }
+.xv-player.optimizers-night .xv-captions { color: #fff; text-shadow: 0 1px 3px #000; }
+.xv-player.optimizers-night .xv-chrome { background: rgba(5, 6, 9, 0.9); }
+.xv-player.optimizers-night .xv-chrome button { color: #f5f7fa; }
+.xv-player.optimizers-night .xv-chrome button:hover { background: rgba(255, 255, 255, 0.1); }
+.xv-player.optimizers-night .xv-scrubber { accent-color: #f5f7fa; }
+.xv-player.optimizers-night .xv-elapsed { color: #cbd0d8; }
+body.optimizers-night-page { background: #050609; }
+`;
+
+function applyNightTheme(ctx: SceneContext): () => void {
+  const root = ctx.canvas.parentElement;
+  if (!root) return () => {};
+  const style = ctx.canvas.ownerDocument.createElement("style");
+  style.textContent = NIGHT_CSS;
+  root.classList.add("optimizers-night");
+  ctx.canvas.ownerDocument.body.classList.add("optimizers-night-page");
+  root.append(style);
+  return () => {
+    root.classList.remove("optimizers-night");
+    ctx.canvas.ownerDocument.body.classList.remove("optimizers-night-page");
+    style.remove();
+  };
 }

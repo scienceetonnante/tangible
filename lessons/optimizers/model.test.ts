@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { gradient, loss, simulate, type OptimizerSettings, type Problem } from "./model.js";
+import { gradient, loss, simulate, symmetricProblem, type OptimizerSettings, type Problem } from "./model.js";
 
 const problem: Problem = { kappa: 1, roughness: 0, startX: -1.65, startY: 1.15 };
 const settings: OptimizerSettings = {
@@ -29,6 +29,21 @@ describe("optimizer lesson model", () => {
     expect(stable.divergedAt).toBeUndefined();
     expect(stable.points.at(-1)!.loss).toBeLessThan(1e-4);
     expect(unstable.divergedAt).toBeDefined();
+  });
+
+  it("reflects one anchor into three equivalent quadrants", () => {
+    const starts = (["sgd", "momentum", "adamw"] as const).map((name) => symmetricProblem(name, problem));
+
+    expect(starts.map(({ startX, startY }) => [startX, startY])).toEqual([
+      [-1.65, 1.15],
+      [1.65, 1.15],
+      [-1.65, -1.15],
+    ]);
+    expect(starts.map((start) => loss(start.startX, start.startY, start))).toEqual([
+      loss(problem.startX, problem.startY, problem),
+      loss(problem.startX, problem.startY, problem),
+      loss(problem.startX, problem.startY, problem),
+    ]);
   });
 
   it("shows momentum and AdamW crossing a ripple that traps SGD", () => {

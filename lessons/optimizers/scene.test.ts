@@ -1,7 +1,7 @@
 import type { PlainState } from "@narrable/core";
 import { describe, expect, it } from "vitest";
 import { scene, schema } from "./scene.js";
-import { landscapeBox } from "./view.js";
+import { landscapeBox, sliderBox, SLIDERS } from "./view.js";
 
 function recordingContext() {
   const calls: string[] = [];
@@ -51,6 +51,7 @@ describe("optimizer scene", () => {
     const centerY = box.y + box.height / 2;
 
     expect(start.onDrag(centerX, centerY, defaultState())).toEqual({ "start.x": 0, "start.y": 0 });
+    expect(start.onDrag(box.x + box.width, box.y + box.height, defaultState())).toEqual({ "start.x": 0, "start.y": 0 });
   });
 
   it("turns an optimizer toggle into a stable click write", () => {
@@ -61,5 +62,16 @@ describe("optimizer scene", () => {
     toggle.onDown!(0, 0, state);
     expect(toggle.onDrag(0, 0, state)).toEqual({ "active.momentum": true });
     expect(toggle.onDrag(10, 10, state)).toEqual({ "active.momentum": true });
+  });
+
+  it("disables controls for inactive optimizers", () => {
+    const { created } = instance();
+    const slider = created.handles().find((handle) => handle.id === "momentum.lr")!;
+    const definition = SLIDERS.find((candidate) => candidate.param === "momentum.lr")!;
+    const box = sliderBox({ width: 1000, height: 600 }, definition);
+    const state = defaultState();
+
+    expect(slider.hitTest((box.x0 + box.x1) / 2, box.y, state)).toBe(false);
+    expect(slider.hitTest((box.x0 + box.x1) / 2, box.y, { ...state, "active.momentum": true })).toBe(true);
   });
 });
