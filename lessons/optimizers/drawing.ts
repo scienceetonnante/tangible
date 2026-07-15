@@ -18,6 +18,7 @@ const BACKGROUND = "#050609";
 const FOREGROUND = "#f5f7fa";
 const MUTED = "#9aa3af";
 const OPTIMIZERS: OptimizerName[] = ["sgd", "momentum", "adamw"];
+let terrainCache: { key: string; document: Document; canvas: HTMLCanvasElement } | undefined;
 
 export function draw(g: CanvasRenderingContext2D, view: View, state: Readonly<PlainState>): void {
   const problem: Problem = {
@@ -57,20 +58,7 @@ function drawLandscape(
   step: number,
 ): void {
   const box = landscapeBox(view);
-  const cells = 40;
-  const cell = box.width / cells;
-  const maxLoss = loss(DOMAIN, DOMAIN, problem);
-
-  for (let row = 0; row < cells; row++) {
-    for (let column = 0; column < cells; column++) {
-      const x = -DOMAIN + ((column + 0.5) / cells) * DOMAIN * 2;
-      const y = DOMAIN - ((row + 0.5) / cells) * DOMAIN * 2;
-      const level = Math.log1p(loss(x, y, problem)) / Math.log1p(maxLoss);
-      const lightness = 8 + (1 - level) ** 1.35 * 84;
-      g.fillStyle = `hsl(212 58% ${lightness}%)`;
-      g.fillRect(box.x + column * cell, box.y + row * cell, cell + 0.6, cell + 0.6);
-    }
-  }
+  drawTerrain(g, box, problem);
 
   g.save();
   g.beginPath();
@@ -87,22 +75,54 @@ function drawLandscape(
 
   const unit = Math.min(view.width, view.height);
   const origin = screenPoint(box, 0, 0);
-  g.fillStyle = FOREGROUND;
-  g.font = `500 ${unit * 0.025}px sans-serif`;
-  g.textAlign = "left";
-  g.textBaseline = "bottom";
-  g.fillText("mirrored starts · equivalent loss", box.x, box.y - unit * 0.011);
   g.fillStyle = MUTED;
   g.font = `${unit * 0.019}px sans-serif`;
+  g.textAlign = "left";
+  g.textBaseline = "bottom";
   g.fillText("w₁", box.x + box.width + unit * 0.007, origin.y);
   g.fillText("w₂", origin.x + unit * 0.007, box.y + unit * 0.022);
+}
+
+function drawTerrain(g: CanvasRenderingContext2D, box: ReturnType<typeof landscapeBox>, problem: Problem): void {
+  const document = g.canvas?.ownerDocument;
+  if (!document) {
+    paintTerrain(g, box, problem);
+    return;
+  }
+  const width = Math.ceil(box.width);
+  const height = Math.ceil(box.height);
+  const key = `${width}:${height}:${problem.kappa.toFixed(4)}:${problem.roughness.toFixed(4)}`;
+  if (!terrainCache || terrainCache.key !== key || terrainCache.document !== document) {
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    paintTerrain(canvas.getContext("2d")!, { x: 0, y: 0, width, height }, problem);
+    terrainCache = { key, document, canvas };
+  }
+  g.drawImage(terrainCache.canvas, box.x, box.y, box.width, box.height);
+}
+
+function paintTerrain(g: CanvasRenderingContext2D, box: ReturnType<typeof landscapeBox>, problem: Problem): void {
+  const cells = 48;
+  const cell = box.width / cells;
+  const maxLoss = loss(DOMAIN, DOMAIN, problem);
+  for (let row = 0; row < cells; row++) {
+    for (let column = 0; column < cells; column++) {
+      const x = -DOMAIN + ((column + 0.5) / cells) * DOMAIN * 2;
+      const y = DOMAIN - ((row + 0.5) / cells) * DOMAIN * 2;
+      const level = Math.log1p(loss(x, y, problem)) / Math.log1p(maxLoss);
+      const lightness = 8 + (1 - level) ** 1.35 * 84;
+      g.fillStyle = `hsl(212 58% ${lightness}%)`;
+      g.fillRect(box.x + column * cell, box.y + row * cell, cell + 0.6, cell + 0.6);
+    }
+  }
 }
 
 function drawGrid(g: CanvasRenderingContext2D, box: ReturnType<typeof landscapeBox>): void {
   g.strokeStyle = "rgba(255, 255, 255, 0.1)";
   g.lineWidth = box.width * 0.002;
-  for (let index = 0; index <= 16; index++) {
-    const value = -DOMAIN + (index / 16) * DOMAIN * 2;
+  for (let index = 0; index <= 20; index++) {
+    const value = -DOMAIN + (index / 20) * DOMAIN * 2;
     const point = screenPoint(box, value, value);
     line(g, point.x, box.y, point.x, box.y + box.height);
     line(g, box.x, point.y, box.x + box.width, point.y);

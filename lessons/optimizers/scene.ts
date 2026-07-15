@@ -47,10 +47,12 @@ export const constants: Record<string, number | number[]> = { MAX_STEPS };
 export const scene: SceneModule = {
   schema,
   create(ctx: SceneContext): SceneInstance {
-    const canvas = ctx.canvas.getContext("2d")!;
+    const g = ctx.canvas.getContext("2d")!;
     const removeTheme = applyNightTheme(ctx);
     return {
-      render: (state) => draw(canvas, ctx.viewport(), state),
+      render(state) {
+        draw(g, ctx.viewport(), state);
+      },
       handles: () => handles(ctx.viewport),
       dispose: removeTheme,
     };
@@ -148,7 +150,8 @@ function clamp(value: number, lo: number, hi: number): number {
 
 const NIGHT_CSS = `
 .xv-player.optimizers-night { background: #050609; color: #f5f7fa; }
-.xv-player.optimizers-night .xv-board { color: #f5f7fa; }
+.xv-player.optimizers-night .xv-board { top: 2%; right: 1.5%; width: 23.5%; height: 63%; padding: 4px; color: #f5f7fa; font-size: 14px; }
+.xv-player.optimizers-night .xv-board-inner { gap: 8px; }
 .xv-player.optimizers-night .xv-captions { color: #fff; text-shadow: 0 1px 3px #000; }
 .xv-player.optimizers-night .xv-chrome { background: rgba(5, 6, 9, 0.9); }
 .xv-player.optimizers-night .xv-chrome button { color: #f5f7fa; }

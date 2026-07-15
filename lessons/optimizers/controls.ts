@@ -27,21 +27,15 @@ export function drawControls(
   drawAlgorithmGroups(g, view, state, trajectories, unit);
   drawToggles(g, view, state, unit);
 
-  g.fillStyle = MUTED;
-  g.font = `500 ${unit * 0.019}px sans-serif`;
-  g.textAlign = "left";
-  g.textBaseline = "bottom";
-  g.fillText("LANDSCAPE", view.width * 0.39, view.height * 0.13);
-
   for (const definition of [...PROBLEM_SLIDERS, ...ALGORITHM_SLIDERS]) {
     drawSlider(g, view, state, definition, unit);
   }
 
   const threshold = 2 / number(state, "sgd.lr");
   g.fillStyle = MUTED;
-  g.font = `${unit * 0.017}px sans-serif`;
+  g.font = `${unit * 0.015}px sans-serif`;
   g.textAlign = "left";
-  g.fillText(`smooth SGD limit: κ < ${threshold.toFixed(1)}`, view.width * 0.39, view.height * 0.48);
+  g.fillText(`stable while κ < ${threshold.toFixed(1)}`, view.width * 0.49, view.height * 0.237);
 }
 
 export function drawStep(g: CanvasRenderingContext2D, view: View, step: number): void {
