@@ -16,7 +16,7 @@ export interface ResolveOptions {
 type Timing = Pick<TtsResult, "charTimes" | "wordTimes" | "duration">;
 
 // Directives whose timing is nudged by the default anticipation.
-const ANTICIPATED = new Set(["cue", "show", "hide", "camera", "board", "highlight", "dim", "clear"]);
+const ANTICIPATED = new Set(["cue", "bake", "show", "hide", "camera", "board", "highlight", "dim", "clear"]);
 
 export function resolve(directives: Directive[], narration: string, timing: Timing, opts: ResolveOptions): ResolvedCue[] {
   const cues = directives.map((d) => ({ t: timeFor(d, narration, timing, opts), directive: d }));

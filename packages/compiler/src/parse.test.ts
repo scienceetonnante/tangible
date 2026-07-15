@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseScript } from "./parse.js";
+import { ParseError, parseScript } from "./parse.js";
 import { SCRIPT_FR } from "./fixtures.js";
 
 describe("parseScript — front matter", () => {
@@ -102,5 +102,35 @@ describe("parseScript — escapes and edge cases", () => {
     expect(silent.narration).toBe("Avant.\n\nAprès.");
     // The box prompt is parsed either way.
     expect(silent.directives.find((d) => d.kind === "pause")).toMatchObject({ prompt: "Essayez vous-même.", speak: false });
+  });
+});
+
+describe("parseScript — @bake", () => {
+  it("parses the baker name and timing options", () => {
+    const parsed = parseScript("Avant @bake(descent, steps: 3, over: 6s, ease: linear, at: +0.5s) après.");
+    expect(parsed.directives[0]).toMatchObject({
+      kind: "bake",
+      name: "descent",
+      options: { steps: 3, over: 6, ease: "linear", at: { kind: "delta", seconds: 0.5 } },
+    });
+    expect(parsed.narration).toBe("Avant après.");
+  });
+
+  it("defaults to one step", () => {
+    const parsed = parseScript("Avant @bake(descent) après.");
+    expect(parsed.directives[0]).toMatchObject({ kind: "bake", options: { steps: 1 } });
+  });
+
+  it("rejects a non-positive or fractional step count at the directive location", () => {
+    for (const steps of ["0", "-1", "1.5", "many"]) {
+      try {
+        parseScript(`Avant @bake(descent, steps: ${steps}) après.`, "script.fr.md");
+        expect.fail("expected ParseError");
+      } catch (error) {
+        expect(error).toBeInstanceOf(ParseError);
+        expect((error as ParseError).message).toBe(`@bake steps must be a positive integer, got "${steps}"`);
+        expect((error as ParseError).loc).toEqual({ file: "script.fr.md", line: 1, col: 7 });
+      }
+    }
   });
 });

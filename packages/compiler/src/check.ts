@@ -7,6 +7,7 @@ import { isEasing } from "@narrable/core";
 import type { ParsedScript, Options } from "./parse.js";
 import { parseValue, parseGroup, type Constants } from "./value.js";
 import { type Diagnostic, type SourceLoc, suggest } from "./diagnostics.js";
+import { evaluateAuthoredState } from "./authored-state.js";
 
 export interface SceneInfo {
   schema: Schema;
@@ -74,6 +75,9 @@ export function check(parsed: ParsedScript, scene: SceneInfo, opts: CheckOptions
         checkEase(d.options, d.loc);
         break;
       }
+      case "bake":
+        checkEase(d.options, d.loc);
+        break;
       case "show":
       case "hide": {
         for (const id of d.ids) checkParam(`show.${id}`, d.loc);
@@ -116,7 +120,7 @@ export function check(parsed: ParsedScript, scene: SceneInfo, opts: CheckOptions
         break;
       }
       case "unknown": {
-        const known = ["cue", "show", "hide", "camera", "track", "board", "highlight", "dim", "clear", "scene", "chapter", "pause"];
+        const known = ["cue", "bake", "show", "hide", "camera", "track", "board", "highlight", "dim", "clear", "scene", "chapter", "pause"];
         const s = suggest(d.name, known);
         err(`unknown directive "@${d.name}"${s ? ` — did you mean "@${s}"?` : ""}`, d.loc);
         break;
@@ -127,6 +131,8 @@ export function check(parsed: ParsedScript, scene: SceneInfo, opts: CheckOptions
         break;
     }
   }
+
+  diags.push(...evaluateAuthoredState(parsed, scene).diagnostics);
 
   return diags;
 }

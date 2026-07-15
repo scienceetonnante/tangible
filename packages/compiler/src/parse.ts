@@ -19,6 +19,10 @@ export interface Options {
   at?: AtOffset;
 }
 
+export interface BakeOptions extends Options {
+  steps: number;
+}
+
 export interface Assignment {
   param: string;
   mode: "animate" | "set"; // "->" vs "="
@@ -35,6 +39,7 @@ interface Base {
 export type Directive = Base &
   (
     | { kind: "cue"; assignments: Assignment[]; options: Options }
+    | { kind: "bake"; name: string; options: BakeOptions }
     | { kind: "show" | "hide"; ids: string[] }
     | { kind: "camera"; preset: string; options: Options }
     | { kind: "track"; param: string; name: string }
@@ -230,6 +235,11 @@ function parseDirective(r: RawDirective, anchorOffset: number): Directive {
   switch (r.name) {
     case "cue":
       return { ...base, kind: "cue", ...parseCueArgs(a, r.loc) };
+    case "bake": {
+      const parts = splitTop(a);
+      const name = parts.shift()?.trim() ?? "";
+      return { ...base, kind: "bake", name, options: parseBakeOptions(parts, r.loc) };
+    }
     case "show":
     case "hide":
       return { ...base, kind: r.name, ids: splitTop(a).map((s) => s.trim()).filter(Boolean) };
@@ -284,6 +294,24 @@ function parseCueArgs(a: string, loc: SourceLoc): { assignments: Assignment[]; o
     }
   }
   return { assignments, options: parseOptions(optionParts, loc) };
+}
+
+function parseBakeOptions(parts: string[], loc: SourceLoc): BakeOptions {
+  let steps = 1;
+  const optionParts: string[] = [];
+  for (const part of parts) {
+    const [key, raw] = splitOnce(part, ":");
+    if (key.trim() !== "steps") {
+      optionParts.push(part);
+      continue;
+    }
+    const value = Number(raw.trim());
+    if (!Number.isInteger(value) || value <= 0) {
+      throw new ParseError(`@bake steps must be a positive integer, got "${raw.trim()}"`, loc);
+    }
+    steps = value;
+  }
+  return { ...parseOptions(optionParts, loc), steps };
 }
 
 function parseOptions(parts: string[], loc: SourceLoc): Options {

@@ -6,7 +6,7 @@ import { readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join, resolve as resolvePath } from "node:path";
 import { createHash } from "node:crypto";
-import { parseScript, check, compile, emit, synthesize, formatDiagnostic } from "@narrable/compiler";
+import { parseScript, check, compile, emit, synthesize, formatDiagnostic, ParseError } from "@narrable/compiler";
 import type { SceneInfo } from "@narrable/compiler";
 import { buildIndex, evaluate } from "@narrable/core";
 import type { Schema, Keyframe, TtsAdapter, ParamSpec, ParamValue } from "@narrable/core";
@@ -300,4 +300,7 @@ function die(msg: string): never {
   process.exit(1);
 }
 
-main().catch((e) => die(String(e instanceof Error ? (e.stack ?? e.message) : e)));
+main().catch((e) => {
+  if (e instanceof ParseError) die(formatDiagnostic({ severity: "error", message: e.message, loc: e.loc }));
+  die(String(e instanceof Error ? (e.stack ?? e.message) : e));
+});

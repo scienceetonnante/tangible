@@ -12,6 +12,8 @@ import { expand } from "./expand.js";
 import type { SceneInfo } from "./check.js";
 import type { Keyframe } from "@narrable/core";
 import type { Diagnostic } from "./diagnostics.js";
+import { formatDiagnostic } from "./diagnostics.js";
+import { evaluateAuthoredState } from "./authored-state.js";
 
 type Timing = Pick<TtsResult, "charTimes" | "wordTimes" | "duration">;
 
@@ -35,12 +37,15 @@ export interface Compiled {
 /** Full parse→resolve→expand→assemble, deterministic for fixed inputs. */
 export function compile(script: string, timing: Timing, scene: SceneInfo, opts: CompileOptions): Compiled {
   const parsed = parseScript(script, opts.file);
+  const authored = evaluateAuthoredState(parsed, scene);
+  if (authored.diagnostics.length) throw new Error(formatDiagnostic(authored.diagnostics[0]!));
   const cues = resolve(parsed.directives, parsed.narration, timing, { anticipation: opts.defaults.anticipation });
   const ex = expand(cues, scene, {
     language: opts.language,
     defaults: { ease: opts.defaults.ease, transition: opts.defaults.transition },
     recorded: opts.recorded,
     recordedPaths: opts.recordedPaths,
+    bakes: authored.bakes,
   });
 
   const tracks: LessonTracks = {

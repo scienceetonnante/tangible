@@ -10,12 +10,14 @@ import type { ResolvedCue } from "./resolve.js";
 import type { SceneInfo } from "./check.js";
 import { parseValue, parseGroup } from "./value.js";
 import type { Diagnostic } from "./diagnostics.js";
+import type { BakeDirective, BakeStep } from "./authored-state.js";
 
 export interface ExpandOptions {
   language: string;
   defaults: { ease: string; transition: number };
   recorded?: Record<string, Keyframe[]>; // param → recorded keyframes (from @track assets)
   recordedPaths?: Record<string, string>; // param → asset path
+  bakes?: Map<BakeDirective, BakeStep[]>;
 }
 
 export interface ExpandResult {
@@ -177,6 +179,7 @@ export function expand(cues: ResolvedCue[], scene: SceneInfo, opts: ExpandOption
         pauses.push({ t, id: `pause-${pauses.length}`, prompt: d.prompt });
         break;
       case "track":
+      case "bake":
       case "unknown":
         break;
     }
