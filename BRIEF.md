@@ -1,16 +1,5 @@
-# Brief for Educators: Designing a Narrated Explorable Lesson
+# Designing a Narrated Explorable Lesson
 
-## Purpose of this brief
-
-This document is for secondary and higher-education teachers who want to identify
-scientific concepts that could benefit from an interactive narrated lesson. It is
-a guide to choosing and shaping a topic, not a description of how the system is
-built.
-
-No technical preparation is needed. The useful contribution of an educator is to
-identify a difficult idea, the relationships learners need to notice, the actions
-that might reveal those relationships, and the sequence of questions that could
-guide the discovery.
 
 ## The medium in one minute
 
@@ -39,7 +28,7 @@ Depending on the topic, a lesson may combine:
 - pauses that invite a specific act of exploration.
 
 Think of it less as a video with buttons and more as **a scientific model that the
-learner can reach into while a teacher guides their attention**.
+learner can reach into while a narrator guides their attention**.
 
 ## The central design question
 
