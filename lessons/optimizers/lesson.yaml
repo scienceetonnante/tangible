@@ -1,0 +1,13 @@
+id: optimizers
+title:
+  en: Why adaptive optimizers exist
+scene: ./scene.ts
+languages: [en]
+voice:
+  en: elevenlabs:s3TPKV1kjDlVtZbl4Ksh
+defaults:
+  anticipation: -0.2
+  ease: inOutCubic
+  transition: 1.0
+tts:
+  speed: 0.9

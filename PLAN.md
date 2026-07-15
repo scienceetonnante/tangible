@@ -67,7 +67,7 @@ without shipping the recording UI.
 - Add the three.js scene-host path.
 - Grow ingredients only as demanded by the lesson: axes, grids, vectors, draggable
   points on curves/spheres, linked plot highlights, and scrub-able KaTeX numbers.
-- Author a third lesson that exercises orbit cameras, quaternion parameters, nlerp,
+- Author the first 3D lesson, exercising orbit cameras, quaternion parameters, nlerp,
   recorded camera choreography, and touch interaction.
 - Measure which platform files changed and document the resulting v0.2 refactor,
   targeting less than 30% platform churn.

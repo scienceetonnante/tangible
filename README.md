@@ -11,7 +11,7 @@ A platform for **interactive ("explorable") narrated video** — lessons that ar
 
 ## Status
 
-The v0.1 vertical slice works end to end: compile a script → synthesize audio (ElevenLabs or a fake adapter) → play, seek, drag-and-catch-up, board equations, captions, and narrated pause checkpoints. The bilingual **unit-circle** lesson is deployed with real voice and verified on Chrome, Safari, and iPad. A second 2D **backpropagation** lesson validates agent authoring, live recomputation, and build-time computed processes: its `@bake` directives call the scene's real gradient-descent function and compile the results into ordinary tracks.
+The v0.1 vertical slice works end to end: compile a script → synthesize audio (ElevenLabs or a fake adapter) → play, seek, drag-and-catch-up, board equations, captions, and narrated pause checkpoints. The bilingual **unit-circle** lesson is deployed with real voice and verified on Chrome, Safari, and iPad. A second 2D **backpropagation** lesson validates agent authoring, live recomputation, and build-time computed processes: its `@bake` directives call the scene's real gradient-descent function and compile the results into ordinary tracks. A third 2D **optimizer** lesson compares SGD, momentum, and AdamW on a live conditioned or rough loss landscape, with a shared start point and matched-step scrubber.
 
 ## How it works
 
@@ -43,6 +43,7 @@ packages/
 lessons/
   unit-circle/  the first lesson: lesson.yaml, scene.ts, script.en.md (+ script.fr.md)
   backprop/     the second 2D lesson: agent-authored network, gradients, draggable weights
+  optimizers/   live optimizer paths on a conditioned or rough 2D loss landscape
 e2e/            Playwright browser tests (Chromium + WebKit)
 ```
 
