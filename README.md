@@ -3,6 +3,7 @@
 A platform for **interactive ("explorable") narrated video** — lessons that are a live 2D/3D scene driven by a recorded voiceover, where the learner can grab the canvas, drag a parameter, or scrub a value at any time and watch everything recompute, then glides back to whatever the narration has reached. Think of the 3blue1brown + Ben Eater quaternion series, but authored from a single **text script** instead of performance capture.
 
 - **[DESIGN.md](./DESIGN.md)** — what the medium is and why: the primer, the architecture rationale, and (§10) the normative implementation invariants.
+- **[BRIEF.md](./BRIEF.md)** — an educator-facing guide to choosing and shaping scientific concepts for narrated explorable lessons.
 - **[PLAN.md](./PLAN.md)** — phased build plan with current status and locked/deferred decisions.
 - **[docs/](./docs/)** — dated notes and records (design proposals, validation reports).
 
