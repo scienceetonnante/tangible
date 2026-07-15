@@ -142,6 +142,22 @@ export function expand(cues: ResolvedCue[], scene: SceneInfo, opts: ExpandOption
         if (spec) setInstant("scene", spec, t, d.name, loc);
         break;
       }
+      case "bake": {
+        const steps = opts.bakes?.get(d);
+        const baker = scene.bakers?.[d.name];
+        if (!steps || !baker) break;
+        const totalDuration = d.options.over ?? opts.defaults.transition * d.options.steps;
+        const segmentDuration = totalDuration / d.options.steps;
+        const ease = d.options.ease ?? opts.defaults.ease;
+        for (let i = 0; i < steps.length; i++) {
+          const step = steps[i]!;
+          const segmentStart = t + i * segmentDuration;
+          for (const param of baker.writes) {
+            setAnimate(param, scene.schema[param]!, segmentStart, segmentDuration, ease, step[param]!, loc);
+          }
+        }
+        break;
+      }
       case "board": {
         boardItems[d.id] = { kind: d.itemKind, source: { [opts.language]: d.source } };
         setInstant(`board.${d.id}`, boardSpec(), t, "shown", loc);
@@ -179,7 +195,6 @@ export function expand(cues: ResolvedCue[], scene: SceneInfo, opts: ExpandOption
         pauses.push({ t, id: `pause-${pauses.length}`, prompt: d.prompt });
         break;
       case "track":
-      case "bake":
       case "unknown":
         break;
     }

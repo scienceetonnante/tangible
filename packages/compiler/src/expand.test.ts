@@ -2,8 +2,9 @@ import { describe, it, expect } from "vitest";
 import { parseScript } from "./parse.js";
 import { resolve } from "./resolve.js";
 import { expand } from "./expand.js";
-import { buildIndex, evaluate } from "@narrable/core";
+import { buildIndex, evaluate, type ParamValue } from "@narrable/core";
 import { SCRIPT_FR, SCENE } from "./fixtures.js";
+import { evaluateAuthoredState } from "./authored-state.js";
 
 const DEFAULTS = { ease: "inOutCubic", transition: 1.0 };
 
@@ -112,6 +113,75 @@ describe("expand — parameter groups", () => {
   });
 });
 
+describe("expand — baked steps", () => {
+  const scene = {
+    schema: {
+      x: { type: { kind: "scalar" as const }, default: 0, interpolate: "lerp" as const, ownership: "script" as const },
+    },
+    bakers: {
+      advance: {
+        reads: ["x"],
+        writes: ["x"],
+        run: (input: Readonly<Record<string, ParamValue>>, { steps }: { steps: number }) => {
+          const start = input.x as number;
+          return Array.from({ length: steps }, (_, i) => ({ x: start + i + 1 }));
+        },
+      },
+    },
+  };
+
+  it("lays multi-step endpoints out evenly with easing on every segment", () => {
+    const parsed = parseScript("Start @bake(advance, steps: 3, over: 6s, ease: linear) moving.");
+    const authored = evaluateAuthoredState(parsed, scene);
+    const timing = fakeTiming(parsed.narration);
+    const cues = resolve(parsed.directives, parsed.narration, timing, { anticipation: -0.2 });
+    const result = expand(cues, scene, { language: "en", defaults: DEFAULTS, bakes: authored.bakes });
+    const start = cues[0]!.t;
+    const endpoints = result.tracks.x!.filter((keyframe) => keyframe.ease);
+
+    expect(endpoints.map(({ t, v, ease }) => ({ t, v, ease }))).toEqual([
+      { t: start + 2, v: 1, ease: "linear" },
+      { t: start + 4, v: 2, ease: "linear" },
+      { t: start + 6, v: 3, ease: "linear" },
+    ]);
+  });
+
+  it("defaults total duration to transition times step count", () => {
+    const parsed = parseScript("Start @bake(advance, steps: 2) moving.");
+    const authored = evaluateAuthoredState(parsed, scene);
+    const timing = fakeTiming(parsed.narration);
+    const cues = resolve(parsed.directives, parsed.narration, timing, { anticipation: 0 });
+    const result = expand(cues, scene, {
+      language: "en",
+      defaults: { ...DEFAULTS, transition: 1.5 },
+      bakes: authored.bakes,
+    });
+    const start = cues[0]!.t;
+
+    expect(result.tracks.x!.filter((keyframe) => keyframe.ease).map((keyframe) => keyframe.t)).toEqual([
+      start + 1.5,
+      start + 3,
+    ]);
+  });
+
+  it("uses the existing overlap truncation rule at bake start", () => {
+    const bake = mkBake("advance", 1, { over: 2, ease: "linear" });
+    const cues = [
+      { t: 0, directive: mkCue("x", "animate", "10", { over: 10, ease: "linear" }) },
+      { t: 5, directive: bake },
+    ];
+    const result = expand(cues, scene, {
+      language: "en",
+      defaults: DEFAULTS,
+      bakes: new Map([[bake, [{ x: 6 }]]]),
+    });
+
+    expect(result.warnings).toHaveLength(1);
+    expect(result.warnings[0]!.message).toContain("x");
+    expect(result.tracks.x!.at(-1)).toEqual({ t: 7, v: 6, ease: "linear" });
+  });
+});
+
 function mkCue(param: string, mode: "animate" | "set", value: string, options: { over?: number; ease?: string }) {
   return {
     kind: "cue" as const,
@@ -120,6 +190,18 @@ function mkCue(param: string, mode: "animate" | "set", value: string, options: {
     anchorOffset: 0,
     block: false,
     loc: { line: 1, col: 1 },
+    raw: "",
+  };
+}
+
+function mkBake(name: string, steps: number, options: { over?: number; ease?: string }) {
+  return {
+    kind: "bake" as const,
+    name,
+    options: { ...options, steps },
+    anchorOffset: 0,
+    block: false,
+    loc: { line: 2, col: 1 },
     raw: "",
   };
 }

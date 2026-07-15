@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { compile, toVtt } from "./emit.js";
 import { SCRIPT_FR, SCENE } from "./fixtures.js";
 import { parseScript } from "./parse.js";
+import type { SceneInfo } from "./check.js";
 
 function fakeTiming(text: string) {
   const charTimes = Array.from({ length: text.length }, (_, i) => ({ start: i * 0.06, end: (i + 1) * 0.06 }));
@@ -44,6 +45,29 @@ describe("compile — determinism", () => {
     const b = compile(SCRIPT_FR, timing, SCENE, OPTS);
     expect(JSON.stringify(a.tracks)).toBe(JSON.stringify(b.tracks));
     expect(a.vtt).toBe(b.vtt);
+  });
+
+  it("is byte-identical when compilation executes a baker", () => {
+    const scene: SceneInfo = {
+      schema: {
+        x: { type: { kind: "scalar" }, default: 0, interpolate: "lerp", ownership: "script" },
+      },
+      bakers: {
+        advance: {
+          reads: ["x"],
+          writes: ["x"],
+          run: (input, { steps }) =>
+            Array.from({ length: steps }, (_, i) => ({ x: (input.x as number) + i + 1 })),
+        },
+      },
+    };
+    const script = "Now @bake(advance, steps: 3, over: 6s) advance.";
+    const timing = fakeTiming(parseScript(script).narration);
+    const a = compile(script, timing, scene, OPTS);
+    const b = compile(script, timing, scene, OPTS);
+
+    expect(JSON.stringify(a.tracks)).toBe(JSON.stringify(b.tracks));
+    expect(a.tracks.tracks.x!.filter((keyframe) => keyframe.ease).map((keyframe) => keyframe.v)).toEqual([1, 2, 3]);
   });
 });
 
