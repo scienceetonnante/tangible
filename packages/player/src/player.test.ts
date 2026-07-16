@@ -62,4 +62,24 @@ describe("Player composition", () => {
     expect(mount.querySelector(".xv-chrome")).toBeNull();
     player.dispose();
   });
+
+  it("starts with captions off and enables them from the CC button", () => {
+    const mount = document.createElement("div");
+    const player = new Player({
+      mount,
+      scene: stubScene([]),
+      tracks,
+      captionsVtt: "WEBVTT\n\n00:00:00.000 --> 00:00:10.000\nVisible caption.\n",
+    });
+    const captions = mount.querySelector(".xv-captions")!;
+
+    player.audio.currentTime = 5;
+    player.driver.tick();
+    expect(captions.textContent).toBe("");
+
+    (mount.querySelector(".xv-captions-toggle") as HTMLButtonElement).click();
+    player.driver.tick();
+    expect(captions.textContent).toBe("Visible caption.");
+    player.dispose();
+  });
 });

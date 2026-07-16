@@ -32,7 +32,7 @@ export class Chrome {
   private playBtn: HTMLButtonElement;
   private scrubber: HTMLInputElement;
   private elapsed: HTMLElement;
-  private captionsOn = true;
+  private captionsOn = false;
   private scrubbing = false;
   private scrubTimer?: ReturnType<typeof setTimeout>;
 

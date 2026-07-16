@@ -44,7 +44,7 @@ export function activeCue(cues: Cue[], t: number): string {
 export class Captions {
   readonly el: HTMLElement;
   private cues: Cue[];
-  private visible = true;
+  private visible = false;
 
   constructor(vtt: string) {
     this.cues = parseVtt(vtt);
