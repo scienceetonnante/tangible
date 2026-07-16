@@ -11,4 +11,5 @@ export interface Handle {
   hitTest(px: number, py: number, state: Readonly<PlainState>): boolean;
   onDown?(px: number, py: number, state: Readonly<PlainState>): void; // capture drag start
   onDrag(px: number, py: number, state: Readonly<PlainState>): Record<string, ParamValue>;
+  onWheel?(px: number, py: number, deltaY: number, state: Readonly<PlainState>): Record<string, ParamValue>;
 }

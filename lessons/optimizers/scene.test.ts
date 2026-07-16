@@ -45,18 +45,18 @@ describe("optimizer scene", () => {
     expect(calls).toContain("fillRect");
     expect(calls).toContain("lineTo");
     expect(calls).toContain("fillText");
-    expect(created.handles()).toHaveLength(11);
+    expect(created.handles()).toHaveLength(12);
   });
 
-  it("maps a landscape drag to the shared start coordinates", () => {
+  it("keeps the camera viewer-owned and confines navigation to the landscape", () => {
     const { created } = instance();
-    const start = created.handles().find((handle) => handle.id === "start")!;
+    const camera = created.handles().find((handle) => handle.id === "camera-orbit")!;
     const box = landscapeBox({ width: 1000, height: 600 });
-    const centerX = box.x + box.width / 2;
-    const centerY = box.y + box.height / 2;
 
-    expect(start.onDrag(centerX, centerY, defaultState())).toEqual({ "start.x": 0, "start.y": 0 });
-    expect(start.onDrag(box.x + box.width, box.y + box.height, defaultState())).toEqual({ "start.x": 0, "start.y": 0 });
+    expect(schema.camera.ownership).toBe("viewer");
+    expect(camera.hitTest(box.x + box.width / 2, box.y + box.height / 2, defaultState())).toBe(true);
+    expect(camera.hitTest(900, 500, defaultState())).toBe(false);
+    expect(camera.onWheel).toBeTypeOf("function");
   });
 
   it("turns an optimizer toggle into a stable click write", () => {

@@ -19,7 +19,9 @@ export async function loadScene(scenePath: string): Promise<SceneInfo> {
       bundle: true,
       format: "esm",
       platform: "node",
-      external: ["@narrable/*", "three"],
+      // Scene runtime dependencies must be bundled because the temporary module
+      // lives outside the workspace and cannot resolve its node_modules.
+      external: ["@narrable/core", "@narrable/player"],
       logLevel: "silent",
     });
     const mod = (await import(pathToFileURL(outfile).href)) as {

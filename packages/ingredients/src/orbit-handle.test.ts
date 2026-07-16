@@ -30,4 +30,16 @@ describe("orbitHandle", () => {
     h.onDrag(50, 50, state);
     expect(start.azimuth).toBe(0);
   });
+
+  it("zooms within configured distance bounds", () => {
+    const h = orbitHandle({ zoomSpeed: 0.01, minDistance: 3, maxDistance: 8 });
+    const state: PlainState = { camera: start };
+
+    const closer = h.onWheel!(0, 0, -100, state).camera as OrbitState;
+    const farther = h.onWheel!(0, 0, 100, state).camera as OrbitState;
+
+    expect(closer.distance).toBe(3);
+    expect(farther.distance).toBe(8);
+    expect(start.distance).toBe(5);
+  });
 });

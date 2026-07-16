@@ -1,7 +1,10 @@
 import type { Handle, ParamValue, PlainState, Schema } from "@narrable/core";
+import { orbitHandle } from "@narrable/ingredients";
 import type { SceneContext, SceneInstance, SceneModule } from "@narrable/player";
 import { draw } from "./drawing.js";
+import { buildFrame } from "./frame.js";
 import { DOMAIN, MAX_STEPS } from "./model.js";
+import { OptimizerThreeView } from "./three-view.js";
 import { landscapeBox, sliderBox, SLIDERS, stepBox, toggleBox, TOGGLES, type View } from "./view.js";
 
 const sharedScalar = (range: [number, number], value: number, label: string) => ({
@@ -26,6 +29,13 @@ export const schema: Schema = {
   roughness: sharedScalar([0, 0.35], 0, "ripple amplitude"),
   "start.x": sharedScalar([-DOMAIN, 0], -1.65, "mirrored start x-coordinate"),
   "start.y": sharedScalar([0, DOMAIN], 1.15, "mirrored start y-coordinate"),
+  camera: {
+    type: { kind: "orbit" },
+    default: { target: [0, 0.55, 0], distance: 7.2, azimuth: -0.72, elevation: 0.55 },
+    interpolate: "orbit",
+    ownership: "viewer",
+    label: "3D loss-surface camera",
+  },
   step: sharedScalar([0, MAX_STEPS], 40, "optimizer step"),
   "active.sgd": sharedBoolean(true, "show SGD"),
   "active.momentum": sharedBoolean(false, "show SGD with momentum"),
@@ -48,40 +58,61 @@ export const scene: SceneModule = {
   schema,
   create(ctx: SceneContext): SceneInstance {
     const g = ctx.canvas.getContext("2d")!;
+    const threeView = ctx.canvas.ownerDocument ? new OptimizerThreeView(ctx.canvas, ctx.overlay) : undefined;
     const removeTheme = applyNightTheme(ctx);
     return {
       render(state) {
-        draw(g, ctx.viewport(), state);
+        const view = ctx.viewport();
+        const frame = buildFrame(state);
+        draw(g, view, state, frame);
+        threeView?.render(frame, state, view);
       },
-      handles: () => handles(ctx.viewport),
-      dispose: removeTheme,
+      handles: () => handles(ctx.viewport, threeView),
+      dispose() {
+        threeView?.dispose();
+        removeTheme();
+      },
     };
   },
 };
 
-function handles(viewport: () => View): Handle[] {
+function handles(viewport: () => View, threeView?: OptimizerThreeView): Handle[] {
   return [
-    startHandle(viewport),
+    startHandle(viewport, threeView),
     ...SLIDERS.map((definition) => sliderHandle(viewport, definition.param, definition.range)),
     stepHandle(viewport),
     ...TOGGLES.map((toggle, index) => toggleHandle(viewport, toggle.param, index)),
+    orbitHandle({
+      speed: 0.004,
+      minElevation: 0.12,
+      maxElevation: 1.35,
+      zoomSpeed: 0.0015,
+      minDistance: 4.2,
+      maxDistance: 10,
+      hitTest(px, py) {
+        const box = landscapeBox(viewport());
+        return px >= box.x && px <= box.x + box.width && py >= box.y && py <= box.y + box.height;
+      },
+    }),
   ];
 }
 
-function startHandle(viewport: () => View): Handle {
+function startHandle(viewport: () => View, threeView?: OptimizerThreeView): Handle {
   return {
     id: "start",
     params: ["start.x", "start.y"],
     hitTest(px, py, state) {
+      if (!threeView) return false;
+      const point = threeView.projectStart(state, viewport());
       const box = landscapeBox(viewport());
-      const point = toScreen(box, state["start.x"] as number, state["start.y"] as number);
+      if (px < box.x || px > box.x + box.width || py < box.y || py > box.y + box.height) return false;
       return Math.hypot(px - point.x, py - point.y) < box.width * 0.06;
     },
-    onDrag(px, py) {
-      const box = landscapeBox(viewport());
+    onDrag(px, py, state) {
+      const point = threeView?.pickSurface(px, py, state, viewport());
       return {
-        "start.x": clamp(((px - box.x) / box.width) * DOMAIN * 2 - DOMAIN, -DOMAIN, 0),
-        "start.y": clamp(DOMAIN - ((py - box.y) / box.height) * DOMAIN * 2, 0, DOMAIN),
+        "start.x": point?.x ?? (state["start.x"] as number),
+        "start.y": point?.y ?? (state["start.y"] as number),
       };
     },
   };
@@ -138,10 +169,6 @@ function toggleHandle(viewport: () => View, param: string, index: number): Handl
       return { [param]: next };
     },
   };
-}
-
-function toScreen(box: { x: number; y: number; width: number; height: number }, x: number, y: number) {
-  return { x: box.x + ((x + DOMAIN) / (DOMAIN * 2)) * box.width, y: box.y + ((DOMAIN - y) / (DOMAIN * 2)) * box.height };
 }
 
 function clamp(value: number, lo: number, hi: number): number {

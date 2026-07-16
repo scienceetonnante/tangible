@@ -1,193 +1,33 @@
 import type { PlainState } from "@narrable/core";
 import { drawControls, drawStep } from "./controls.js";
-import {
-  DOMAIN,
-  MAX_STEPS,
-  loss,
-  sample,
-  simulate,
-  symmetricProblem,
-  type OptimizerName,
-  type OptimizerSettings,
-  type Problem,
-  type Trajectory,
-} from "./model.js";
+import type { OptimizerFrame } from "./frame.js";
+import { MAX_STEPS, type Trajectory } from "./model.js";
 import { landscapeBox, lossPlotBox, SERIES, type View } from "./view.js";
 
 const BACKGROUND = "#050609";
 const FOREGROUND = "#f5f7fa";
 const MUTED = "#9aa3af";
-const OPTIMIZERS: OptimizerName[] = ["sgd", "momentum", "adamw"];
-let terrainCache: { key: string; document: Document; canvas: HTMLCanvasElement } | undefined;
 
-export function draw(g: CanvasRenderingContext2D, view: View, state: Readonly<PlainState>): void {
-  const problem: Problem = {
-    kappa: number(state, "kappa"),
-    roughness: number(state, "roughness"),
-    startX: number(state, "start.x"),
-    startY: number(state, "start.y"),
-  };
-  const settings: OptimizerSettings = {
-    sgdLr: number(state, "sgd.lr"),
-    momentumLr: number(state, "momentum.lr"),
-    momentumBeta: number(state, "momentum.beta"),
-    adamwLr: number(state, "adamw.lr"),
-  };
-  const trajectories = OPTIMIZERS.filter((name) => state[`active.${name}`] as boolean).map((name) =>
-    simulate(name, symmetricProblem(name, problem), settings),
-  );
-  const step = number(state, "step");
-
+export function draw(g: CanvasRenderingContext2D, view: View, state: Readonly<PlainState>, frame: OptimizerFrame): void {
   g.clearRect(0, 0, view.width, view.height);
   g.fillStyle = BACKGROUND;
   g.fillRect(0, 0, view.width, view.height);
   g.lineJoin = "round";
   g.lineCap = "round";
-  drawLandscape(g, view, state, problem, trajectories, step);
-  drawLossPlot(g, view, trajectories, step);
-  drawControls(g, view, state, trajectories);
-  drawStep(g, view, step);
+  drawLandscapeLabels(g, view);
+  drawLossPlot(g, view, frame.trajectories, frame.step);
+  drawControls(g, view, state, frame.trajectories);
+  drawStep(g, view, frame.step);
 }
 
-function drawLandscape(
-  g: CanvasRenderingContext2D,
-  view: View,
-  state: Readonly<PlainState>,
-  problem: Problem,
-  trajectories: Trajectory[],
-  step: number,
-): void {
+function drawLandscapeLabels(g: CanvasRenderingContext2D, view: View): void {
   const box = landscapeBox(view);
-  drawTerrain(g, box, problem);
-
-  g.save();
-  g.beginPath();
-  g.rect(box.x, box.y, box.width, box.height);
-  g.clip();
-  drawGrid(g, box);
-  for (const trajectory of trajectories) drawTrajectory(g, box, trajectory, step);
-  g.restore();
-
-  drawStartPucks(g, box, state, problem);
-  g.strokeStyle = "rgba(255, 255, 255, 0.48)";
-  g.lineWidth = box.width * 0.004;
-  g.strokeRect(box.x, box.y, box.width, box.height);
-
   const unit = Math.min(view.width, view.height);
-  const origin = screenPoint(box, 0, 0);
   g.fillStyle = MUTED;
   g.font = `${unit * 0.019}px sans-serif`;
   g.textAlign = "left";
   g.textBaseline = "bottom";
-  g.fillText("w₁", box.x + box.width + unit * 0.007, origin.y);
-  g.fillText("w₂", origin.x + unit * 0.007, box.y + unit * 0.022);
-}
-
-function drawTerrain(g: CanvasRenderingContext2D, box: ReturnType<typeof landscapeBox>, problem: Problem): void {
-  const document = g.canvas?.ownerDocument;
-  if (!document) {
-    paintTerrain(g, box, problem);
-    return;
-  }
-  const width = Math.ceil(box.width);
-  const height = Math.ceil(box.height);
-  const key = `${width}:${height}:${problem.kappa.toFixed(4)}:${problem.roughness.toFixed(4)}`;
-  if (!terrainCache || terrainCache.key !== key || terrainCache.document !== document) {
-    const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = height;
-    paintTerrain(canvas.getContext("2d")!, { x: 0, y: 0, width, height }, problem);
-    terrainCache = { key, document, canvas };
-  }
-  g.drawImage(terrainCache.canvas, box.x, box.y, box.width, box.height);
-}
-
-function paintTerrain(g: CanvasRenderingContext2D, box: ReturnType<typeof landscapeBox>, problem: Problem): void {
-  const cells = 48;
-  const cell = box.width / cells;
-  const maxLoss = loss(DOMAIN, DOMAIN, problem);
-  for (let row = 0; row < cells; row++) {
-    for (let column = 0; column < cells; column++) {
-      const x = -DOMAIN + ((column + 0.5) / cells) * DOMAIN * 2;
-      const y = DOMAIN - ((row + 0.5) / cells) * DOMAIN * 2;
-      const level = Math.log1p(loss(x, y, problem)) / Math.log1p(maxLoss);
-      const lightness = 8 + (1 - level) ** 1.35 * 84;
-      g.fillStyle = `hsl(212 58% ${lightness}%)`;
-      g.fillRect(box.x + column * cell, box.y + row * cell, cell + 0.6, cell + 0.6);
-    }
-  }
-}
-
-function drawGrid(g: CanvasRenderingContext2D, box: ReturnType<typeof landscapeBox>): void {
-  g.strokeStyle = "rgba(255, 255, 255, 0.1)";
-  g.lineWidth = box.width * 0.002;
-  for (let index = 0; index <= 20; index++) {
-    const value = -DOMAIN + (index / 20) * DOMAIN * 2;
-    const point = screenPoint(box, value, value);
-    line(g, point.x, box.y, point.x, box.y + box.height);
-    line(g, box.x, point.y, box.x + box.width, point.y);
-  }
-  const origin = screenPoint(box, 0, 0);
-  g.strokeStyle = "rgba(255, 255, 255, 0.48)";
-  g.lineWidth = box.width * 0.004;
-  line(g, box.x, origin.y, box.x + box.width, origin.y);
-  line(g, origin.x, box.y, origin.x, box.y + box.height);
-}
-
-function drawStartPucks(
-  g: CanvasRenderingContext2D,
-  box: ReturnType<typeof landscapeBox>,
-  state: Readonly<PlainState>,
-  problem: Problem,
-): void {
-  for (const name of OPTIMIZERS) {
-    const start = symmetricProblem(name, problem);
-    const point = screenPoint(box, start.startX, start.startY);
-    const active = state[`active.${name}`] as boolean;
-    g.fillStyle = active ? FOREGROUND : "#171a20";
-    g.strokeStyle = active ? SERIES[name].color : "#505660";
-    g.lineWidth = box.width * 0.011;
-    disc(g, point.x, point.y, box.width * 0.026);
-    g.fill();
-    g.stroke();
-  }
-}
-
-function drawTrajectory(
-  g: CanvasRenderingContext2D,
-  box: ReturnType<typeof landscapeBox>,
-  trajectory: Trajectory,
-  step: number,
-): void {
-  const shownStep = Math.min(step, trajectory.points.length - 1);
-  const wholeSteps = Math.floor(shownStep);
-  const first = screenPoint(box, trajectory.points[0]!.x, trajectory.points[0]!.y);
-  g.beginPath();
-  g.moveTo(first.x, first.y);
-  for (let index = 1; index <= wholeSteps; index++) {
-    const point = trajectory.points[index]!;
-    const screen = screenPoint(box, point.x, point.y);
-    g.lineTo(screen.x, screen.y);
-  }
-  if (shownStep > wholeSteps) {
-    const point = sample(trajectory, shownStep);
-    const screen = screenPoint(box, point.x, point.y);
-    g.lineTo(screen.x, screen.y);
-  }
-  g.strokeStyle = SERIES[trajectory.name].color;
-  g.lineWidth = box.width * 0.014;
-  g.stroke();
-
-  const current = sample(trajectory, shownStep);
-  const head = screenPoint(box, clamp(current.x, -DOMAIN, DOMAIN), clamp(current.y, -DOMAIN, DOMAIN));
-  drawMarker(g, trajectory.name, head.x, head.y, box.width * 0.024);
-  if (trajectory.divergedAt !== undefined && step >= trajectory.divergedAt) {
-    g.fillStyle = FOREGROUND;
-    g.font = `500 ${box.width * 0.065}px sans-serif`;
-    g.textAlign = "center";
-    g.textBaseline = "middle";
-    g.fillText("×", head.x, head.y);
-  }
+  g.fillText("drag to orbit · scroll to zoom", box.x, box.y - unit * 0.014);
 }
 
 function drawLossPlot(g: CanvasRenderingContext2D, view: View, trajectories: Trajectory[], step: number): void {
@@ -226,39 +66,11 @@ function drawLossPlot(g: CanvasRenderingContext2D, view: View, trajectories: Tra
   line(g, xAt(step), top, xAt(step), bottom);
 }
 
-function drawMarker(g: CanvasRenderingContext2D, name: OptimizerName, x: number, y: number, radius: number): void {
-  g.fillStyle = SERIES[name].color;
-  g.beginPath();
-  if (name === "sgd") g.arc(x, y, radius, 0, Math.PI * 2);
-  else if (name === "momentum") g.rect(x - radius, y - radius, radius * 2, radius * 2);
-  else {
-    g.moveTo(x, y - radius * 1.3);
-    g.lineTo(x + radius * 1.3, y);
-    g.lineTo(x, y + radius * 1.3);
-    g.lineTo(x - radius * 1.3, y);
-    g.closePath();
-  }
-  g.fill();
-}
-
-function screenPoint(box: ReturnType<typeof landscapeBox>, x: number, y: number) {
-  return { x: box.x + ((x + DOMAIN) / (DOMAIN * 2)) * box.width, y: box.y + ((DOMAIN - y) / (DOMAIN * 2)) * box.height };
-}
-
-function number(state: Readonly<PlainState>, key: string): number {
-  return state[key] as number;
-}
-
 function line(g: CanvasRenderingContext2D, x1: number, y1: number, x2: number, y2: number): void {
   g.beginPath();
   g.moveTo(x1, y1);
   g.lineTo(x2, y2);
   g.stroke();
-}
-
-function disc(g: CanvasRenderingContext2D, x: number, y: number, radius: number): void {
-  g.beginPath();
-  g.arc(x, y, radius, 0, Math.PI * 2);
 }
 
 function clamp(value: number, lo: number, hi: number): number {

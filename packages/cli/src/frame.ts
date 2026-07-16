@@ -24,7 +24,7 @@ export async function renderFrame(siteDir: string, opts: FrameOptions): Promise<
     const langQ = opts.lang ? `&lang=${opts.lang}` : "";
     await page.goto(`http://localhost:${port}/?t=${opts.t}&nochrome${langQ}`);
     await page.waitForFunction(() => (globalThis as unknown as { __player?: { clock: unknown } }).__player?.clock !== undefined);
-    await page.waitForTimeout(200); // let the seek + a render frame settle
+    await page.waitForTimeout(500); // let the seek and WebGL compositor settle
     await page.screenshot({ path: opts.out });
   } finally {
     await browser.close();

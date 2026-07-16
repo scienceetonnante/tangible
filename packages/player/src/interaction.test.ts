@@ -64,4 +64,24 @@ describe("InteractionManager", () => {
     canvas.dispatchEvent(ptr("pointermove", 50, 50));
     expect(store.meta.get("theta")!.touchedEver).toBe(false);
   });
+
+  it("routes wheel input to the first matching wheel handle", () => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 400;
+    canvas.height = 400;
+    const store = new StateStore(schema);
+    const clock = new AudioClock(new FakeMedia());
+    const wheelHandle: Handle = {
+      ...testHandle,
+      hitTest: () => true,
+      onWheel: (_px, _py, deltaY) => ({ theta: deltaY / 100 }),
+    };
+    new InteractionManager(canvas, { handles: () => [wheelHandle] }, store, clock, () => 1);
+
+    const event = new WheelEvent("wheel", { clientX: 200, clientY: 200, deltaY: 50, cancelable: true });
+    canvas.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(store.meta.get("theta")!.userValue).toBeCloseTo(0.5, 9);
+  });
 });

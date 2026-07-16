@@ -26,6 +26,7 @@ export class InteractionManager {
     canvas.addEventListener("pointermove", this.onMove);
     canvas.addEventListener("pointerup", this.onUp);
     canvas.addEventListener("pointercancel", this.onUp);
+    canvas.addEventListener("wheel", this.onWheel, { passive: false });
   }
 
   dispose(): void {
@@ -33,9 +34,10 @@ export class InteractionManager {
     this.canvas.removeEventListener("pointermove", this.onMove);
     this.canvas.removeEventListener("pointerup", this.onUp);
     this.canvas.removeEventListener("pointercancel", this.onUp);
+    this.canvas.removeEventListener("wheel", this.onWheel);
   }
 
-  private toCanvas(e: PointerEvent): [number, number] {
+  private toCanvas(e: Pick<MouseEvent, "clientX" | "clientY">): [number, number] {
     const r = this.canvas.getBoundingClientRect();
     const sx = r.width ? this.canvas.width / r.width : 1;
     const sy = r.height ? this.canvas.height / r.height : 1;
@@ -66,6 +68,16 @@ export class InteractionManager {
     for (const p of this.active.params) this.store.setDragging(p, false);
     this.canvas.releasePointerCapture?.(e.pointerId);
     this.active = undefined;
+  };
+
+  private onWheel = (e: WheelEvent) => {
+    const [px, py] = this.toCanvas(e);
+    for (const h of this.target.handles()) {
+      if (!h.onWheel || !h.hitTest(px, py, this.store.plain)) continue;
+      e.preventDefault();
+      this.write(h.onWheel(px, py, e.deltaY, this.store.plain));
+      break;
+    }
   };
 
   private write(writes: Record<string, ParamValue>): void {

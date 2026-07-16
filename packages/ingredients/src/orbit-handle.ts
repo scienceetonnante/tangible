@@ -8,6 +8,10 @@ export interface OrbitHandleOptions {
   speed?: number; // radians per pixel; default 0.01
   minElevation?: number; // default -1.5 (~ -86°)
   maxElevation?: number; // default 1.5
+  hitTest?: Handle["hitTest"]; // default whole canvas
+  zoomSpeed?: number; // exponential distance change per wheel delta
+  minDistance?: number;
+  maxDistance?: number;
 }
 
 export function orbitHandle(opts: OrbitHandleOptions = {}): Handle {
@@ -15,6 +19,8 @@ export function orbitHandle(opts: OrbitHandleOptions = {}): Handle {
   const speed = opts.speed ?? 0.01;
   const minEl = opts.minElevation ?? -1.5;
   const maxEl = opts.maxElevation ?? 1.5;
+  const hitTest = opts.hitTest ?? (() => true);
+  const zoomSpeed = opts.zoomSpeed;
 
   let startX = 0;
   let startY = 0;
@@ -23,7 +29,7 @@ export function orbitHandle(opts: OrbitHandleOptions = {}): Handle {
   return {
     id: "camera-orbit",
     params: [param],
-    hitTest: () => true, // background drag; scenes list specific handles before this
+    hitTest, // background drag; scenes list specific handles before this
     onDown(px, py, state) {
       startX = px;
       startY = py;
@@ -35,5 +41,17 @@ export function orbitHandle(opts: OrbitHandleOptions = {}): Handle {
       const elevation = Math.min(maxEl, Math.max(minEl, start.elevation + (py - startY) * speed));
       return { [param]: { target: [...start.target], distance: start.distance, azimuth, elevation } };
     },
+    ...(zoomSpeed === undefined
+      ? {}
+      : {
+          onWheel(_px, _py, deltaY, state) {
+            const orbit = state[param] as OrbitState;
+            const distance = Math.min(
+              opts.maxDistance ?? Infinity,
+              Math.max(opts.minDistance ?? 0, orbit.distance * Math.exp(deltaY * zoomSpeed)),
+            );
+            return { [param]: { ...orbit, target: [...orbit.target] as [number, number, number], distance } };
+          },
+        }),
   };
 }

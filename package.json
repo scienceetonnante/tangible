@@ -20,11 +20,16 @@
   "devDependencies": {
     "@playwright/test": "^1.49.1",
     "@types/node": "^22.10.2",
+    "@types/three": "^0.185.1",
     "esbuild": "^0.24.0",
     "eslint": "^9.17.0",
     "jsdom": "^25.0.1",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.18.1",
     "vitest": "^2.1.8"
+  },
+  "dependencies": {
+    "@narrable/ingredients": "workspace:*",
+    "three": "^0.185.1"
   }
 }
