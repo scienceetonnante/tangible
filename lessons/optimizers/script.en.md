@@ -5,6 +5,7 @@ language: en
 
 @scene(landscape)
 @chapter(The easy bowl)
+@camera(pathView)
 
 This square is a top-down map of a loss surface. Darker means higher
 loss; the pale center is the minimum. The white puck is one shared
@@ -12,16 +13,16 @@ starting point, and the orange trail is plain gradient descent: the
 geometry underneath SGD, shown without minibatch noise so it stays easy
 to read. Below it, the loss plot uses the same color.
 
-On this round bowl, every direction has the same curvature.
-@cue(step -> 60, over: 4s) Step by step, SGD takes a clean route into
+@camera(roundBowlView, over: 2.5s) On this round bowl, every direction has the same curvature.
+@camera(pathView, over: 2.5s) @cue(step -> 60, over: 4s) Step by step, SGD takes a clean route into
 the center. Nothing about this problem asks the optimizer to treat one
 direction differently from another.
 
 @chapter(Conditioning)
 
-Now I will change the problem without touching SGD's learning rate.
+@camera(ravineView, over: 3s) Now I will change the problem without touching SGD's learning rate.
 @cue(step = 0, kappa -> 24, over: 4s) As kappa rises, the bowl becomes
-a narrow ravine. In this top-down view, the bands squeeze together
+a narrow ravine. @camera(pathView, over: 1.5s) In this top-down view, the bands squeeze together
 vertically: the vertical direction is now much steeper than the
 horizontal one.
 
@@ -58,12 +59,12 @@ update rules made visible.
 
 @chapter(A different kind of hard)
 
-Conditioning is not the only difficulty. @cue(kappa -> 1, roughness -> 0.28, step = 0, over: 3s)
+Conditioning is not the only difficulty. @camera(roughnessView, over: 3s) @cue(kappa -> 1, roughness -> 0.28, step = 0, over: 3s)
 I have rounded the bowl again, then added ripples along the route to the
 minimum. This knob is independent of kappa: it adds local troughs
 without squeezing the two coordinate scales apart.
 
-@cue(step -> 60, over: 5s) Plain SGD settles into a ripple. The other
+@camera(pathView, over: 2.5s) @cue(step -> 60, over: 5s) Plain SGD settles into a ripple. The other
 paths carry enough history or adaptive scaling to cross this particular
 bump. That does not make either optimizer universally better. It shows
 that a change designed for one failure mode can also change how the
@@ -71,9 +72,9 @@ optimizer behaves on another.
 
 @chapter(The price of stability)
 
-Return to a smooth but harsher ravine. @cue(roughness -> 0, kappa -> 32, step = 0, over: 3s)
+@camera(ravineView, over: 3s) Return to a smooth but harsher ravine. @cue(roughness -> 0, kappa -> 32, step = 0, over: 3s)
 SGD still has exactly the learning rate it started with.
-@cue(step -> 40, over: 4s) This time the orange path does not merely
+@camera(pathView, over: 2.5s) @cue(step -> 40, over: 4s) This time the orange path does not merely
 zigzag. It grows until it leaves the map: divergence.
 
 @pause(prompt: "Rescue SGD by lowering its learning rate, then move the matched-step slider forward. Notice what stability costs in speed along the flat direction.")

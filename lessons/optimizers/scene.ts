@@ -1,4 +1,4 @@
-import type { Handle, ParamValue, PlainState, Schema } from "@narrable/core";
+import type { Handle, OrbitState, ParamValue, PlainState, Schema } from "@narrable/core";
 import { orbitHandle } from "@narrable/ingredients";
 import type { SceneContext, SceneInstance, SceneModule } from "@narrable/player";
 import { draw } from "./drawing.js";
@@ -23,6 +23,15 @@ const scriptBoolean = (value: boolean, label: string) => ({
   label,
 });
 
+const pathView: OrbitState = { target: [0, 0.4, 0], distance: 7.4, azimuth: -0.15, elevation: 1.22 };
+
+export const presets: Record<string, Record<string, ParamValue>> = {
+  pathView: { camera: pathView },
+  roundBowlView: { camera: { target: [0, 0.55, 0], distance: 7, azimuth: -0.72, elevation: 0.48 } },
+  ravineView: { camera: { target: [0, 0.65, 0], distance: 6.8, azimuth: 1.05, elevation: 0.36 } },
+  roughnessView: { camera: { target: [0, 0.55, 0], distance: 6.8, azimuth: 0.05, elevation: 0.34 } },
+};
+
 export const schema: Schema = {
   scene: { type: { kind: "enum", values: ["landscape"] }, default: "landscape", interpolate: "snap", ownership: "script" },
   kappa: scriptScalar([1, 40], 1, "condition number κ"),
@@ -31,9 +40,9 @@ export const schema: Schema = {
   "start.y": scriptScalar([-DOMAIN, DOMAIN], 1.15, "shared start y-coordinate"),
   camera: {
     type: { kind: "orbit" },
-    default: { target: [0, 0.55, 0], distance: 7.2, azimuth: -0.72, elevation: 0.55 },
+    default: pathView,
     interpolate: "orbit",
-    ownership: "viewer",
+    ownership: "script",
     label: "3D loss-surface camera",
   },
   step: scriptScalar([0, MAX_STEPS], 40, "optimizer step"),
@@ -56,6 +65,7 @@ export const constants: Record<string, number | number[]> = { MAX_STEPS };
 
 export const scene: SceneModule = {
   schema,
+  presets,
   create(ctx: SceneContext): SceneInstance {
     const g = ctx.canvas.getContext("2d")!;
     const threeView = ctx.canvas.ownerDocument ? new OptimizerThreeView(ctx.canvas, ctx.overlay) : undefined;

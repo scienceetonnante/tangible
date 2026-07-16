@@ -2,7 +2,7 @@ import { buildIndex, type PlainState } from "../../packages/core/src/index.js";
 import { Reconciler } from "../../packages/player/src/reconciler.js";
 import { StateStore } from "../../packages/player/src/store.js";
 import { describe, expect, it } from "vitest";
-import { scene, schema } from "./scene.js";
+import { presets, scene, schema } from "./scene.js";
 import { landscapeBox, sliderBox, SLIDERS } from "./view.js";
 
 function recordingContext() {
@@ -53,13 +53,43 @@ describe("optimizer scene", () => {
     expect(store.plain["sgd.lr"]).toBeCloseTo(schema["sgd.lr"]!.default as number, 3);
   });
 
-  it("uses catch-up ownership for controls and persistent ownership only for the camera", () => {
+  it("returns a learner-moved camera to the scripted shot", () => {
+    const scripted = defaultState();
+    const store = new StateStore(schema);
+    const reconciler = new Reconciler(store, buildIndex({}, schema), schema, { hold: 3, tau: 0.2 });
+    const moved = presets.ravineView!.camera!;
+
+    store.touch("camera", moved, 0, 0);
+    reconciler.reconcile(scripted, 0, 2, 0.016);
+    expect(store.plain.camera).toEqual(moved);
+
+    reconciler.reconcile(scripted, 0, 3.1, 0.1);
+    const returning = store.plain.camera as { elevation: number };
+    expect(returning.elevation).toBeGreaterThan((moved as { elevation: number }).elevation);
+    expect(returning.elevation).toBeLessThan((schema.camera.default as { elevation: number }).elevation);
+
+    reconciler.reconcile(scripted, 0, 5.1, 2);
+    expect((store.plain.camera as { elevation: number }).elevation).toBeCloseTo(
+      (schema.camera.default as { elevation: number }).elevation,
+      3,
+    );
+  });
+
+  it("returns every learner-controlled value, including the camera, to the narration", () => {
     const { created } = instance();
     const parameters = new Set(created.handles().flatMap((handle) => handle.params));
-    parameters.delete("camera");
 
     for (const parameter of parameters) expect(schema[parameter]!.ownership).toBe("script");
-    expect(schema.camera.ownership).toBe("viewer");
+  });
+
+  it("defines low terrain shots and a near-top path shot", () => {
+    const camera = (name: string) => presets[name]!.camera as { elevation: number };
+
+    expect(camera("pathView").elevation).toBeGreaterThan(1.1);
+    for (const name of ["roundBowlView", "ravineView", "roughnessView"]) {
+      expect(camera(name).elevation).toBeLessThan(0.6);
+    }
+    expect(scene.presets).toBe(presets);
   });
 
   it("renders the terrain, trajectories, plots, and controls", () => {
@@ -81,12 +111,11 @@ describe("optimizer scene", () => {
     expect(created.handles()).toHaveLength(12);
   });
 
-  it("keeps the camera viewer-owned and confines navigation to the landscape", () => {
+  it("confines camera navigation to the landscape", () => {
     const { created } = instance();
     const camera = created.handles().find((handle) => handle.id === "camera-orbit")!;
     const box = landscapeBox({ width: 1000, height: 600 });
 
-    expect(schema.camera.ownership).toBe("viewer");
     expect(camera.hitTest(box.x + box.width / 2, box.y + box.height / 2, defaultState())).toBe(true);
     expect(camera.hitTest(900, 500, defaultState())).toBe(false);
     expect(camera.onWheel).toBeTypeOf("function");
