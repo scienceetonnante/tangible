@@ -7,15 +7,16 @@ in [DESIGN.md](./DESIGN.md), especially §10.
 ## Starting point
 
 The current baseline includes the completed M-bake compiler milestone: the bilingual
-unit-circle lesson is deployed, and backpropagation uses its real gradient-descent
-function for three build-time computed steps. The hermetic unit and dual-browser
-end-to-end suites are green.
+unit-circle lesson is deployed, backpropagation uses its real gradient-descent
+function for three build-time computed steps, and the optimizer lesson uses a
+lesson-local Three.js viewport. The hermetic unit and dual-browser end-to-end suites
+are green.
 
 The next phases are deliberately ordered by unresolved product risk:
 
 1. **Backprop release** — prove M-bake in a real-voice deployed lesson.
 2. **M4** — add performance capture for spatial choreography.
-3. **M5** — prove the renderer and abstractions on a 3D lesson.
+3. **M5** — turn the lesson-local 3D proof into reusable renderer abstractions.
 
 ## Decisions for upcoming work
 
@@ -25,7 +26,7 @@ The next phases are deliberately ordered by unresolved product risk:
 - Keep pnpm workspaces, direct `<audio>`, binary-search track lookup, sentence-level
   captions, and full-page preview reload until a measured problem justifies change.
 - M4 is development tooling. Recorded JSON tracks may ship; the recording UI may not.
-- The 3D milestone creates the third authored lesson, after unit-circle and backprop.
+- The reusable 3D milestone remains distinct from the optimizer lesson's local hybrid renderer.
 
 ## Backprop release
 
@@ -62,12 +63,13 @@ without shipping the recording UI.
 
 ---
 
-## M5 — ingredients and first 3D lesson
+## M5 — reusable 3D scene host and spatial lesson
 
-- Add the three.js scene-host path.
+- Add a reusable three.js scene-host path; the optimizer currently owns its WebGL
+  overlay directly.
 - Grow ingredients only as demanded by the lesson: axes, grids, vectors, draggable
   points on curves/spheres, linked plot highlights, and scrub-able KaTeX numbers.
-- Author the first 3D lesson, exercising orbit cameras, quaternion parameters, nlerp,
+- Author a spatial 3D lesson, exercising orbit cameras, quaternion parameters, nlerp,
   recorded camera choreography, and touch interaction.
 - Measure which platform files changed and document the resulting v0.2 refactor,
   targeting less than 30% platform churn.
