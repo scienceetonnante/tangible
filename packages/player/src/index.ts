@@ -9,6 +9,8 @@ export * from "./board.js";
 export * from "./captions.js";
 export * from "./pause-gate.js";
 export * from "./chrome.js";
+export * from "./answer-timeline.js";
+export * from "./assistant-panel.js";
 export * from "./url.js";
 export * from "./player.js";
 export * from "./styles.js";

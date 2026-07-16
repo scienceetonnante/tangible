@@ -2,7 +2,7 @@
 // host, reconciler, interaction, board, captions, pause gates, and chrome. One
 // Player per lesson page (DESIGN §5.4).
 
-import { buildIndex, type LessonTracks, type Schema, type PlainState, type TrackIndex } from "@narrable/core";
+import { buildIndex, type AssistantContext, type AssistantRequest, type AssistantResponse, type LessonTracks, type Schema, type PlainState, type TrackIndex } from "@narrable/core";
 import { AudioClock } from "./clock.js";
 import { StateStore } from "./store.js";
 import { TimelineDriver } from "./timeline.js";
@@ -14,6 +14,8 @@ import { Captions } from "./captions.js";
 import { PauseGate } from "./pause-gate.js";
 import { Chrome } from "./chrome.js";
 import { parseDevParams } from "./url.js";
+import { AnswerTimeline } from "./answer-timeline.js";
+import { AssistantPanel } from "./assistant-panel.js";
 
 declare global {
   interface Window {
@@ -29,10 +31,25 @@ export interface PlayerOptions {
   audioSrc?: string[];
   baseUrl?: string;
   chrome?: boolean; // default true
+  assistant?: {
+    context: AssistantContext;
+    endpoint?: string;
+    fetchImpl?: typeof fetch;
+    createAudio?: () => HTMLAudioElement;
+  };
+}
+
+interface ActiveAnswer {
+  audio: HTMLAudioElement;
+  timeline: AnswerTimeline;
+  state: PlainState;
+  claimed: Set<string>;
+  url: string;
 }
 
 export class Player {
   readonly store: StateStore;
+  readonly displayStore: StateStore;
   readonly clock: AudioClock;
   readonly driver: TimelineDriver;
   readonly host: SceneHost;
@@ -43,21 +60,30 @@ export class Player {
   readonly pauseGate: PauseGate;
   readonly chrome?: Chrome;
   readonly audio: HTMLAudioElement;
+  readonly assistant?: AssistantPanel;
 
   private canvas: HTMLCanvasElement;
   private container: HTMLElement;
+  private shell: HTMLElement;
   private index: TrackIndex;
   private lastFrameT = 0;
   private dumpState = false;
   private unbindKeys?: () => void;
   private resizeObserver?: ResizeObserver;
+  private activeAnswer?: ActiveAnswer;
+  private answerAbort?: AbortController;
+  private assistantFetch?: typeof fetch;
+  private assistantEndpoint = "/api/answer";
+  private answerAudio?: HTMLAudioElement;
 
   constructor(opts: PlayerOptions) {
     const schema: Schema = { ...opts.scene.schema, ...boardSchema(opts.tracks.tracks) };
     this.index = buildIndex(opts.tracks.tracks, schema);
     this.store = new StateStore(schema);
+    this.displayStore = new StateStore(schema);
 
     // DOM layers, bottom to top.
+    this.shell = el("div", "xv-shell");
     this.container = el("div", "xv-player");
     this.canvas = el("canvas", "") as HTMLCanvasElement;
     const overlay = el("div", "xv-overlay");
@@ -75,13 +101,14 @@ export class Player {
     }
     this.clock = new AudioClock(this.audio);
 
-    this.board = new Board(this.store, opts.tracks.boardItems, opts.tracks.language);
+    this.board = new Board(this.displayStore, opts.tracks.boardItems, opts.tracks.language);
     boardPanel.append(this.board.el);
     this.captions = new Captions(opts.captionsVtt ?? "");
     this.pauseGate = new PauseGate(this.clock, opts.tracks.pauses);
 
     this.container.append(this.canvas, overlay, boardPanel, this.captions.el, this.audio);
-    opts.mount.append(this.container);
+    this.shell.append(this.container);
+    opts.mount.append(this.shell);
     this.resize();
 
     this.host = new SceneHost(opts.scene, {
@@ -91,13 +118,43 @@ export class Player {
     });
     this.reconciler = new Reconciler(this.store, this.index, schema);
     this.driver = new TimelineDriver(this.clock, this.index, this.store, { onFrame: (t) => this.frame(t) }, this.reconciler);
-    this.interaction = new InteractionManager(this.canvas, this.host, this.store, this.clock);
+    this.interaction = new InteractionManager(
+      this.canvas,
+      this.host,
+      this.store,
+      this.clock,
+      undefined,
+      () => this.displayStore.plain,
+      (param) => this.activeAnswer?.claimed.add(param),
+    );
 
     const dev = parseDevParams(typeof location !== "undefined" ? location.search : "");
     if (opts.chrome !== false && !dev.nochrome) {
       this.chrome = new Chrome(this.clock, opts.tracks, { onCaptionsToggle: (on) => this.captions.setVisible(on) });
       this.container.append(this.chrome.el);
       this.unbindKeys = this.chrome.bindKeys();
+    }
+    if (opts.assistant) {
+      this.assistantFetch = opts.assistant.fetchImpl ?? fetch;
+      this.assistantEndpoint = opts.assistant.endpoint ?? "/api/answer";
+      this.answerAudio = opts.assistant.createAudio?.() ?? document.createElement("audio");
+      this.answerAudio.className = "xv-answer-audio";
+      this.container.append(this.answerAudio);
+      this.assistant = new AssistantPanel({
+        onAsk: (question) => void this.ask(question, opts.assistant!.context),
+        onCancel: () => this.cancelAnswer(),
+        onPlayAnswer: () => this.playAnswer(),
+      });
+      this.shell.append(this.assistant.el);
+      let hasPlayed = false;
+      this.clock.on("play", () => {
+        hasPlayed = true;
+        if (this.activeAnswer || this.answerAbort) this.cancelAnswer();
+        this.assistant?.setPauseEnabled(false);
+      });
+      this.clock.on("pause", () => {
+        if (hasPlayed) this.assistant?.setPauseEnabled(true);
+      });
     }
     if (dev.state) this.dumpState = true;
     if (dev.t !== undefined) {
@@ -127,17 +184,102 @@ export class Player {
     this.unbindKeys?.();
     this.board.dispose();
     this.host.dispose();
-    this.container.remove();
+    this.cancelAnswer();
+    this.shell.remove();
   }
 
   private frame(t: number): void {
     const dt = Math.max(0, t - this.lastFrameT);
     this.lastFrameT = t;
-    this.host.render(this.store.plain, dt);
+    for (const key of this.store.keys()) this.displayStore.set(key, this.store.plain[key]!);
+    if (this.activeAnswer) {
+      const answer = this.activeAnswer.timeline.evaluate(this.activeAnswer.audio.currentTime, this.activeAnswer.state);
+      for (const [param, value] of Object.entries(answer)) {
+        if (!this.activeAnswer.claimed.has(param)) this.displayStore.set(param, value);
+      }
+    }
+    this.host.render(this.displayStore.plain, dt);
     this.captions.update(t);
     this.pauseGate.update(t);
     this.chrome?.update(t);
     if (this.dumpState) window.__XV_STATE__ = { ...this.store.plain };
+  }
+
+  private async ask(question: string, context: AssistantContext): Promise<void> {
+    this.answerAbort = new AbortController();
+    this.assistant!.setBusy(true, "Thinking…");
+    const body: AssistantRequest = {
+      lessonId: context.lessonId,
+      language: context.language,
+      question,
+      t: this.clock.t,
+      state: { ...this.displayStore.plain },
+      history: this.assistant!.history.slice(-8),
+    };
+    try {
+      const response = await this.assistantFetch!(this.assistantEndpoint, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+        signal: this.answerAbort.signal,
+      });
+      if (!response.ok) throw new Error(await response.text());
+      const answer = (await response.json()) as AssistantResponse;
+      if (!answer.answer || !Array.isArray(answer.beats) || !Array.isArray(answer.timedBeats)) throw new Error("invalid assistant response");
+      this.assistant!.addTurn(question, answer.answer, answer.beats);
+      this.startAnswer(answer, context);
+    } catch (error) {
+      if ((error as Error).name !== "AbortError") this.assistant!.fail(`Answer failed: ${(error as Error).message}`);
+    } finally {
+      this.answerAbort = undefined;
+    }
+  }
+
+  private startAnswer(answer: AssistantResponse, context: AssistantContext): void {
+    const bytes = Uint8Array.from(atob(answer.audioBase64), (char) => char.charCodeAt(0));
+    const blob = new Blob([bytes], { type: mimeForAudio(`answer.${answer.audioFormat}`) });
+    const url = URL.createObjectURL(blob);
+    const audio = this.answerAudio!;
+    audio.src = url;
+    audio.currentTime = 0;
+    audio.onended = () => this.finishAnswer();
+    audio.onerror = () => this.finishAnswer("The answer audio could not be played.");
+    const schema: Schema = {};
+    for (const param of context.commandable) schema[param] = context.schema[param]!;
+    this.activeAnswer = {
+      audio,
+      timeline: new AnswerTimeline(schema, this.displayStore.plain, answer.timedBeats),
+      state: {},
+      claimed: new Set(),
+      url,
+    };
+    this.assistant!.setBusy(true, "Answering…");
+    this.playAnswer();
+  }
+
+  private playAnswer(): void {
+    if (!this.activeAnswer) return;
+    void Promise.resolve(this.activeAnswer.audio.play()).catch(() => this.assistant?.showPlayFallback());
+  }
+
+  private finishAnswer(status = ""): void {
+    if (!this.activeAnswer) return;
+    URL.revokeObjectURL(this.activeAnswer.url);
+    this.activeAnswer.audio.onended = null;
+    this.activeAnswer.audio.onerror = null;
+    this.activeAnswer.audio.removeAttribute("src");
+    this.activeAnswer = undefined;
+    this.assistant?.finish(status);
+  }
+
+  private cancelAnswer(): void {
+    this.answerAbort?.abort();
+    if (this.activeAnswer) {
+      this.activeAnswer.audio.pause();
+      this.finishAnswer();
+    } else {
+      this.assistant?.finish("Cancelled");
+    }
   }
 
   private resize(): void {

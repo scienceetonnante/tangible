@@ -123,7 +123,7 @@ export class Chrome {
 
   private toggleFullscreen(): void {
     if (document.fullscreenElement) void document.exitFullscreen();
-    else void this.el.closest(".xv-player")?.requestFullscreen?.();
+    else void (this.el.closest(".xv-shell") ?? this.el.closest(".xv-player"))?.requestFullscreen?.();
   }
 
   private duration(): number {

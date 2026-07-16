@@ -30,6 +30,8 @@ async function main() {
   const base = "./" + lang + "/";
   const tracks = await (await fetch(base + "tracks.json")).json();
   const vtt = await (await fetch(base + "captions.vtt")).text();
+  const assistantResponse = await fetch(base + "assistant.json");
+  const assistant = assistantResponse.ok ? { context: await assistantResponse.json() } : undefined;
   // Fetch audio as an in-memory blob and play from an object URL. Static hosts (e.g.
   // Hugging Face Spaces) serve media stored via Xet/LFS through signed CDN redirects
   // that break Safari's range-based media loader (403 on the redirect); a blob URL
@@ -40,7 +42,7 @@ async function main() {
     audioSrc.push(URL.createObjectURL(new Blob([buf], { type: mimeForAudio(src) })));
   }
   const style = document.createElement("style"); style.textContent = PLAYER_CSS; document.head.append(style);
-  const player = new Player({ mount: document.getElementById("app"), scene, tracks, captionsVtt: vtt, audioSrc, baseUrl: "" });
+  const player = new Player({ mount: document.getElementById("app"), scene, tracks, captionsVtt: vtt, audioSrc, baseUrl: "", assistant });
   window.__player = player;
   player.start();
 }
