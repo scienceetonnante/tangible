@@ -20,7 +20,7 @@ describe("tickFractions", () => {
       chapters: [{ t: 0, title: "a" }, { t: 10, title: "b" }],
       pauses: [{ t: 5, id: "p0", prompt: "x" }],
     } as LessonTracks;
-    expect(tickFractions(tracks)).toEqual({ chapters: [0, 0.5], pauses: [0.25] });
+    expect(tickFractions(tracks)).toEqual({ chapters: [0, 0.5], pauses: [0.275] });
   });
 });
 

@@ -3,6 +3,7 @@
 
 import type { LessonTracks } from "@narrable/core";
 import type { AudioClock } from "./clock.js";
+import { pauseTime } from "./pause-gate.js";
 
 /** m:ss (or h:mm:ss) for the readouts. */
 export function formatTime(sec: number): string {
@@ -18,7 +19,7 @@ export function tickFractions(tracks: LessonTracks): { chapters: number[]; pause
   const d = tracks.duration || 1;
   return {
     chapters: tracks.chapters.map((c) => c.t / d),
-    pauses: tracks.pauses.map((p) => p.t / d),
+    pauses: tracks.pauses.map((p) => pauseTime(p, d) / d),
   };
 }
 

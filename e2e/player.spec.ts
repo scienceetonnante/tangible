@@ -27,7 +27,7 @@ test("seek correctness: browser state matches core evaluation at random times", 
   }
 });
 
-test("playback advances state and the pause gate stops at the checkpoint", async ({ page }) => {
+test("checkpoint pauses after the spoken tail and resumes from the play button", async ({ page }) => {
   await ready(page);
   const pauseT = tracks.pauses[0].t as number;
   await page.evaluate((pt) => {
@@ -36,8 +36,12 @@ test("playback advances state and the pause gate stops at the checkpoint", async
     p.clock.play();
   }, pauseT);
   await page.waitForFunction(() => (window as any).__player.clock.playing === false, null, { timeout: 6000 });
-  const display = await page.evaluate(() => getComputedStyle((window as any).__player.pauseGate.el).display);
-  expect(display).toBe("flex");
+  const stoppedAt = await page.evaluate(() => (window as any).__player.clock.t as number);
+  expect(stoppedAt).toBeCloseTo(pauseT + 0.5, 1);
+  await expect(page.locator(".xv-gate")).toHaveCount(0);
+
+  await page.locator(".xv-play").click();
+  await page.waitForFunction(() => (window as any).__player.clock.playing === true);
 });
 
 test("catch-up: a touched parameter holds, then glides back to scripted", async ({ page }) => {

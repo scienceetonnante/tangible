@@ -100,7 +100,7 @@ describe("parseScript — escapes and edge cases", () => {
     expect(spoken.narration).toBe("Avant.\n\nEssayez vous-même. Après.");
     const silent = parseScript('Avant.\n\n@pause(prompt: "Essayez vous-même.", speak: false)\n\nAprès.');
     expect(silent.narration).toBe("Avant.\n\nAprès.");
-    // The box prompt is parsed either way.
+    // The prompt metadata is parsed either way.
     expect(silent.directives.find((d) => d.kind === "pause")).toMatchObject({ prompt: "Essayez vous-même.", speak: false });
   });
 });

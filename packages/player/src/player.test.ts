@@ -45,6 +45,7 @@ describe("Player composition", () => {
     expect(mount.querySelector(".xv-player")).toBeTruthy();
     expect(mount.querySelector("canvas")).toBeTruthy();
     expect(mount.querySelector(".xv-chrome")).toBeTruthy();
+    expect(mount.querySelector(".xv-gate")).toBeNull();
 
     player.audio.currentTime = 5;
     player.driver.tick();

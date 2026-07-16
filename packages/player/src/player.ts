@@ -80,7 +80,7 @@ export class Player {
     this.captions = new Captions(opts.captionsVtt ?? "");
     this.pauseGate = new PauseGate(this.clock, opts.tracks.pauses);
 
-    this.container.append(this.canvas, overlay, boardPanel, this.captions.el, this.pauseGate.el, this.audio);
+    this.container.append(this.canvas, overlay, boardPanel, this.captions.el, this.audio);
     opts.mount.append(this.container);
     this.resize();
 

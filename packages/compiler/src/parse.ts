@@ -137,8 +137,8 @@ function tokenize(body: string, startLine: number, file?: string): { textRaw: st
         const afterBlank = body.slice(end, nextNl === -1 ? body.length : nextNl).trim() === "";
         const block = beforeBlank && afterBlank;
         // A @pause narrates its prompt: inject it into the spoken text and anchor
-        // the checkpoint just after it, so the voice reads the instruction, then
-        // the box appears. `speak: false` opts out.
+        // the checkpoint just after it, so the voice reads the instruction before
+        // playback pauses. `speak: false` opts out.
         if (name === "pause") {
           const spoken = spokenPausePrompt(argsText);
           if (spoken) {

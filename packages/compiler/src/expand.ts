@@ -23,7 +23,7 @@ export interface ExpandOptions {
 export interface ExpandResult {
   tracks: Record<string, Keyframe[]>;
   chapters: { t: number; title: string }[];
-  pauses: { t: number; id: string; prompt: string }[];
+  pauses: { t: number; id: string; prompt: string; tail: number }[];
   boardItems: Record<string, BoardItem>;
   recorded: Record<string, string>;
   warnings: Diagnostic[];
@@ -47,7 +47,7 @@ export function expand(cues: ResolvedCue[], scene: SceneInfo, opts: ExpandOption
   const boardItems: Record<string, BoardItem> = {};
   const highlightsByItem = new Map<string, Set<string>>(); // item → highlight param keys
   const chapters: { t: number; title: string }[] = [];
-  const pauses: { t: number; id: string; prompt: string }[] = [];
+  const pauses: { t: number; id: string; prompt: string; tail: number }[] = [];
 
   // Derive a spec for board/highlight params (not in the scene schema).
   const boardSpec = (): ParamSpec => ({ type: { kind: "boardItem" }, default: "hidden", interpolate: "snap", ownership: "script" });
@@ -192,7 +192,7 @@ export function expand(cues: ResolvedCue[], scene: SceneInfo, opts: ExpandOption
         chapters.push({ t, title: d.title });
         break;
       case "pause":
-        pauses.push({ t, id: `pause-${pauses.length}`, prompt: d.prompt });
+        pauses.push({ t, id: `pause-${pauses.length}`, prompt: d.prompt, tail: d.speak ? 0.5 : 0 });
         break;
       case "track":
       case "unknown":

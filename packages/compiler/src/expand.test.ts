@@ -65,6 +65,16 @@ describe("expand — worked example (DESIGN §6.5)", () => {
     expect(result.chapters[0]!.title).toBe("Le cercle et l'angle");
     expect(result.pauses).toHaveLength(1);
     expect(result.pauses[0]!.prompt).toContain("Déplacez le point rouge");
+    expect(result.pauses[0]!.tail).toBe(0.5);
+  });
+
+  it("does not delay a silent pause into the following narration", () => {
+    const parsed = parseScript('Before. @pause(prompt: "Try it", speak: false) After.');
+    const timing = fakeTiming(parsed.narration);
+    const cues = resolve(parsed.directives, parsed.narration, timing, { anticipation: 0 });
+    const result = expand(cues, SCENE, { language: "en", defaults: DEFAULTS });
+
+    expect(result.pauses[0]!.tail).toBe(0);
   });
 
   it("the compiled theta track is seekable and monotone through the sweep", async () => {

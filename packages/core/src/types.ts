@@ -65,7 +65,7 @@ export interface LessonTracks {
   schemaHash: string;
   tracks: Record<string, Keyframe[]>; // param name → sorted keyframes
   chapters: { t: number; title: string }[];
-  pauses: { t: number; id: string; prompt: string }[];
+  pauses: { t: number; id: string; prompt: string; tail?: number }[];
   captions: { src: string };
   boardItems: Record<string, BoardItem>;
   recorded: Record<string, string>; // trackId → asset path
