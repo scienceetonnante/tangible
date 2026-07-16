@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { gradient, loss, simulate, symmetricProblem, type OptimizerSettings, type Problem } from "./model.js";
+import { buildFrame } from "./frame.js";
+import { gradient, loss, simulate, type OptimizerSettings, type Problem } from "./model.js";
 
 const problem: Problem = { kappa: 1, roughness: 0, startX: -1.65, startY: 1.15 };
 const settings: OptimizerSettings = {
@@ -31,18 +32,26 @@ describe("optimizer lesson model", () => {
     expect(unstable.divergedAt).toBeDefined();
   });
 
-  it("reflects one anchor into three equivalent quadrants", () => {
-    const starts = (["sgd", "momentum", "adamw"] as const).map((name) => symmetricProblem(name, problem));
+  it("starts every active optimizer from one shared point", () => {
+    const frame = buildFrame({
+      kappa: problem.kappa,
+      roughness: problem.roughness,
+      "start.x": problem.startX,
+      "start.y": problem.startY,
+      "sgd.lr": settings.sgdLr,
+      "momentum.lr": settings.momentumLr,
+      "momentum.beta": settings.momentumBeta,
+      "adamw.lr": settings.adamwLr,
+      "active.sgd": true,
+      "active.momentum": true,
+      "active.adamw": true,
+      step: 0,
+    });
 
-    expect(starts.map(({ startX, startY }) => [startX, startY])).toEqual([
-      [-1.65, 1.15],
-      [1.65, 1.15],
-      [-1.65, -1.15],
-    ]);
-    expect(starts.map((start) => loss(start.startX, start.startY, start))).toEqual([
-      loss(problem.startX, problem.startY, problem),
-      loss(problem.startX, problem.startY, problem),
-      loss(problem.startX, problem.startY, problem),
+    expect(frame.trajectories.map((trajectory) => trajectory.points[0])).toEqual([
+      { x: -1.65, y: 1.15, loss: loss(problem.startX, problem.startY, problem), stepSize: 0 },
+      { x: -1.65, y: 1.15, loss: loss(problem.startX, problem.startY, problem), stepSize: 0 },
+      { x: -1.65, y: 1.15, loss: loss(problem.startX, problem.startY, problem), stepSize: 0 },
     ]);
   });
 

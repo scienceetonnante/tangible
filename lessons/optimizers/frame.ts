@@ -1,12 +1,5 @@
 import type { PlainState } from "@narrable/core";
-import {
-  simulate,
-  symmetricProblem,
-  type OptimizerName,
-  type OptimizerSettings,
-  type Problem,
-  type Trajectory,
-} from "./model.js";
+import { simulate, type OptimizerName, type OptimizerSettings, type Problem, type Trajectory } from "./model.js";
 
 const OPTIMIZERS: OptimizerName[] = ["sgd", "momentum", "adamw"];
 
@@ -31,7 +24,7 @@ export function buildFrame(state: Readonly<PlainState>): OptimizerFrame {
     adamwLr: number(state, "adamw.lr"),
   };
   const trajectories = OPTIMIZERS.filter((name) => state[`active.${name}`] as boolean).map((name) =>
-    simulate(name, symmetricProblem(name, problem), settings),
+    simulate(name, problem, settings),
   );
   return { problem, trajectories, step: number(state, "step") };
 }

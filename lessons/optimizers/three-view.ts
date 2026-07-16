@@ -1,12 +1,11 @@
 import type { OrbitState, PlainState } from "@narrable/core";
 import * as THREE from "three";
 import type { OptimizerFrame } from "./frame.js";
-import { DOMAIN, sample, symmetricProblem, type OptimizerName, type Problem, type Trajectory } from "./model.js";
+import { DOMAIN, sample, type OptimizerName, type Problem, type Trajectory } from "./model.js";
 import { intersectLossSurface, normalizedLoss, surfacePoint } from "./surface.js";
 import { landscapeBox, SERIES, type View } from "./view.js";
 
 const GRID_CELLS = 56;
-const OPTIMIZERS: OptimizerName[] = ["sgd", "momentum", "adamw"];
 
 /** Three.js loss surface drawn over the lesson's left-hand viewport. */
 export class OptimizerThreeView {
@@ -67,7 +66,7 @@ export class OptimizerThreeView {
     const problem = problemFrom(state);
     const hit = intersectLossSurface(this.raycaster.ray, problem);
     if (!hit) return undefined;
-    return { x: clamp(hit.x, -DOMAIN, 0), y: clamp(-hit.z, 0, DOMAIN) };
+    return { x: clamp(hit.x, -DOMAIN, DOMAIN), y: clamp(-hit.z, -DOMAIN, DOMAIN) };
   }
 
   dispose(): void {
@@ -122,7 +121,7 @@ export class OptimizerThreeView {
     if (key === this.contentKey) return;
     this.contentKey = key;
     clearGroup(this.content);
-    for (const name of OPTIMIZERS) this.content.add(startMarker(name, frame.problem, state[`active.${name}`] as boolean));
+    this.content.add(startMarker(frame.problem));
     for (const trajectory of frame.trajectories) this.content.add(trajectoryGroup(trajectory, frame.step, frame.problem));
   }
 
@@ -193,20 +192,19 @@ function gridLines(problem: Problem): THREE.Line[] {
   return lines;
 }
 
-function startMarker(name: OptimizerName, problem: Problem, active: boolean): THREE.Group {
-  const start = symmetricProblem(name, problem);
+function startMarker(problem: Problem): THREE.Group {
   const group = new THREE.Group();
   const puck = new THREE.Mesh(
     new THREE.CylinderGeometry(0.105, 0.105, 0.06, 24),
-    new THREE.MeshStandardMaterial({ color: active ? 0xf5f7fa : 0x20242b, roughness: 0.3 }),
+    new THREE.MeshStandardMaterial({ color: 0xf5f7fa, roughness: 0.3 }),
   );
   const ring = new THREE.Mesh(
     new THREE.TorusGeometry(0.105, 0.025, 8, 24),
-    new THREE.MeshBasicMaterial({ color: active ? SERIES[name].color : 0x505660 }),
+    new THREE.MeshBasicMaterial({ color: 0xcbd0d8 }),
   );
   ring.rotation.x = Math.PI / 2;
   group.add(puck, ring);
-  group.position.copy(surfacePoint(start.startX, start.startY, problem, 0.055));
+  group.position.copy(surfacePoint(problem.startX, problem.startY, problem, 0.055));
   return group;
 }
 

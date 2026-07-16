@@ -55,13 +55,6 @@ export function gradient(
   };
 }
 
-/** Reflect one shared upper-left anchor into equivalent optimizer start positions. */
-export function symmetricProblem(name: OptimizerName, problem: Problem): Problem {
-  if (name === "momentum") return { ...problem, startX: -problem.startX };
-  if (name === "adamw") return { ...problem, startY: -problem.startY };
-  return problem;
-}
-
 /** Run one optimizer from the shared start point until it converges or leaves the view. */
 export function simulate(
   name: OptimizerName,

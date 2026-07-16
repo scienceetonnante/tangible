@@ -27,8 +27,8 @@ export const schema: Schema = {
   scene: { type: { kind: "enum", values: ["landscape"] }, default: "landscape", interpolate: "snap", ownership: "script" },
   kappa: sharedScalar([1, 40], 1, "condition number κ"),
   roughness: sharedScalar([0, 0.35], 0, "ripple amplitude"),
-  "start.x": sharedScalar([-DOMAIN, 0], -1.65, "mirrored start x-coordinate"),
-  "start.y": sharedScalar([0, DOMAIN], 1.15, "mirrored start y-coordinate"),
+  "start.x": sharedScalar([-DOMAIN, DOMAIN], -1.65, "shared start x-coordinate"),
+  "start.y": sharedScalar([-DOMAIN, DOMAIN], 1.15, "shared start y-coordinate"),
   camera: {
     type: { kind: "orbit" },
     default: { target: [0, 0.55, 0], distance: 7.2, azimuth: -0.72, elevation: 0.55 },

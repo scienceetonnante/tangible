@@ -29,6 +29,11 @@ describe("optimizer scene", () => {
     expect(schema.step.type).toEqual({ kind: "scalar", range: [0, 60] });
   });
 
+  it("lets the shared start point use the whole surface", () => {
+    expect(schema["start.x"]!.type).toEqual({ kind: "scalar", range: [-2, 2] });
+    expect(schema["start.y"]!.type).toEqual({ kind: "scalar", range: [-2, 2] });
+  });
+
   it("renders the terrain, trajectories, plots, and controls", () => {
     const { created, calls } = instance();
     const state = {
