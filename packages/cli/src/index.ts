@@ -21,6 +21,7 @@ import { renderFrame } from "./frame.js";
 import { preview } from "./preview.js";
 import { transcodeToM4a } from "./transcode.js";
 import { emitAssistantContext } from "./assistant-context.js";
+import { createAssistantApi, serveLesson } from "./assistant-server.js";
 
 async function main() {
   const argv = process.argv.slice(2);
@@ -45,6 +46,9 @@ async function main() {
     case "preview":
       await cmdPreview(flags);
       return;
+    case "serve":
+      await cmdServe(flags);
+      return;
     case "state":
       await cmdState(flags);
       return;
@@ -52,7 +56,7 @@ async function main() {
       await cmdRef(flags);
       return;
     default:
-      die(`unknown command "${cmd ?? ""}"\nusage: lesson <new|check|build|frame|preview|state|ref> [--lang fr] [--lesson dir] [--at t] [--drag p=v] [--bundle] [-o file] [--size WxH] [--fake]`);
+      die(`unknown command "${cmd ?? ""}"\nusage: lesson <new|check|build|frame|preview|serve|state|ref> [--lang fr] [--lesson dir] [--at t] [--drag p=v] [--bundle] [-o file] [--size WxH] [--port n] [--fake]`);
   }
 }
 
@@ -167,7 +171,21 @@ async function cmdPreview(flags: Flags): Promise<void> {
   };
   await rebuild();
   const watchPaths = [join(lessonDir, manifest.scene), ...langs.map((l) => join(lessonDir, `script.${l}.md`))];
-  preview({ siteDir: join(lessonDir, "build", "site"), watchPaths, rebuild });
+  const siteDir = join(lessonDir, "build", "site");
+  preview({
+    siteDir,
+    watchPaths,
+    rebuild,
+    port: flags.port,
+    assistantApi: manifest.assistant ? createAssistantApi({ siteDir, fake: flags.fake }) : undefined,
+  });
+}
+
+async function cmdServe(flags: Flags): Promise<void> {
+  const lessonDir = flags.lesson ?? process.cwd();
+  const siteDir = join(lessonDir, "build", "site");
+  if (!existsSync(join(siteDir, "index.html"))) die('no static bundle — run "lesson build --bundle" first');
+  serveLesson({ siteDir, port: flags.port, fake: flags.fake });
 }
 
 async function cmdState(flags: Flags): Promise<void> {
@@ -272,6 +290,7 @@ interface Flags {
   out?: string;
   size?: string;
   drag?: string;
+  port?: number;
 }
 
 function parseFlags(args: string[]): Flags {
@@ -285,6 +304,7 @@ function parseFlags(args: string[]): Flags {
     else if (args[i] === "-o" || args[i] === "--out") f.out = args[++i];
     else if (args[i] === "--size") f.size = args[++i];
     else if (args[i] === "--drag") f.drag = args[++i];
+    else if (args[i] === "--port") f.port = Number(args[++i]);
   }
   return f;
 }

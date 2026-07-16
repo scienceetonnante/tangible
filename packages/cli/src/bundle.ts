@@ -7,6 +7,8 @@ import { createRequire } from "node:module";
 import { mkdir, writeFile, copyFile, readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
+import { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { Manifest } from "./manifest.js";
 import type { LessonTracks } from "@narrable/core";
 
@@ -69,7 +71,29 @@ main();
   }
   await copyFile(katexCss, join(outDir, "katex.css"));
   await writeFile(join(outDir, "index.html"), indexHtml(manifest, langs));
+  if (manifest.assistant) await bundleAssistantServer(outDir);
   return outDir;
+}
+
+async function bundleAssistantServer(outDir: string): Promise<void> {
+  const serverPath = join(dirname(fileURLToPath(import.meta.url)), "assistant-server.js");
+  await build({
+    stdin: {
+      contents: `import { serveLesson } from ${JSON.stringify(serverPath)}; serveLesson({ siteDir: process.cwd(), port: Number(process.env.PORT ?? 7860) });`,
+      resolveDir: outDir,
+      sourcefile: "server-entry.mjs",
+    },
+    outfile: join(outDir, "server.mjs"),
+    bundle: true,
+    format: "esm",
+    platform: "node",
+    target: "node22",
+    logLevel: "silent",
+  });
+  await writeFile(
+    join(outDir, "Dockerfile"),
+    "FROM node:22-slim\nWORKDIR /app\nCOPY . .\nENV PORT=7860\nEXPOSE 7860\nCMD [\"node\", \"server.mjs\"]\n",
+  );
 }
 
 function indexHtml(manifest: Manifest, langs: string[]): string {
