@@ -13,3 +13,8 @@ defaults:
   transition: 1.0
 tts:
   speed: 0.9 # ElevenLabs speaking rate: 0.7 (slow) .. 1.2 (fast), 1.0 = default
+assistant:
+  context:
+    en: assistant.en.md
+    fr: assistant.fr.md
+  commandable: [theta, show.thetaLabel, show.projection, show.cosLabel]

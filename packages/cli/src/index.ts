@@ -20,6 +20,7 @@ import { bundleSite } from "./bundle.js";
 import { renderFrame } from "./frame.js";
 import { preview } from "./preview.js";
 import { transcodeToM4a } from "./transcode.js";
+import { emitAssistantContext } from "./assistant-context.js";
 
 async function main() {
   const argv = process.argv.slice(2);
@@ -150,6 +151,7 @@ async function buildLanguage(lessonDir: string, manifest: Manifest, scene: Scene
   });
   for (const w of compiled.warnings) console.error(formatDiagnostic(w));
   await emit(join(lessonDir, "build", lang), compiled, audio);
+  await emitAssistantContext(lessonDir, manifest, scene, lang, script);
 }
 
 async function cmdPreview(flags: Flags): Promise<void> {

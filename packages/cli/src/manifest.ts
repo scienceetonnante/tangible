@@ -12,6 +12,10 @@ export interface Manifest {
   voice: Record<string, string>;
   defaults: { anticipation: number; ease: string; transition: number };
   tts?: { speed?: number };
+  assistant?: {
+    context: Record<string, string>;
+    commandable: string[];
+  };
 }
 
 export async function loadManifest(lessonDir: string): Promise<Manifest> {

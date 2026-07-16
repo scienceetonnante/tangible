@@ -79,3 +79,58 @@ export interface BoardItem {
 
 /** Full evaluated scene state at a time t: param name → value. */
 export type PlainState = Record<string, ParamValue>;
+
+/** Build-time context supplied to the lesson question-answering model. */
+export interface AssistantContext {
+  version: 1;
+  lessonId: string;
+  language: string;
+  title: string;
+  guide: string;
+  script: string;
+  narration: string;
+  schema: Schema;
+  presets: Record<string, Record<string, ParamValue>>;
+  constants: Record<string, number | number[]>;
+  groups: Record<string, string[]>;
+  commandable: string[];
+  voice: string;
+  speed?: number;
+}
+
+/** One model-authored spoken beat and its declarative scene writes. */
+export interface AnswerBeat {
+  say: string;
+  set: PlainState;
+  over: number;
+}
+
+export interface AssistantHistoryTurn {
+  question: string;
+  answer: string;
+  beats: AnswerBeat[];
+}
+
+export interface AssistantRequest {
+  lessonId: string;
+  language: string;
+  question: string;
+  t: number;
+  state: PlainState;
+  history: AssistantHistoryTurn[];
+}
+
+export interface TimedAnswerBeat {
+  t: number;
+  set: PlainState;
+  over: number;
+}
+
+export interface AssistantResponse {
+  answer: string;
+  beats: AnswerBeat[];
+  timedBeats: TimedAnswerBeat[];
+  audioBase64: string;
+  audioFormat: "mp3" | "wav" | "webm" | "m4a";
+  duration: number;
+}

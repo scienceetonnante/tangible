@@ -5,6 +5,7 @@
 import { build } from "esbuild";
 import { createRequire } from "node:module";
 import { mkdir, writeFile, copyFile, readFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 import type { Manifest } from "./manifest.js";
 import type { LessonTracks } from "@narrable/core";
@@ -62,6 +63,7 @@ main();
     await mkdir(dst, { recursive: true });
     const tracks = JSON.parse(await readFile(join(src, "tracks.json"), "utf8")) as LessonTracks;
     for (const f of ["tracks.json", "captions.vtt", ...tracks.audio.src]) await copyFile(join(src, f), join(dst, f));
+    if (existsSync(join(src, "assistant.json"))) await copyFile(join(src, "assistant.json"), join(dst, "assistant.json"));
   }
   await copyFile(katexCss, join(outDir, "katex.css"));
   await writeFile(join(outDir, "index.html"), indexHtml(manifest, langs));
