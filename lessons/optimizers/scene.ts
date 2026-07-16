@@ -7,28 +7,28 @@ import { DOMAIN, MAX_STEPS } from "./model.js";
 import { OptimizerThreeView } from "./three-view.js";
 import { landscapeBox, sliderBox, SLIDERS, stepBox, toggleBox, TOGGLES, type View } from "./view.js";
 
-const sharedScalar = (range: [number, number], value: number, label: string) => ({
+const scriptScalar = (range: [number, number], value: number, label: string) => ({
   type: { kind: "scalar" as const, range },
   default: value,
   interpolate: "lerp" as const,
-  ownership: "shared" as const,
+  ownership: "script" as const,
   label,
 });
 
-const sharedBoolean = (value: boolean, label: string) => ({
+const scriptBoolean = (value: boolean, label: string) => ({
   type: { kind: "boolean" as const },
   default: value,
   interpolate: "snap" as const,
-  ownership: "shared" as const,
+  ownership: "script" as const,
   label,
 });
 
 export const schema: Schema = {
   scene: { type: { kind: "enum", values: ["landscape"] }, default: "landscape", interpolate: "snap", ownership: "script" },
-  kappa: sharedScalar([1, 40], 1, "condition number κ"),
-  roughness: sharedScalar([0, 0.35], 0, "ripple amplitude"),
-  "start.x": sharedScalar([-DOMAIN, DOMAIN], -1.65, "shared start x-coordinate"),
-  "start.y": sharedScalar([-DOMAIN, DOMAIN], 1.15, "shared start y-coordinate"),
+  kappa: scriptScalar([1, 40], 1, "condition number κ"),
+  roughness: scriptScalar([0, 0.35], 0, "ripple amplitude"),
+  "start.x": scriptScalar([-DOMAIN, DOMAIN], -1.65, "shared start x-coordinate"),
+  "start.y": scriptScalar([-DOMAIN, DOMAIN], 1.15, "shared start y-coordinate"),
   camera: {
     type: { kind: "orbit" },
     default: { target: [0, 0.55, 0], distance: 7.2, azimuth: -0.72, elevation: 0.55 },
@@ -36,14 +36,14 @@ export const schema: Schema = {
     ownership: "viewer",
     label: "3D loss-surface camera",
   },
-  step: sharedScalar([0, MAX_STEPS], 40, "optimizer step"),
-  "active.sgd": sharedBoolean(true, "show SGD"),
-  "active.momentum": sharedBoolean(false, "show SGD with momentum"),
-  "active.adamw": sharedBoolean(false, "show AdamW"),
-  "sgd.lr": sharedScalar([0.02, 0.12], 0.075, "SGD learning rate"),
-  "momentum.lr": sharedScalar([0.02, 0.25], 0.15, "momentum learning rate"),
-  "momentum.beta": sharedScalar([0, 0.95], 0.3, "momentum smoothing β"),
-  "adamw.lr": sharedScalar([0.02, 0.16], 0.1, "AdamW learning rate"),
+  step: scriptScalar([0, MAX_STEPS], 40, "optimizer step"),
+  "active.sgd": scriptBoolean(true, "show SGD"),
+  "active.momentum": scriptBoolean(false, "show SGD with momentum"),
+  "active.adamw": scriptBoolean(false, "show AdamW"),
+  "sgd.lr": scriptScalar([0.02, 0.12], 0.075, "SGD learning rate"),
+  "momentum.lr": scriptScalar([0.02, 0.25], 0.15, "momentum learning rate"),
+  "momentum.beta": scriptScalar([0, 0.95], 0.3, "momentum smoothing β"),
+  "adamw.lr": scriptScalar([0.02, 0.16], 0.1, "AdamW learning rate"),
 };
 
 export const groups: Record<string, string[]> = {

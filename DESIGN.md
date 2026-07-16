@@ -367,7 +367,7 @@ With synchronization automated and the player built once, the per-lesson cost co
 4. **The compiler is the feedback loop.** Errors are precise, actionable, and produced without network access whenever possible (`check`).
 5. **The hot path is framework-free.** The per-frame loop touches plain objects and typed arrays; signals are used only at the boundary to the DOM (board, readouts, captions, chrome).
 
-**Parameter ownership** (the reconciliation policy, per §5.2): `script` — the viewer may perturb, and after a short hold the value glides back to the scripted track; `shared` — the viewer's value holds until the script next writes that parameter; `viewer` — once touched, the scripted track is ignored for the rest of the session. The catch-up envelope (≈3 s hold, exponential return, discrete channels revert instantly) is described concretely in §3 and §5.4.
+**Parameter ownership** (the reconciliation policy, per §5.2): `script` — the viewer may perturb, and after a short hold the value glides back to the scripted track; `shared` — the viewer's value holds until the script next writes that parameter; `viewer` — once touched, the scripted track is ignored for the rest of the session. Narration-bound handles use `script` unless the lesson explicitly calls for persistence; camera navigation is normally `viewer`. The catch-up envelope (≈3 s hold, exponential return, discrete channels revert instantly) is described concretely in §3 and §5.4.
 
 ---
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { bakers, forward, gradients } from "./scene.js";
+import { bakers, forward, gradients, schema } from "./scene.js";
 
 const INITIAL = {
   w11: 0.5,
@@ -13,6 +13,10 @@ const INITIAL = {
 const WEIGHTS = Object.keys(INITIAL) as (keyof typeof INITIAL)[];
 
 describe("backpropagation maths", () => {
+  it("returns every learner-controlled value to the narration", () => {
+    for (const parameter of [...WEIGHTS, "lr"]) expect(schema[parameter]!.ownership).toBe("script");
+  });
+
   it("matches the known initial forward pass", () => {
     const result = forward(INITIAL);
     expect(result.yhat).toBeCloseTo(0.1249535702, 9);

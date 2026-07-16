@@ -16,17 +16,16 @@ const WEIGHTS = ["w11", "w12", "w21", "w22", "wo1", "wo2"] as const;
 export const schema: Schema = {
   scene: { type: { kind: "enum", values: ["net"] }, default: "net", interpolate: "snap", ownership: "script" },
 
-  // Six weights. `shared`: the script animates them (gradient-descent steps) AND the
-  // learner can grab them; a grabbed weight holds, then glides back to the timeline.
-  w11: { type: { kind: "scalar", range: W }, default: 0.5, interpolate: "lerp", ownership: "shared", label: "input1 -> hidden1" },
-  w12: { type: { kind: "scalar", range: W }, default: -0.4, interpolate: "lerp", ownership: "shared", label: "input2 -> hidden1" },
-  w21: { type: { kind: "scalar", range: W }, default: -0.3, interpolate: "lerp", ownership: "shared", label: "input1 -> hidden2" },
-  w22: { type: { kind: "scalar", range: W }, default: 0.8, interpolate: "lerp", ownership: "shared", label: "input2 -> hidden2" },
-  wo1: { type: { kind: "scalar", range: W }, default: 0.6, interpolate: "lerp", ownership: "shared", label: "hidden1 -> output" },
-  wo2: { type: { kind: "scalar", range: W }, default: -0.5, interpolate: "lerp", ownership: "shared", label: "hidden2 -> output" },
+  // The script animates the weights, while learner drags get the standard
+  // hold-then-glide catch-up so the display rejoins the narration.
+  w11: { type: { kind: "scalar", range: W }, default: 0.5, interpolate: "lerp", ownership: "script", label: "input1 -> hidden1" },
+  w12: { type: { kind: "scalar", range: W }, default: -0.4, interpolate: "lerp", ownership: "script", label: "input2 -> hidden1" },
+  w21: { type: { kind: "scalar", range: W }, default: -0.3, interpolate: "lerp", ownership: "script", label: "input1 -> hidden2" },
+  w22: { type: { kind: "scalar", range: W }, default: 0.8, interpolate: "lerp", ownership: "script", label: "input2 -> hidden2" },
+  wo1: { type: { kind: "scalar", range: W }, default: 0.6, interpolate: "lerp", ownership: "script", label: "hidden1 -> output" },
+  wo2: { type: { kind: "scalar", range: W }, default: -0.5, interpolate: "lerp", ownership: "script", label: "hidden2 -> output" },
 
-  // Learning rate: learner-owned, so it sticks once they touch it.
-  lr: { type: { kind: "scalar", range: [0, 1] }, default: 0.5, interpolate: "lerp", ownership: "viewer", label: "learning rate" },
+  lr: { type: { kind: "scalar", range: [0, 1] }, default: 0.5, interpolate: "lerp", ownership: "script", label: "learning rate" },
 
   // Sweep progress: script-driven scalars that reveal the two passes left->right / right->left.
   forward: { type: { kind: "scalar", range: [0, 1] }, default: 0, interpolate: "lerp", ownership: "script", label: "forward-pass reveal" },

@@ -30,6 +30,8 @@ scene.ts ──┘                              │
 
 Every parameter's value is a pure function of time `t` (**value-at-time**), which is what makes seeking, catch-up, and headless frame rendering possible. The compiler bakes all easing/timing into dense keyframe tracks; the runtime just looks up and interpolates.
 
+Narration-bound controls use `ownership: "script"`: a learner change holds for three seconds, then glides back to the scenario value even while playback is paused. Use `viewer` for persistent navigation such as the camera, and reserve `shared` for choices that should persist until a later script cue.
+
 ## Repository layout
 
 ```
@@ -94,7 +96,7 @@ Run as `node packages/cli/dist/index.js <command>` (after `pnpm build`).
 | `build [--lang en] [--bundle] [--fake]` | Full pipeline → `build/<lang>/`. `--bundle` also emits a static site under `build/site/`. `--fake` uses the deterministic fake voice. |
 | `preview [--fake]` | Serve the static bundle with file-watch + browser live-reload. |
 | `frame --at <t> -o <file.png> [--lang en] [--size WxH]` | Headless-render the lesson at time `t` to a PNG (deterministic). |
-| `state --at <t> [--lang en] [--drag p=v]` | Print the full scene state at time `t` as JSON (no browser). With `--drag <param>=<value>`, simulate a viewer grabbing that param at `t` and print the reconciled hold-then-glide trajectory (scripted vs displayed) — a headless check of interaction/`shared` behavior. |
+| `state --at <t> [--lang en] [--drag p=v]` | Print the full scene state at time `t` as JSON (no browser). With `--drag <param>=<value>`, simulate a viewer grabbing that param at `t` and print the reconciled trajectory (scripted vs displayed) — a headless check of interaction ownership. |
 | `ref` | Emit the scene's **cue-reference sheet** (params, presets, constants) as Markdown. |
 
 Common flags: `--lesson <dir>` (defaults to the current directory), `--lang <code>`.
