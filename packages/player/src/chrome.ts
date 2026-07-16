@@ -96,6 +96,8 @@ export class Chrome {
   /** Global keyboard shortcuts; returns a disposer. */
   bindKeys(target: Window | HTMLElement = window): () => void {
     const onKey = (e: KeyboardEvent) => {
+      const source = e.target as HTMLElement | null;
+      if (source?.matches("input, textarea, select, button, [contenteditable=true]")) return;
       if (e.key === " " || e.key === "k") {
         e.preventDefault();
         this.togglePlay();

@@ -185,6 +185,35 @@ Everything above doubles as an affordance for AI-assisted production, and this s
 
 The intended division of labor: the agent drafts — script, cues, scene scaffolding from the ingredient library, translations — and the human directs: the pedagogical arc, what the scene should be, taste calls on pacing. The performance-capture escape hatch (§5.5) is the one deliberately human channel — recorded camera gestures — and even it produces JSON an agent can subsequently trim or retime.
 
+### 5.8 Pause-time lesson assistant
+
+An optional lesson assistant extends a pause without extending or mutating the
+authored timeline. After playback has begun, both a manual pause and an authored
+`@pause` enable a question field below the transport. The model receives the full
+script and narration, a per-language semantic description of the layout and
+controls, the scene schema and presets, the current visible state, and the bounded
+conversation history.
+
+The model returns a declarative sequence of spoken beats. Each beat contains text,
+absolute values for explicitly allowlisted parameters, and a short transition
+duration. The server validates names, types, ranges, length, and count before using
+the lesson's normal ElevenLabs voice and character timings to resolve the beats
+onto a temporary value-at-time track. Model output is data, never executable code.
+
+The lesson clock remains paused. A separate answer-audio clock drives the temporary
+track, composed over the normal evaluated-and-reconciled state. Learner interaction
+stays active: a parameter touched during an answer immediately masks the assistant
+for that parameter, while other answer tracks continue. Ending or cancelling the
+answer discards the temporary layer; `script`, `shared`, and `viewer` ownership in
+the underlying state were never modified. Resuming lesson playback also cancels an
+answer so the two narrations cannot overlap.
+
+Provider credentials require a trusted same-origin server. Assistant-enabled
+bundles therefore include a small Node server and Dockerfile suitable for a
+Hugging Face Docker Space; lessons without assistant configuration remain fully
+static. The browser player knows only the typed request/response contract and does
+not import provider or TTS code.
+
 ## 6. Markup format — draft specification
 
 The script is Markdown: prose is the narration, verbatim. Two kinds of directives are embedded in it. **Block directives** stand on their own line and structure the lesson; **inline directives** sit inside the prose and anchor to the word that follows them. Directives are stripped before synthesis; their position in the text is what gives them a time.
@@ -357,17 +386,17 @@ With synchronization automated and the player built once, the per-lesson cost co
 
 *The rules the built platform upholds — violations are bugs. Detailed data-format contracts, the interpolator, and the reconciler algorithm now live in the code (`packages/core` and its tests); this section is the durable statement of intent behind them.*
 
-**Fixed decisions.** Runtime is vanilla TypeScript with `@preact/signals-core` for reactivity — no React, no framework in the hot path. TTS is ElevenLabs (`with-timestamps`) behind a provider-adapter interface, with forced alignment of human recordings as a planned second adapter. Each lesson builds to a fully static bundle (HTML + JS + audio + JSON), deployable to any static host. Computed processes are compiler-only: `@bake` emits ordinary keyframes and requires no player support.
+**Fixed decisions.** Runtime is vanilla TypeScript with `@preact/signals-core` for reactivity — no React, no framework in the hot path. TTS is ElevenLabs (`with-timestamps`) behind a provider-adapter interface, with forced alignment of human recordings as a planned second adapter. Each lesson builds to a static asset bundle (HTML + JS + audio + JSON); assistant-enabled lessons add a small same-origin server for provider credentials, while all others remain deployable to any static host. Computed processes are compiler-only: `@bake` emits ordinary keyframes and requires no player support.
 
 **Guiding principles.**
 
-1. **Value-at-time.** Every parameter's value is computable directly from time `t`; nothing accumulates frame by frame. This is what makes seeking, catch-up, state-dump, and headless frame rendering possible.
+1. **Value-at-time.** Every authored parameter's value is computable directly from lesson time `t`; nothing accumulates frame by frame. A dynamic assistant answer is a separate value-at-time overlay driven by answer-audio time and is discarded whole. This is what makes seeking, catch-up, state-dump, headless frame rendering, and exact removal of the answer layer possible.
 2. **Everything is text.** All authored artifacts are diffable text files; all generated artifacts are JSON/VTT/audio. No state lives only in a GUI.
 3. **Deterministic builds.** Same inputs (script + cached audio) → byte-identical outputs.
 4. **The compiler is the feedback loop.** Errors are precise, actionable, and produced without network access whenever possible (`check`).
 5. **The hot path is framework-free.** The per-frame loop touches plain objects and typed arrays; signals are used only at the boundary to the DOM (board, readouts, captions, chrome).
 
-**Parameter ownership** (the reconciliation policy, per §5.2): `script` — the viewer may perturb, and after a short hold the value glides back to the scripted track; `shared` — the viewer's value holds until the script next writes that parameter; `viewer` — once touched, the scripted track is ignored for the rest of the session. Narration-bound handles use `script` unless the lesson explicitly calls for persistence; camera navigation is normally `viewer`. The catch-up envelope (≈3 s hold, exponential return, discrete channels revert instantly) is described concretely in §3 and §5.4.
+**Parameter ownership** (the reconciliation policy, per §5.2): `script` — the viewer may perturb, and after a short hold the value glides back to the scripted track; `shared` — the viewer's value holds until the script next writes that parameter; `viewer` — once touched, the scripted track is ignored for the rest of the session. Narration-bound handles use `script` unless the lesson explicitly calls for persistence; camera navigation is normally `viewer`. The catch-up envelope (≈3 s hold, exponential return, discrete channels revert instantly) is described concretely in §3 and §5.4. Assistant writes are not a fourth ownership mode: they are temporary display-layer values, and an in-answer learner write wins for that parameter.
 
 ---
 

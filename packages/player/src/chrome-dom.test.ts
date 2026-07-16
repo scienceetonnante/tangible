@@ -54,4 +54,18 @@ describe("Chrome scrubber", () => {
     chrome.update(0);
     expect(playBtn.textContent).toBe("⏸");
   });
+
+  it("does not trigger playback shortcuts while the learner types a question", () => {
+    const media = new FakeMedia();
+    const chrome = new Chrome(new AudioClock(media), tracks);
+    const target = document.createElement("div");
+    const input = document.createElement("input");
+    target.append(input);
+    chrome.bindKeys(target);
+
+    input.dispatchEvent(new KeyboardEvent("keydown", { key: " ", bubbles: true }));
+    expect(media.paused).toBe(true);
+    target.dispatchEvent(new KeyboardEvent("keydown", { key: " ", bubbles: true }));
+    expect(media.paused).toBe(false);
+  });
 });

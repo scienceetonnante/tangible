@@ -11,7 +11,7 @@ A platform for **interactive ("explorable") narrated video** — lessons that ar
 
 ## Status
 
-The v0.1 vertical slice works end to end: compile a script → synthesize audio (ElevenLabs or a fake adapter) → play, seek, drag-and-catch-up, board equations, captions, and narrated pause checkpoints. The bilingual **unit-circle** lesson is deployed with real voice and verified on Chrome, Safari, and iPad. A second 2D **backpropagation** lesson validates agent authoring, live recomputation, and build-time computed processes: its `@bake` directives call the scene's real gradient-descent function and compile the results into ordinary tracks. A third **optimizer** lesson compares SGD, momentum, and AdamW on a navigable 3D conditioned or rough loss surface, with a shared start point and matched-step scrubber.
+The v0.1 vertical slice works end to end: compile a script → synthesize audio (ElevenLabs or a fake adapter) → play, seek, drag-and-catch-up, board equations, captions, and narrated pause checkpoints. The bilingual **unit-circle** lesson is deployed with real voice and verified on Chrome, Safari, and iPad; it also has an optional pause-time lesson assistant that answers with Hugging Face Inference Providers, speaks in the lesson's ElevenLabs voice, and drives a temporary visual demonstration without changing the authored timeline. A second 2D **backpropagation** lesson validates agent authoring, live recomputation, and build-time computed processes: its `@bake` directives call the scene's real gradient-descent function and compile the results into ordinary tracks. A third **optimizer** lesson compares SGD, momentum, and AdamW on a navigable 3D conditioned or rough loss surface, with a shared start point and matched-step scrubber.
 
 ## How it works
 
@@ -32,6 +32,8 @@ Every parameter's value is a pure function of time `t` (**value-at-time**), whic
 
 Narration-bound controls use `ownership: "script"`: a learner change holds for three seconds, then glides back to the scenario value even while playback is paused. Use `viewer` for persistent navigation such as the camera, and reserve `shared` for choices that should persist until a later script cue.
 
+When the optional assistant is enabled, the lesson clock stays paused while a second, ephemeral answer clock drives allowlisted scene parameters. Learner interaction remains live and wins per parameter; when the answer ends, its layer disappears and the original ownership rules continue normally.
+
 ## Repository layout
 
 ```
@@ -39,7 +41,7 @@ packages/
   core/         shared types, schema, easing, the value-at-time interpolator, reconciliation math
   compiler/     script.md → tracks.json + captions.vtt (parse→check/bake→synthesize→resolve→expand→emit)
   tts/          TTS adapters: fake (deterministic) and ElevenLabs (with-timestamps)
-  player/       browser runtime: clock, store, timeline, reconciler, interaction, board, captions, chrome
+  player/       browser runtime: clock, state composition, interaction, board, captions, chrome, questions
   ingredients/  reusable scene helpers (e.g. camera-orbit handle)
   cli/          the `lesson` command
 lessons/
@@ -63,10 +65,12 @@ pnpm install
 pnpm build        # compile all packages (tsc --build)
 ```
 
-Optional, for real voice synthesis — create a `.env` at the repo root (gitignored):
+Optional, for real voice synthesis and live questions — create a `.env` at the repo root (gitignored):
 
 ```
 ELEVENLABS_API_KEY=sk_...your_key...
+HF_TOKEN=hf_...your_token...
+HF_MODEL=org/model:provider
 ```
 
 ## Quick start
@@ -79,7 +83,8 @@ pnpm build
 # Compile the lesson (uses ElevenLabs if a key + voice IDs are set, else pass --fake)
 node packages/cli/dist/index.js build --bundle --lesson lessons/unit-circle
 
-# Serve it with live-reload (open http://localhost:5179)
+# Serve it with live-reload (open http://localhost:5179). The assistant uses
+# the real providers when all three environment settings above are present.
 node packages/cli/dist/index.js preview --lesson lessons/unit-circle
 ```
 
@@ -93,8 +98,9 @@ Run as `node packages/cli/dist/index.js <command>` (after `pnpm build`).
 |---|---|
 | `new <id>` | Scaffold a lesson directory (manifest, template scene, script skeleton). |
 | `check [--lang en]` | Parse + validate a script against the scene schema. No network. Non-zero exit on error. The fast authoring/agent loop. |
-| `build [--lang en] [--bundle] [--fake]` | Full pipeline → `build/<lang>/`. `--bundle` also emits a static site under `build/site/`. `--fake` uses the deterministic fake voice. |
-| `preview [--fake]` | Serve the static bundle with file-watch + browser live-reload. |
+| `build [--lang en] [--bundle] [--fake]` | Full pipeline → `build/<lang>/`. `--bundle` emits the site and, for assistant-enabled lessons, a Docker server bundle. `--fake` uses deterministic fake voice and answer providers. |
+| `preview [--fake] [--port 5179]` | Serve with file-watch and browser live-reload; assistant-enabled lessons get the same-origin answer API. |
+| `serve [--fake] [--port 7860]` | Serve an existing bundle and its answer API without file watching; this is the Docker Space entry path. |
 | `frame --at <t> -o <file.png> [--lang en] [--size WxH]` | Headless-render the lesson at time `t` to a PNG (deterministic). |
 | `state --at <t> [--lang en] [--drag p=v]` | Print the full scene state at time `t` as JSON (no browser). With `--drag <param>=<value>`, simulate a viewer grabbing that param at `t` and print the reconciled trajectory (scripted vs displayed) — a headless check of interaction ownership. |
 | `ref` | Emit the scene's **cue-reference sheet** (params, presets, constants) as Markdown. |
@@ -141,6 +147,19 @@ A lesson is a directory with three authored files:
 
 Run `lesson ref` on a scene to get the exact parameters, ranges, presets, groups, and bakers you can drive.
 
+An assistant-enabled lesson also lists a semantic context file and an explicit command allowlist in `lesson.yaml`:
+
+```yaml
+assistant:
+  context:
+    en: assistant.en.md
+  commandable: [theta, show.projection, show.cosLabel]
+```
+
+`assistant.<lang>.md` describes the scene, layout, visible controls, terminology, and answer guidance. The build combines it with the full script, narration, schema, presets, and constants in `assistant.json`. The model returns one to six validated spoken beats with absolute parameter values; arbitrary code and non-allowlisted parameters never reach the player.
+
+Assistant-enabled Hugging Face Spaces use the generated `Dockerfile` and `server.mjs`. Store `HF_TOKEN` and `ELEVENLABS_API_KEY` as Space secrets and `HF_MODEL` as a variable. Lessons without assistant configuration remain ordinary static bundles.
+
 ## Development
 
 ```bash
@@ -149,6 +168,6 @@ pnpm test       # Vitest unit tests
 pnpm test:e2e   # Playwright browser tests (Chromium + WebKit)
 ```
 
-CI (`.github/workflows/ci.yml`) runs the hermetic checks plus the Playwright suite — **fake TTS, no network, no API keys**. Real ElevenLabs synthesis only happens on a local `build` when a key is present.
+CI (`.github/workflows/ci.yml`) runs the hermetic checks plus the Playwright suite — **fake TTS/answers, no network, no API keys**. Real ElevenLabs synthesis only happens on a local build or answer request when a key is present.
 
 Handy checks without a browser: `lesson state --at <t>` (numeric state) and `lesson frame --at <t> -o f.png` (visual). Because state is a pure function of `t`, both are deterministic.

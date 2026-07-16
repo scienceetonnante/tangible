@@ -14,8 +14,20 @@ export async function emitAssistantContext(
   language: string,
   script: string,
 ): Promise<void> {
+  const context = await buildAssistantContext(lessonDir, manifest, scene, language, script);
+  if (!context) return;
+  await writeFile(join(lessonDir, "build", language, "assistant.json"), JSON.stringify(context, null, 2) + "\n");
+}
+
+export async function buildAssistantContext(
+  lessonDir: string,
+  manifest: Manifest,
+  scene: SceneInfo,
+  language: string,
+  script: string,
+): Promise<AssistantContext | undefined> {
   const config = manifest.assistant;
-  if (!config) return;
+  if (!config) return undefined;
 
   const contextPath = config.context[language];
   if (!contextPath) throw new Error(`assistant.context is missing language "${language}"`);
@@ -23,7 +35,7 @@ export async function emitAssistantContext(
     if (!scene.schema[param]) throw new Error(`assistant.commandable references unknown parameter "${param}"`);
   }
 
-  const context: AssistantContext = {
+  return {
     version: 1,
     lessonId: manifest.id,
     language,
@@ -39,5 +51,4 @@ export async function emitAssistantContext(
     voice: manifest.voice[language] ?? "",
     speed: manifest.tts?.speed,
   };
-  await writeFile(join(lessonDir, "build", language, "assistant.json"), JSON.stringify(context, null, 2) + "\n");
 }

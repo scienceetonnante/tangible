@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
-# Deploy the unit-circle static bundle to a Hugging Face Space.
+# Deploy the unit-circle bundle and assistant server to a Docker Hugging Face Space.
 #
 # Usage:  scripts/deploy-space.sh <space-git-url>
 #   e.g.  scripts/deploy-space.sh https://huggingface.co/spaces/david/unit-circle
 #
 # Assumes `lesson build --bundle` has already produced build/site/, and that git
 # is authenticated for the Space remote (HF token as the git password, or a
-# configured credential helper). Pushes the bundle + the Space card README.
+# configured credential helper). Configure HF_TOKEN and ELEVENLABS_API_KEY as
+# Space secrets and HF_MODEL as a Space variable before using the question box.
 set -euo pipefail
 
 SPACE_URL="${1:?Usage: deploy-space.sh <space-git-url>}"

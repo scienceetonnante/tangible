@@ -26,14 +26,14 @@ export async function bundleSite(lessonDir: string, manifest: Manifest, scenePat
 import { Player, PLAYER_CSS } from "@narrable/player";
 import { scene } from ${JSON.stringify(scenePath)};
 const DEFAULT_LANG = ${JSON.stringify(langs[0])};
+const HAS_ASSISTANT = ${JSON.stringify(Boolean(manifest.assistant))};
 const mimeForAudio = (s) => s.endsWith(".m4a") ? "audio/mp4" : s.endsWith(".mp3") ? "audio/mpeg" : s.endsWith(".webm") ? "audio/webm" : "audio/wav";
 async function main() {
   const lang = new URLSearchParams(location.search).get("lang") || DEFAULT_LANG;
   const base = "./" + lang + "/";
   const tracks = await (await fetch(base + "tracks.json")).json();
   const vtt = await (await fetch(base + "captions.vtt")).text();
-  const assistantResponse = await fetch(base + "assistant.json");
-  const assistant = assistantResponse.ok ? { context: await assistantResponse.json() } : undefined;
+  const assistant = HAS_ASSISTANT ? { context: await (await fetch(base + "assistant.json")).json() } : undefined;
   // Fetch audio as an in-memory blob and play from an object URL. Static hosts (e.g.
   // Hugging Face Spaces) serve media stored via Xet/LFS through signed CDN redirects
   // that break Safari's range-based media loader (403 on the redirect); a blob URL

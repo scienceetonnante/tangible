@@ -135,7 +135,7 @@ export class Player {
       this.unbindKeys = this.chrome.bindKeys();
     }
     if (opts.assistant) {
-      this.assistantFetch = opts.assistant.fetchImpl ?? fetch;
+      this.assistantFetch = opts.assistant.fetchImpl ?? ((input, init) => fetch(input, init));
       this.assistantEndpoint = opts.assistant.endpoint ?? "/api/answer";
       this.answerAudio = opts.assistant.createAudio?.() ?? document.createElement("audio");
       this.answerAudio.className = "xv-answer-audio";

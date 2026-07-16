@@ -20,7 +20,7 @@ import { bundleSite } from "./bundle.js";
 import { renderFrame } from "./frame.js";
 import { preview } from "./preview.js";
 import { transcodeToM4a } from "./transcode.js";
-import { emitAssistantContext } from "./assistant-context.js";
+import { buildAssistantContext, emitAssistantContext } from "./assistant-context.js";
 import { createAssistantApi, serveLesson } from "./assistant-server.js";
 
 async function main() {
@@ -69,10 +69,17 @@ async function cmdCheck(flags: Flags): Promise<number> {
   let errors = 0;
   for (const lang of languagesFor(flags, manifest)) {
     const file = `script.${lang}.md`;
-    const diags = check(parseScript(await readFile(join(lessonDir, file), "utf8"), file), scene);
+    const script = await readFile(join(lessonDir, file), "utf8");
+    const diags = check(parseScript(script, file), scene);
     for (const d of diags) {
       console.error(formatDiagnostic(d));
       if (d.severity === "error") errors++;
+    }
+    try {
+      await buildAssistantContext(lessonDir, manifest, scene, lang, script);
+    } catch (error) {
+      console.error(`${file}: assistant: ${error instanceof Error ? error.message : String(error)}`);
+      errors++;
     }
   }
   console.error(errors === 0 ? "check: no errors" : `check: ${errors} error(s)`);
@@ -170,7 +177,11 @@ async function cmdPreview(flags: Flags): Promise<void> {
     await bundleSite(lessonDir, manifest, join(lessonDir, manifest.scene), langs);
   };
   await rebuild();
-  const watchPaths = [join(lessonDir, manifest.scene), ...langs.map((l) => join(lessonDir, `script.${l}.md`))];
+  const watchPaths = [
+    join(lessonDir, manifest.scene),
+    ...langs.map((l) => join(lessonDir, `script.${l}.md`)),
+    ...langs.flatMap((l) => manifest.assistant?.context[l] ? [join(lessonDir, manifest.assistant.context[l]!)] : []),
+  ];
   const siteDir = join(lessonDir, "build", "site");
   preview({
     siteDir,
