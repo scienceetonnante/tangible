@@ -9,3 +9,21 @@ defaults:
   anticipation: -0.2
   ease: inOutCubic
   transition: 1.0
+assistant:
+  context:
+    en: assistant.en.md
+  voice:
+    en: hf-endpoint:david_v1
+  commandable:
+    - kappa
+    - roughness
+    - start.x
+    - start.y
+    - step
+    - active.sgd
+    - active.momentum
+    - active.adamw
+    - sgd.lr
+    - momentum.lr
+    - momentum.beta
+    - adamw.lr
