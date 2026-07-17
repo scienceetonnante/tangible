@@ -24,6 +24,7 @@ test("agent loop: check catches error → fix → build → state + frame", () =
   const dir = mkdtempSync(join(tmpdir(), "xv-agent-"));
   cpSync("lessons/unit-circle/lesson.yaml", join(dir, "lesson.yaml"));
   cpSync("lessons/unit-circle/scene.ts", join(dir, "scene.ts"));
+  cpSync("lessons/unit-circle/assistant.fr.md", join(dir, "assistant.fr.md"));
 
   // 1. A broken script fails check with a did-you-mean diagnostic.
   writeFileSync(join(dir, "script.fr.md"), brokenScript);

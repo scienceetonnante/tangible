@@ -3,7 +3,8 @@ title: The Unit Circle
 emoji: 🔵
 colorFrom: indigo
 colorTo: blue
-sdk: static
+sdk: docker
+app_port: 7860
 pinned: false
 short_description: An interactive narrated explorable of the unit circle
 ---
@@ -18,6 +19,8 @@ Built with [narrable](https://github.com/) — narrated explorables authored fro
 a single text script. Available in **English** (default) and **French**
 (append `?lang=fr` to the URL).
 
-This is a static Space: the entire lesson is a self-contained bundle
-(`index.html` + player JS + per-language `tracks.json`, captions, and audio).
-No server-side anything.
+The lesson assets remain a self-contained static bundle. A small same-origin Node
+server protects the Hugging Face Inference Providers and private cloned-voice
+endpoint credentials used by the pause-time question box. Configure `HF_TOKEN`
+and `HF_TTS_TOKEN` as secrets, and `HF_MODEL` plus `TTS_ENDPOINT_URL` as Space
+variables. `HF_TTS_TOKEN` may be omitted when `HF_TOKEN` can call both services.

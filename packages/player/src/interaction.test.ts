@@ -84,4 +84,22 @@ describe("InteractionManager", () => {
     expect(event.defaultPrevented).toBe(true);
     expect(store.meta.get("theta")!.userValue).toBeCloseTo(0.5, 9);
   });
+
+  it("hit-tests the composed display state and reports learner writes", () => {
+    const canvas = document.createElement("canvas");
+    canvas.width = 400;
+    canvas.height = 400;
+    const store = new StateStore(schema);
+    const clock = new AudioClock(new FakeMedia());
+    const written: string[] = [];
+    const handle: Handle = {
+      ...testHandle,
+      hitTest: (_px, _py, state) => state.theta === 9,
+    };
+    new InteractionManager(canvas, { handles: () => [handle] }, store, clock, () => 1, () => ({ theta: 9 }), (param) => written.push(param));
+
+    canvas.dispatchEvent(ptr("pointerdown", 20, 20));
+    expect(store.meta.get("theta")!.touchedEver).toBe(true);
+    expect(written).toEqual(["theta"]);
+  });
 });

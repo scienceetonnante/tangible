@@ -5,6 +5,7 @@
 import { createServer, type ServerResponse } from "node:http";
 import { watch } from "node:fs";
 import { serveFromDir } from "./static-server.js";
+import type { AssistantApiHandler } from "./assistant-server.js";
 
 const RELOAD_SNIPPET = `<script>new EventSource("/__reload").onmessage=()=>location.reload()</script>`;
 
@@ -13,6 +14,7 @@ export interface PreviewOptions {
   watchPaths: string[];
   rebuild: () => Promise<void>;
   port?: number;
+  assistantApi?: AssistantApiHandler;
 }
 
 export function preview(opts: PreviewOptions): void {
@@ -26,7 +28,10 @@ export function preview(opts: PreviewOptions): void {
       req.on("close", () => clients.delete(res));
       return;
     }
-    void serveFromDir(opts.siteDir, req, res, (html) => html.replace("</body>", `${RELOAD_SNIPPET}</body>`));
+    void (async () => {
+      if (opts.assistantApi && await opts.assistantApi(req, res)) return;
+      await serveFromDir(opts.siteDir, req, res, (html) => html.replace("</body>", `${RELOAD_SNIPPET}</body>`));
+    })();
   });
   server.listen(port, () => console.error(`preview on http://localhost:${port} (watching for changes)`));
 

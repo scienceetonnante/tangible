@@ -6,12 +6,12 @@ import { readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join, resolve as resolvePath } from "node:path";
 import { createHash } from "node:crypto";
-import { parseScript, check, compile, emit, synthesize, formatDiagnostic, ParseError } from "@narrable/compiler";
+import { parseScript, check, compile, emit, synthesize, narrationSegmentOffsets, formatDiagnostic, ParseError } from "@narrable/compiler";
 import type { SceneInfo } from "@narrable/compiler";
 import { buildIndex, evaluate } from "@narrable/core";
 import type { Schema, Keyframe, TtsAdapter, ParamSpec, ParamValue } from "@narrable/core";
 import { StateStore, Reconciler } from "@narrable/player";
-import { FakeTtsAdapter, ElevenLabsAdapter } from "@narrable/tts";
+import { FakeTtsAdapter, ElevenLabsAdapter, HuggingFaceVoiceAdapter } from "@narrable/tts";
 import { loadScene } from "./scene-loader.js";
 import { loadManifest, type Manifest } from "./manifest.js";
 import { refSheet } from "./ref.js";
@@ -20,6 +20,8 @@ import { bundleSite } from "./bundle.js";
 import { renderFrame } from "./frame.js";
 import { preview } from "./preview.js";
 import { transcodeToM4a } from "./transcode.js";
+import { buildAssistantContext, emitAssistantContext } from "./assistant-context.js";
+import { createAssistantApi, serveLesson } from "./assistant-server.js";
 
 async function main() {
   const argv = process.argv.slice(2);
@@ -44,6 +46,9 @@ async function main() {
     case "preview":
       await cmdPreview(flags);
       return;
+    case "serve":
+      await cmdServe(flags);
+      return;
     case "state":
       await cmdState(flags);
       return;
@@ -51,7 +56,7 @@ async function main() {
       await cmdRef(flags);
       return;
     default:
-      die(`unknown command "${cmd ?? ""}"\nusage: lesson <new|check|build|frame|preview|state|ref> [--lang fr] [--lesson dir] [--at t] [--drag p=v] [--bundle] [-o file] [--size WxH] [--fake]`);
+      die(`unknown command "${cmd ?? ""}"\nusage: lesson <new|check|build|frame|preview|serve|state|ref> [--lang fr] [--lesson dir] [--at t] [--drag p=v] [--bundle] [-o file] [--size WxH] [--port n] [--fake]`);
   }
 }
 
@@ -64,10 +69,17 @@ async function cmdCheck(flags: Flags): Promise<number> {
   let errors = 0;
   for (const lang of languagesFor(flags, manifest)) {
     const file = `script.${lang}.md`;
-    const diags = check(parseScript(await readFile(join(lessonDir, file), "utf8"), file), scene);
+    const script = await readFile(join(lessonDir, file), "utf8");
+    const diags = check(parseScript(script, file), scene);
     for (const d of diags) {
       console.error(formatDiagnostic(d));
       if (d.severity === "error") errors++;
+    }
+    try {
+      await buildAssistantContext(lessonDir, manifest, scene, lang, script);
+    } catch (error) {
+      console.error(`${file}: assistant: ${error instanceof Error ? error.message : String(error)}`);
+      errors++;
     }
   }
   console.error(errors === 0 ? "check: no errors" : `check: ${errors} error(s)`);
@@ -101,9 +113,12 @@ async function cmdFrame(flags: Flags): Promise<void> {
   console.error(`rendered frame at t=${t} → ${out}`);
 }
 
-/** Choose a TTS adapter from the manifest voice spec ("elevenlabs:ID"). */
+/** Choose a TTS adapter from the manifest voice spec. */
 function selectTts(voiceSpec: string, fake: boolean): { adapter: TtsAdapter; voice: string } {
   const [provider, id] = voiceSpec.split(":");
+  if (!fake && provider === "hf-endpoint") {
+    return { adapter: new HuggingFaceVoiceAdapter(), voice: id ?? "" };
+  }
   if (!fake && provider === "elevenlabs" && process.env.ELEVENLABS_API_KEY) {
     return { adapter: new ElevenLabsAdapter(), voice: id ?? "" };
   }
@@ -128,6 +143,7 @@ async function buildLanguage(lessonDir: string, manifest: Manifest, scene: Scene
     language: lang,
     cacheDir: join(lessonDir, ".cache", "tts"),
     speed: manifest.tts?.speed,
+    segmentOffsets: narrationSegmentOffsets(parsed.narration, parsed.directives.map((directive) => directive.anchorOffset)),
   });
 
   // Real-voice MP3 seeks imprecisely in browsers (voice drifts from the animation
@@ -150,6 +166,7 @@ async function buildLanguage(lessonDir: string, manifest: Manifest, scene: Scene
   });
   for (const w of compiled.warnings) console.error(formatDiagnostic(w));
   await emit(join(lessonDir, "build", lang), compiled, audio);
+  await emitAssistantContext(lessonDir, manifest, scene, lang, script);
 }
 
 async function cmdPreview(flags: Flags): Promise<void> {
@@ -164,8 +181,26 @@ async function cmdPreview(flags: Flags): Promise<void> {
     await bundleSite(lessonDir, manifest, join(lessonDir, manifest.scene), langs);
   };
   await rebuild();
-  const watchPaths = [join(lessonDir, manifest.scene), ...langs.map((l) => join(lessonDir, `script.${l}.md`))];
-  preview({ siteDir: join(lessonDir, "build", "site"), watchPaths, rebuild });
+  const watchPaths = [
+    join(lessonDir, manifest.scene),
+    ...langs.map((l) => join(lessonDir, `script.${l}.md`)),
+    ...langs.flatMap((l) => manifest.assistant?.context[l] ? [join(lessonDir, manifest.assistant.context[l]!)] : []),
+  ];
+  const siteDir = join(lessonDir, "build", "site");
+  preview({
+    siteDir,
+    watchPaths,
+    rebuild,
+    port: flags.port,
+    assistantApi: manifest.assistant ? createAssistantApi({ siteDir, fake: flags.fake }) : undefined,
+  });
+}
+
+async function cmdServe(flags: Flags): Promise<void> {
+  const lessonDir = flags.lesson ?? process.cwd();
+  const siteDir = join(lessonDir, "build", "site");
+  if (!existsSync(join(siteDir, "index.html"))) die('no static bundle — run "lesson build --bundle" first');
+  serveLesson({ siteDir, port: flags.port, fake: flags.fake });
 }
 
 async function cmdState(flags: Flags): Promise<void> {
@@ -270,6 +305,7 @@ interface Flags {
   out?: string;
   size?: string;
   drag?: string;
+  port?: number;
 }
 
 function parseFlags(args: string[]): Flags {
@@ -283,6 +319,7 @@ function parseFlags(args: string[]): Flags {
     else if (args[i] === "-o" || args[i] === "--out") f.out = args[++i];
     else if (args[i] === "--size") f.size = args[++i];
     else if (args[i] === "--drag") f.drag = args[++i];
+    else if (args[i] === "--port") f.port = Number(args[++i]);
   }
   return f;
 }

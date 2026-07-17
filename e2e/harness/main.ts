@@ -3,12 +3,12 @@
 // for Playwright to drive.
 
 import { Player, PLAYER_CSS } from "@narrable/player";
-import type { LessonTracks } from "@narrable/core";
+import type { AssistantContext, LessonTracks } from "@narrable/core";
 import { scene } from "../../lessons/unit-circle/scene";
 
 declare global {
   interface Window {
-    __XV_DATA: { tracks: LessonTracks; vtt: string; audio: string };
+    __XV_DATA: { tracks: LessonTracks; vtt: string; audio: string; assistant: AssistantContext };
     __player: Player;
   }
 }
@@ -19,6 +19,6 @@ style.textContent = PLAYER_CSS;
 document.head.append(style);
 
 const mount = document.getElementById("app")!;
-const player = new Player({ mount, scene, tracks: data.tracks, captionsVtt: data.vtt, audioSrc: [data.audio] });
+const player = new Player({ mount, scene, tracks: data.tracks, captionsVtt: data.vtt, audioSrc: [data.audio], assistant: { context: data.assistant } });
 window.__player = player;
 player.start();

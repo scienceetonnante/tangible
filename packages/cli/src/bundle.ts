@@ -5,7 +5,10 @@
 import { build } from "esbuild";
 import { createRequire } from "node:module";
 import { mkdir, writeFile, copyFile, readFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { join } from "node:path";
+import { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { Manifest } from "./manifest.js";
 import type { LessonTracks } from "@narrable/core";
 
@@ -23,12 +26,14 @@ export async function bundleSite(lessonDir: string, manifest: Manifest, scenePat
 import { Player, PLAYER_CSS } from "@narrable/player";
 import { scene } from ${JSON.stringify(scenePath)};
 const DEFAULT_LANG = ${JSON.stringify(langs[0])};
+const HAS_ASSISTANT = ${JSON.stringify(Boolean(manifest.assistant))};
 const mimeForAudio = (s) => s.endsWith(".m4a") ? "audio/mp4" : s.endsWith(".mp3") ? "audio/mpeg" : s.endsWith(".webm") ? "audio/webm" : "audio/wav";
 async function main() {
   const lang = new URLSearchParams(location.search).get("lang") || DEFAULT_LANG;
   const base = "./" + lang + "/";
   const tracks = await (await fetch(base + "tracks.json")).json();
   const vtt = await (await fetch(base + "captions.vtt")).text();
+  const assistant = HAS_ASSISTANT ? { context: await (await fetch(base + "assistant.json")).json() } : undefined;
   // Fetch audio as an in-memory blob and play from an object URL. Static hosts (e.g.
   // Hugging Face Spaces) serve media stored via Xet/LFS through signed CDN redirects
   // that break Safari's range-based media loader (403 on the redirect); a blob URL
@@ -39,7 +44,7 @@ async function main() {
     audioSrc.push(URL.createObjectURL(new Blob([buf], { type: mimeForAudio(src) })));
   }
   const style = document.createElement("style"); style.textContent = PLAYER_CSS; document.head.append(style);
-  const player = new Player({ mount: document.getElementById("app"), scene, tracks, captionsVtt: vtt, audioSrc, baseUrl: "" });
+  const player = new Player({ mount: document.getElementById("app"), scene, tracks, captionsVtt: vtt, audioSrc, baseUrl: "", assistant });
   window.__player = player;
   player.start();
 }
@@ -62,10 +67,33 @@ main();
     await mkdir(dst, { recursive: true });
     const tracks = JSON.parse(await readFile(join(src, "tracks.json"), "utf8")) as LessonTracks;
     for (const f of ["tracks.json", "captions.vtt", ...tracks.audio.src]) await copyFile(join(src, f), join(dst, f));
+    if (existsSync(join(src, "assistant.json"))) await copyFile(join(src, "assistant.json"), join(dst, "assistant.json"));
   }
   await copyFile(katexCss, join(outDir, "katex.css"));
   await writeFile(join(outDir, "index.html"), indexHtml(manifest, langs));
+  if (manifest.assistant) await bundleAssistantServer(outDir);
   return outDir;
+}
+
+async function bundleAssistantServer(outDir: string): Promise<void> {
+  const serverPath = join(dirname(fileURLToPath(import.meta.url)), "assistant-server.js");
+  await build({
+    stdin: {
+      contents: `import { serveLesson } from ${JSON.stringify(serverPath)}; serveLesson({ siteDir: process.cwd(), port: Number(process.env.PORT ?? 7860) });`,
+      resolveDir: outDir,
+      sourcefile: "server-entry.mjs",
+    },
+    outfile: join(outDir, "server.mjs"),
+    bundle: true,
+    format: "esm",
+    platform: "node",
+    target: "node22",
+    logLevel: "silent",
+  });
+  await writeFile(
+    join(outDir, "Dockerfile"),
+    "FROM node:22-slim\nWORKDIR /app\nCOPY . .\nENV PORT=7860\nEXPOSE 7860\nCMD [\"node\", \"server.mjs\"]\n",
+  );
 }
 
 function indexHtml(manifest: Manifest, langs: string[]): string {

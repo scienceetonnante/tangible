@@ -4,10 +4,26 @@ title:
 scene: ./scene.ts
 languages: [en]
 voice:
-  en: elevenlabs:s3TPKV1kjDlVtZbl4Ksh
+  en: hf-endpoint:david_v1
 defaults:
   anticipation: -0.2
   ease: inOutCubic
   transition: 1.0
-tts:
-  speed: 0.9
+assistant:
+  context:
+    en: assistant.en.md
+  voice:
+    en: hf-endpoint:david_v1
+  commandable:
+    - kappa
+    - roughness
+    - start.x
+    - start.y
+    - step
+    - active.sgd
+    - active.momentum
+    - active.adamw
+    - sgd.lr
+    - momentum.lr
+    - momentum.beta
+    - adamw.lr

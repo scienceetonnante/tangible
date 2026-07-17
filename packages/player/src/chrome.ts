@@ -96,6 +96,8 @@ export class Chrome {
   /** Global keyboard shortcuts; returns a disposer. */
   bindKeys(target: Window | HTMLElement = window): () => void {
     const onKey = (e: KeyboardEvent) => {
+      const source = e.target as HTMLElement | null;
+      if (source?.matches("input, textarea, select, button, [contenteditable=true]")) return;
       if (e.key === " " || e.key === "k") {
         e.preventDefault();
         this.togglePlay();
@@ -123,7 +125,7 @@ export class Chrome {
 
   private toggleFullscreen(): void {
     if (document.fullscreenElement) void document.exitFullscreen();
-    else void this.el.closest(".xv-player")?.requestFullscreen?.();
+    else void (this.el.closest(".xv-shell") ?? this.el.closest(".xv-player"))?.requestFullscreen?.();
   }
 
   private duration(): number {

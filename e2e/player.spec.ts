@@ -39,6 +39,7 @@ test("checkpoint pauses after the spoken tail and resumes from the play button",
   const stoppedAt = await page.evaluate(() => (window as any).__player.clock.t as number);
   expect(stoppedAt).toBeCloseTo(pauseT + 0.5, 1);
   await expect(page.locator(".xv-gate")).toHaveCount(0);
+  await expect(page.locator(".xv-assistant-input")).toBeEnabled();
 
   await page.locator(".xv-play").click();
   await page.waitForFunction(() => (window as any).__player.clock.playing === true);

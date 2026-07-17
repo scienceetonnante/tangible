@@ -2,7 +2,8 @@
 import { describe, it, expect } from "vitest";
 import { Player } from "./player.js";
 import type { SceneModule } from "./scene-host.js";
-import type { LessonTracks, PlainState } from "@narrable/core";
+import type { AssistantContext, LessonTracks, PlainState } from "@narrable/core";
+import { AnswerTimeline } from "./answer-timeline.js";
 
 const tracks: LessonTracks = {
   version: 1,
@@ -20,6 +21,22 @@ const tracks: LessonTracks = {
   captions: { src: "captions.vtt" },
   boardItems: { note: { kind: "text", source: { fr: "x" } } },
   recorded: {},
+};
+
+const assistantContext: AssistantContext = {
+  version: 1,
+  lessonId: "t",
+  language: "fr",
+  title: "Test",
+  guide: "A test scene.",
+  script: "Test.",
+  narration: "Test.",
+  schema: { theta: { type: { kind: "scalar" }, default: 0, interpolate: "lerp", ownership: "script" } },
+  presets: {},
+  constants: {},
+  groups: {},
+  commandable: ["theta"],
+  voice: "elevenlabs:test",
 };
 
 function stubScene(seen: PlainState[]): SceneModule {
@@ -80,6 +97,43 @@ describe("Player composition", () => {
     (mount.querySelector(".xv-captions-toggle") as HTMLButtonElement).click();
     player.driver.tick();
     expect(captions.textContent).toBe("Visible caption.");
+    player.dispose();
+  });
+
+  it("enables questions only after playback reaches a manual or scripted pause", () => {
+    const mount = document.createElement("div");
+    const player = new Player({ mount, scene: stubScene([]), tracks, assistant: { context: assistantContext } });
+    const input = mount.querySelector(".xv-assistant-input") as HTMLInputElement;
+    expect(input.disabled).toBe(true);
+
+    player.audio.dispatchEvent(new Event("play"));
+    expect(input.disabled).toBe(true);
+    player.audio.dispatchEvent(new Event("pause"));
+    expect(input.disabled).toBe(false);
+    player.dispose();
+  });
+
+  it("composes answer state over the lesson until the learner claims that parameter", () => {
+    const mount = document.createElement("div");
+    const seen: PlainState[] = [];
+    const player = new Player({ mount, scene: stubScene(seen), tracks, assistant: { context: assistantContext } });
+    const active = {
+      audio: { currentTime: 1 },
+      timeline: new AnswerTimeline(assistantContext.schema, { theta: 0 }, [{ t: 0, set: { theta: 8 }, over: 0 }]),
+      state: {},
+      claimed: new Set<string>(),
+      url: "",
+    };
+    (player as unknown as { activeAnswer: typeof active }).activeAnswer = active;
+
+    player.audio.currentTime = 0;
+    player.driver.tick();
+    expect(seen.at(-1)!.theta).toBe(8);
+
+    active.claimed.add("theta");
+    player.driver.tick();
+    expect(seen.at(-1)!.theta).toBe(0);
+    (player as unknown as { activeAnswer?: typeof active }).activeAnswer = undefined;
     player.dispose();
   });
 });

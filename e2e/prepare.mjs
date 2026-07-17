@@ -21,6 +21,17 @@ export default async function prepare() {
   const buildDir = join(root, "lessons/unit-circle/build/fr");
   const tracks = await readFile(join(buildDir, "tracks.json"), "utf8");
   const vtt = await readFile(join(buildDir, "captions.vtt"), "utf8");
+  const assistant = JSON.parse(await readFile(join(buildDir, "assistant.json"), "utf8"));
+  // Keep the browser acceptance answer short while exercising the real fake-TTS
+  // timing and audio path.
+  assistant.speed = 5;
+  const { answerQuestion } = await import(join(root, "packages/cli/dist/assistant-service.js"));
+  const { FakeTtsAdapter } = await import(join(root, "packages/tts/dist/index.js"));
+  const answer = await answerQuestion(
+    { lessonId: assistant.lessonId, language: assistant.language, question: "Why?", t: 0, state: { theta: 0 }, history: [] },
+    assistant,
+    { fake: true, tts: new FakeTtsAdapter() },
+  );
 
   const distDir = join(root, "e2e/dist");
   await mkdir(distDir, { recursive: true });
@@ -39,8 +50,9 @@ export default async function prepare() {
     },
   });
 
-  const data = { tracks: JSON.parse(tracks), vtt, audio: "audio.wav" };
+  const data = { tracks: JSON.parse(tracks), vtt, audio: "audio.wav", assistant };
   await writeFile(join(distDir, "data.js"), `window.__XV_DATA = ${JSON.stringify(data)};`);
+  await writeFile(join(distDir, "answer.json"), JSON.stringify(answer));
   await writeFile(
     join(distDir, "index.html"),
     `<!doctype html><html><head><meta charset="utf-8"><title>xv e2e</title></head><body><div id="app" style="width:640px"></div><script src="data.js"></script><script src="main.js"></script></body></html>`,
