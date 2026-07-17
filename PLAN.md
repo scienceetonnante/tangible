@@ -9,9 +9,11 @@ in [DESIGN.md](./DESIGN.md), especially §10.
 The current baseline includes the completed M-bake compiler milestone: the bilingual
 unit-circle lesson is deployed, backpropagation uses its real gradient-descent
 function for three build-time computed steps, and the optimizer lesson uses a
-lesson-local Three.js viewport. The unit-circle lesson also has an optional
-pause-time narrated assistant with validated scene commands and Docker Space
-deployment support. The hermetic unit and dual-browser end-to-end suites are green.
+lesson-local Three.js viewport. The unit-circle and optimizer lessons both have an
+optional pause-time narrated assistant with validated scene commands and Docker
+Space deployment support. Optimizer authored narration and assistant answers use
+the private `david_v1` voice. The hermetic unit and dual-browser end-to-end suites
+are green.
 
 The next phases are deliberately ordered by unresolved product risk:
 

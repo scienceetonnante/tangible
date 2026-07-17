@@ -11,7 +11,7 @@ A platform for **interactive ("explorable") narrated video** — lessons that ar
 
 ## Status
 
-The v0.1 vertical slice works end to end: compile a script → synthesize audio (ElevenLabs, a private Qwen3-TTS endpoint, or a fake adapter) → play, seek, drag-and-catch-up, board equations, captions, and narrated pause checkpoints. The bilingual **unit-circle** lesson is deployed with real voice and verified on Chrome, Safari, and iPad; it also has an optional pause-time lesson assistant that answers with Hugging Face Inference Providers, speaks with a private Qwen3-TTS cloned-voice endpoint, and drives a temporary visual demonstration without changing the authored timeline. A second 2D **backpropagation** lesson validates agent authoring, live recomputation, and build-time computed processes: its `@bake` directives call the scene's real gradient-descent function and compile the results into ordinary tracks. A third **optimizer** lesson uses the cloned voice and compares SGD, momentum, and AdamW on a navigable conditioned or rough 3D loss surface, with a shared start point and matched-step scrubber.
+The v0.1 vertical slice works end to end: compile a script → synthesize audio (ElevenLabs, a private Qwen3-TTS endpoint, or a fake adapter) → play, seek, drag-and-catch-up, board equations, captions, and narrated pause checkpoints. The bilingual **unit-circle** lesson is deployed with real voice and verified on Chrome, Safari, and iPad; it also has an optional pause-time lesson assistant that answers with Hugging Face Inference Providers, speaks with a private Qwen3-TTS cloned-voice endpoint, and drives a temporary visual demonstration without changing the authored timeline. A second 2D **backpropagation** lesson validates agent authoring, live recomputation, and build-time computed processes: its `@bake` directives call the scene's real gradient-descent function and compile the results into ordinary tracks. A third **optimizer** lesson compares SGD, momentum, and AdamW on a navigable conditioned or rough 3D loss surface. Its authored narration and pause-time assistant both use the cloned `david_v1` voice, and the assistant can demonstrate answers with every meaningful optimizer control. This flow has been validated locally end to end with the live Hugging Face providers.
 
 ## How it works
 
@@ -33,6 +33,16 @@ Every parameter's value is a pure function of time `t` (**value-at-time**), whic
 Narration-bound controls use `ownership: "script"`: a learner change holds for three seconds, then glides back to the scenario value even while playback is paused. Use `viewer` for persistent navigation such as the camera, and reserve `shared` for choices that should persist until a later script cue.
 
 When the optional assistant is enabled, the lesson clock stays paused while a second, ephemeral answer clock drives allowlisted scene parameters. Learner interaction remains live and wins per parameter; when the answer ends, its layer disappears and the original ownership rules continue normally.
+
+The lesson server orchestrates both provider calls; the voice endpoint is only responsible for speech synthesis:
+
+```
+browser ─► lesson server /api/answer ─┬─► Hugging Face router (LLM answer plan)
+                                     └─► private Qwen3-TTS endpoint (speech)
+        ◄─ validated beats + WAV ─────┘
+```
+
+Tokens remain on this same-origin server and are never sent to the browser.
 
 ## Repository layout
 
@@ -74,6 +84,13 @@ HF_MODEL=openai/gpt-oss-120b:cerebras
 TTS_ENDPOINT_URL=https://...endpoints.huggingface.cloud
 HF_TTS_TOKEN=hf_...private-endpoint-token...
 ```
+
+The CLI loads `.env` from both the directory where it is invoked and the selected
+lesson directory. This makes it possible to keep shared credentials in the root
+`.env` while placing a lesson-specific `TTS_ENDPOINT_URL` in, for example,
+`lessons/optimizers/.env`; both files are gitignored. `HF_TTS_TOKEN` is optional
+when `HF_TOKEN` is authorized for both the LLM router and the private voice
+endpoint.
 
 ## Quick start
 
@@ -168,7 +185,7 @@ assistant:
 
 `assistant.<lang>.md` describes the scene, layout, visible controls, terminology, and answer guidance. The build combines it with the full script, narration, schema, presets, and constants in `assistant.json`. The model returns one to six validated spoken beats with absolute parameter values; arbitrary code and non-allowlisted parameters never reach the player. `assistant.voice` may override the authored narration voice. The cloned-voice endpoint returns WAV without alignment, so the server synthesizes and joins each beat separately; sample counts give exact command boundaries at the cost of one endpoint request per beat.
 
-Assistant-enabled Hugging Face Spaces use the generated `Dockerfile` and `server.mjs`. Store `HF_TOKEN` and `HF_TTS_TOKEN` as Space secrets, and `HF_MODEL` plus `TTS_ENDPOINT_URL` as variables. `HF_TTS_TOKEN` falls back to `HF_TOKEN` when one token has both permissions. Lessons without assistant configuration remain ordinary static bundles.
+Assistant-enabled Hugging Face Spaces use the generated `Dockerfile` and `server.mjs`. This Docker Space hosts the lesson UI and its small Node orchestration server; it is separate from the existing cloned-voice endpoint. Store `HF_TOKEN` and `HF_TTS_TOKEN` as Space secrets, and `HF_MODEL` plus `TTS_ENDPOINT_URL` as variables. `HF_TTS_TOKEN` falls back to `HF_TOKEN` when one token has both permissions. Lessons without assistant configuration remain ordinary static bundles.
 
 The lesson server writes one JSON log line for each `assistant.request`,
 `assistant.success`, or `assistant.error`. Local logs appear in the terminal running

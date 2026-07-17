@@ -216,7 +216,11 @@ Provider credentials require a trusted same-origin server. Assistant-enabled
 bundles therefore include a small Node server and Dockerfile suitable for a
 Hugging Face Docker Space; lessons without assistant configuration remain fully
 static. The browser player knows only the typed request/response contract and does
-not import provider or TTS code.
+not import provider or TTS code. The lesson server orchestrates the two independent
+provider calls: it asks the Hugging Face router for a declarative answer plan,
+validates that plan, then sends its beats to the private voice endpoint. The voice
+endpoint has no LLM responsibility. Request lifecycle logs are structured JSON and
+deliberately exclude question text, scene values, credentials, and generated audio.
 
 ## 6. Markup format — draft specification
 
