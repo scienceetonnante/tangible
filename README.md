@@ -70,7 +70,7 @@ Optional, for real voice synthesis and live questions — create a `.env` at the
 ```
 ELEVENLABS_API_KEY=sk_...your_key...
 HF_TOKEN=hf_...your_token...
-HF_MODEL=org/model:provider
+HF_MODEL=openai/gpt-oss-120b:cerebras
 TTS_ENDPOINT_URL=https://...endpoints.huggingface.cloud
 HF_TTS_TOKEN=hf_...private-endpoint-token...
 ```
@@ -169,6 +169,12 @@ assistant:
 `assistant.<lang>.md` describes the scene, layout, visible controls, terminology, and answer guidance. The build combines it with the full script, narration, schema, presets, and constants in `assistant.json`. The model returns one to six validated spoken beats with absolute parameter values; arbitrary code and non-allowlisted parameters never reach the player. `assistant.voice` may override the authored narration voice. The cloned-voice endpoint returns WAV without alignment, so the server synthesizes and joins each beat separately; sample counts give exact command boundaries at the cost of one endpoint request per beat.
 
 Assistant-enabled Hugging Face Spaces use the generated `Dockerfile` and `server.mjs`. Store `HF_TOKEN` and `HF_TTS_TOKEN` as Space secrets, and `HF_MODEL` plus `TTS_ENDPOINT_URL` as variables. `HF_TTS_TOKEN` falls back to `HF_TOKEN` when one token has both permissions. Lessons without assistant configuration remain ordinary static bundles.
+
+The lesson server writes one JSON log line for each `assistant.request`,
+`assistant.success`, or `assistant.error`. Local logs appear in the terminal running
+`lesson serve` or `lesson preview`; Docker deployments expose the same stdout/stderr
+as container logs. Logs include request IDs, provider/model, latency, answer size,
+and errors, but not question text, scene-state values, tokens, or generated audio.
 
 ## Development
 

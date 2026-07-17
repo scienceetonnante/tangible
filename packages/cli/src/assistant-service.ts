@@ -114,6 +114,7 @@ export function validateAnswer(beats: unknown, context: AssistantContext): asser
     if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new Error(`beat ${i + 1} must be an object`);
     const beat = raw as Record<string, unknown>;
     if (typeof beat.say !== "string" || !beat.say.trim()) throw new Error(`beat ${i + 1}.say must be non-empty text`);
+    if (beat.say.length > 600) throw new Error(`beat ${i + 1}.say exceeds 600 characters`);
     chars += beat.say.length;
     if (chars > 2000) throw new Error("answer speech exceeds 2000 characters");
     if (!beat.set || typeof beat.set !== "object" || Array.isArray(beat.set)) throw new Error(`beat ${i + 1}.set must be an object`);
@@ -149,14 +150,12 @@ function answerJsonSchema(context: AssistantContext): Record<string, unknown> {
     properties: {
       beats: {
         type: "array",
-        minItems: 1,
-        maxItems: 6,
         items: {
           type: "object",
           additionalProperties: false,
           required: ["say", "set", "over"],
           properties: {
-            say: { type: "string", minLength: 1, maxLength: 600 },
+            say: { type: "string" },
             set: { type: "object", additionalProperties: false, properties },
             over: { type: "number", minimum: 0, maximum: 2 },
           },
@@ -185,8 +184,8 @@ function valueJsonSchema(type: ParamType): Record<string, unknown> {
   }
 }
 
-function numberArray(length: number): Record<string, unknown> {
-  return { type: "array", items: { type: "number" }, minItems: length, maxItems: length };
+function numberArray(_length: number): Record<string, unknown> {
+  return { type: "array", items: { type: "number" } };
 }
 
 function fakeAnswer(context: AssistantContext): AnswerBeat[] {

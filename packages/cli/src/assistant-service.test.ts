@@ -74,5 +74,13 @@ describe("assistant service", () => {
     expect(messages[0]!.content).toContain('"script":"A lesson."');
     expect(messages.at(-1)!.content).toContain('"lessonTime":3');
     expect(JSON.stringify(sent.response_format)).toContain('"additionalProperties":false');
+    expect(JSON.stringify(sent.response_format)).not.toMatch(/minItems|maxItems|minLength|maxLength/);
+  });
+
+  it("keeps answer count constraints in server validation", () => {
+    const beat = { say: "x", set: {}, over: 0 };
+    expect(() => validateAnswer([], context)).toThrow("one to six");
+    expect(() => validateAnswer(Array.from({ length: 7 }, () => beat), context)).toThrow("one to six");
+    expect(() => validateAnswer([{ ...beat, say: "x".repeat(601) }], context)).toThrow("600 characters");
   });
 });

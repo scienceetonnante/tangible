@@ -27,9 +27,13 @@ describe("assistant server", () => {
       writeHead(code: number) { status = code; },
       end(text: string) { body = text; },
     } as unknown as ServerResponse;
+    const logs: Record<string, unknown>[] = [];
 
-    expect(await createAssistantApi({ siteDir, fake: true })(req, res)).toBe(true);
+    expect(await createAssistantApi({ siteDir, fake: true, logger: (entry) => logs.push(entry) })(req, res)).toBe(true);
     expect(status).toBe(200);
     expect((JSON.parse(body) as { answer: string }).answer).toContain("quarter turn");
+    expect(logs.map((entry) => entry.event)).toEqual(["assistant.request", "assistant.success"]);
+    expect(logs[1]).toMatchObject({ lessonId: "circle", model: "fake", tts: "fake", beats: 2 });
+    expect(logs[1]!.requestId).toBe(logs[0]!.requestId);
   });
 });

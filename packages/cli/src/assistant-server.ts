@@ -2,6 +2,7 @@
 // server-side while serving the ordinary static bundle unchanged.
 
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
+import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { AssistantContext, AssistantRequest, TtsAdapter } from "@narrable/core";
@@ -14,26 +15,60 @@ export interface AssistantServerOptions {
   port?: number;
   fake?: boolean;
   tts?: TtsAdapter;
+  logger?: (entry: Record<string, unknown>) => void;
 }
 
 export type AssistantApiHandler = (req: IncomingMessage, res: ServerResponse) => Promise<boolean>;
 
 export function createAssistantApi(opts: AssistantServerOptions): AssistantApiHandler {
   const requests = new Map<string, number[]>();
+  const log = opts.logger ?? ((entry) => console.error(JSON.stringify({ timestamp: new Date().toISOString(), ...entry })));
   return async (req, res) => {
     if ((req.url ?? "").split("?")[0] !== "/api/answer") return false;
     if (req.method !== "POST") return json(res, 405, { error: "method not allowed" });
     if (!allowRequest(requests, req.socket.remoteAddress ?? "unknown")) return json(res, 429, { error: "too many questions; try again shortly" });
 
+    const requestId = randomUUID().slice(0, 8);
+    const started = Date.now();
+    let request: AssistantRequest | undefined;
     try {
-      const request = await readJson(req) as AssistantRequest;
+      request = await readJson(req) as AssistantRequest;
       if (!/^[a-zA-Z0-9-]+$/.test(request.language)) throw new Error("invalid language");
+      log({
+        event: "assistant.request",
+        requestId,
+        lessonId: request.lessonId,
+        language: request.language,
+        questionChars: request.question?.length,
+        historyTurns: request.history?.length,
+      });
       const context = JSON.parse(await readFile(join(opts.siteDir, request.language, "assistant.json"), "utf8")) as AssistantContext;
       const tts = opts.tts ?? selectAssistantTts(context.voice, opts.fake ?? false);
       const answer = await answerQuestion(request, context, { tts, fake: opts.fake });
+      log({
+        event: "assistant.success",
+        requestId,
+        lessonId: request.lessonId,
+        model: opts.fake ? "fake" : process.env.HF_MODEL,
+        tts: tts.id,
+        beats: answer.beats.length,
+        answerChars: answer.answer.length,
+        audioSeconds: answer.duration,
+        latencyMs: Date.now() - started,
+      });
       return json(res, 200, answer);
     } catch (error) {
-      return json(res, 400, { error: error instanceof Error ? error.message : String(error) });
+      const message = error instanceof Error ? error.message : String(error);
+      log({
+        event: "assistant.error",
+        requestId,
+        lessonId: request?.lessonId,
+        language: request?.language,
+        model: opts.fake ? "fake" : process.env.HF_MODEL,
+        error: message,
+        latencyMs: Date.now() - started,
+      });
+      return json(res, 400, { error: message });
     }
   };
 }
