@@ -20,6 +20,7 @@ a single text script. Available in **English** (default) and **French**
 (append `?lang=fr` to the URL).
 
 The lesson assets remain a self-contained static bundle. A small same-origin Node
-server protects the Hugging Face Inference Providers and ElevenLabs credentials
-used by the pause-time question box. Configure `HF_TOKEN`, `HF_MODEL`, and
-`ELEVENLABS_API_KEY` as runtime Space secrets/variables.
+server protects the Hugging Face Inference Providers and private cloned-voice
+endpoint credentials used by the pause-time question box. Configure `HF_TOKEN`
+and `HF_TTS_TOKEN` as secrets, and `HF_MODEL` plus `TTS_ENDPOINT_URL` as Space
+variables. `HF_TTS_TOKEN` may be omitted when `HF_TOKEN` can call both services.

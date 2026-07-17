@@ -1,7 +1,7 @@
 {
   "name": "@narrable/tts",
   "version": "0.1.0",
-  "description": "TTS provider adapters (fake and ElevenLabs).",
+  "description": "TTS provider adapters (fake, ElevenLabs, and Hugging Face voice endpoints).",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

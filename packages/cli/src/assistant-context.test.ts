@@ -13,7 +13,7 @@ const manifest: Manifest = {
   voice: { en: "elevenlabs:voice" },
   defaults: { anticipation: -0.2, ease: "linear", transition: 1 },
   tts: { speed: 0.9 },
-  assistant: { context: { en: "assistant.en.md" }, commandable: ["theta"] },
+  assistant: { context: { en: "assistant.en.md" }, commandable: ["theta"], voice: { en: "hf-endpoint:david_v1" } },
 };
 
 const scene = {
@@ -44,7 +44,7 @@ describe("assistant context", () => {
     expect(got.script).toBe(script);
     expect(got.narration).toBe("The angle is half a turn.");
     expect(got.commandable).toEqual(["theta"]);
-    expect(got.voice).toBe("elevenlabs:voice");
+    expect(got.voice).toBe("hf-endpoint:david_v1");
   });
 
   it("rejects an unknown commandable parameter", async () => {

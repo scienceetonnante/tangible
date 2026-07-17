@@ -17,4 +17,7 @@ assistant:
   context:
     en: assistant.en.md
     fr: assistant.fr.md
+  voice:
+    en: hf-endpoint:david_v1
+    fr: hf-endpoint:david_v1
   commandable: [theta, show.thetaLabel, show.projection, show.cosLabel]

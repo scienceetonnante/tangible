@@ -26,8 +26,17 @@ export interface TtsResult {
   duration: number; // seconds
 }
 
+export interface SegmentedTtsRequest extends Omit<TtsRequest, "text"> {
+  segments: string[];
+}
+
+export interface SegmentedTtsResult extends TtsResult {
+  segmentStarts: number[]; // seconds, one entry per requested segment
+}
+
 export interface TtsAdapter {
-  id: string; // "fake", "elevenlabs", "align"
+  id: string; // "fake", "elevenlabs", "hf-endpoint", "align"
   modelId?: string; // participates in the cache key
   synthesize(req: TtsRequest): Promise<TtsResult>;
+  synthesizeSegments?(req: SegmentedTtsRequest): Promise<SegmentedTtsResult>;
 }

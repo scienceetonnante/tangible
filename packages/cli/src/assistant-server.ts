@@ -5,7 +5,7 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { AssistantContext, AssistantRequest, TtsAdapter } from "@narrable/core";
-import { ElevenLabsAdapter, FakeTtsAdapter } from "@narrable/tts";
+import { ElevenLabsAdapter, FakeTtsAdapter, HuggingFaceVoiceAdapter } from "@narrable/tts";
 import { answerQuestion } from "./assistant-service.js";
 import { serveFromDir } from "./static-server.js";
 
@@ -19,7 +19,6 @@ export interface AssistantServerOptions {
 export type AssistantApiHandler = (req: IncomingMessage, res: ServerResponse) => Promise<boolean>;
 
 export function createAssistantApi(opts: AssistantServerOptions): AssistantApiHandler {
-  const tts = opts.tts ?? (opts.fake ? new FakeTtsAdapter() : new ElevenLabsAdapter());
   const requests = new Map<string, number[]>();
   return async (req, res) => {
     if ((req.url ?? "").split("?")[0] !== "/api/answer") return false;
@@ -30,12 +29,20 @@ export function createAssistantApi(opts: AssistantServerOptions): AssistantApiHa
       const request = await readJson(req) as AssistantRequest;
       if (!/^[a-zA-Z0-9-]+$/.test(request.language)) throw new Error("invalid language");
       const context = JSON.parse(await readFile(join(opts.siteDir, request.language, "assistant.json"), "utf8")) as AssistantContext;
+      const tts = opts.tts ?? selectAssistantTts(context.voice, opts.fake ?? false);
       const answer = await answerQuestion(request, context, { tts, fake: opts.fake });
       return json(res, 200, answer);
     } catch (error) {
       return json(res, 400, { error: error instanceof Error ? error.message : String(error) });
     }
   };
+}
+
+function selectAssistantTts(voice: string, fake: boolean): TtsAdapter {
+  if (fake) return new FakeTtsAdapter();
+  if (voice.startsWith("hf-endpoint:")) return new HuggingFaceVoiceAdapter();
+  if (voice.startsWith("elevenlabs:")) return new ElevenLabsAdapter();
+  throw new Error(`unsupported assistant voice "${voice}"`);
 }
 
 export function serveLesson(opts: AssistantServerOptions): Server {

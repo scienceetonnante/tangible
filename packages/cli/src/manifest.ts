@@ -15,6 +15,7 @@ export interface Manifest {
   assistant?: {
     context: Record<string, string>;
     commandable: string[];
+    voice?: Record<string, string>;
   };
 }
 

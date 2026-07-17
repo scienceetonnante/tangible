@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { AssistantContext, AssistantRequest } from "@narrable/core";
+import type { AssistantContext, AssistantRequest, TtsAdapter } from "@narrable/core";
 import { FakeTtsAdapter } from "@narrable/tts";
 import { answerQuestion, validateAnswer } from "./assistant-service.js";
 
@@ -30,6 +30,26 @@ describe("assistant service", () => {
     expect(response.timedBeats[1]!.t).toBeGreaterThan(0);
     expect(response.audioFormat).toBe("wav");
     expect(response.audioBase64.length).toBeGreaterThan(10);
+  });
+
+  it("uses provider segment boundaries when character alignment is unavailable", async () => {
+    const tts: TtsAdapter = {
+      id: "segmented",
+      async synthesize() { throw new Error("full-text synthesis should not run"); },
+      async synthesizeSegments(req) {
+        expect(req.voice).toBe("voice");
+        expect(req.segments).toHaveLength(2);
+        return {
+          audio: new Uint8Array([1, 2]),
+          format: "wav",
+          wordTimes: [],
+          duration: 2,
+          segmentStarts: [0, 1.25],
+        };
+      },
+    };
+    const response = await answerQuestion(request, context, { fake: true, tts });
+    expect(response.timedBeats.map((beat) => beat.t)).toEqual([0, 1.25]);
   });
 
   it("rejects commands outside the allowlist and scalar range", () => {

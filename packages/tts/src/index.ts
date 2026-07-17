@@ -1,3 +1,4 @@
-// @narrable/tts — TTS provider adapters (fake and ElevenLabs).
+// @narrable/tts — TTS provider adapters.
 export { FakeTtsAdapter } from "./fake.js";
 export { ElevenLabsAdapter, splitKeepingSeparators, type ElevenLabsOptions } from "./elevenlabs.js";
+export { HuggingFaceVoiceAdapter, type HuggingFaceVoiceOptions } from "./huggingface-voice.js";

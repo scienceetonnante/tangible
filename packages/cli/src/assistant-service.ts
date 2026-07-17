@@ -1,5 +1,5 @@
 // Provider orchestration for lesson questions: Hugging Face produces a small,
-// declarative answer plan; ElevenLabs supplies the lesson voice and timings.
+// declarative answer plan; the configured TTS adapter supplies voice and timing.
 
 import { validateValue, type AnswerBeat, type AssistantContext, type AssistantRequest, type AssistantResponse, type ParamType, type ParamValue, type TtsAdapter } from "@narrable/core";
 
@@ -27,10 +27,13 @@ export async function answerQuestion(
     offsets.push(answer.length);
     answer += beat.say;
   }
-  const voice = context.voice.startsWith("elevenlabs:") ? context.voice.slice("elevenlabs:".length) : context.voice;
-  const speech = await providers.tts.synthesize({ text: answer, voice, language: context.language, speed: context.speed });
+  const voice = providerVoice(context.voice);
+  const segmented = providers.tts.synthesizeSegments
+    ? await providers.tts.synthesizeSegments({ segments: beats.map((beat) => beat.say), voice, language: context.language, speed: context.speed })
+    : undefined;
+  const speech = segmented ?? await providers.tts.synthesize({ text: answer, voice, language: context.language, speed: context.speed });
   const timedBeats = beats.map((beat, i) => ({
-    t: charTime(offsets[i]!, speech.charTimes, speech.wordTimes),
+    t: segmented?.segmentStarts[i] ?? charTime(offsets[i]!, speech.charTimes, speech.wordTimes),
     set: beat.set,
     over: beat.over,
   }));
@@ -42,6 +45,11 @@ export async function answerQuestion(
     audioFormat: speech.format,
     duration: speech.duration,
   };
+}
+
+function providerVoice(spec: string): string {
+  const separator = spec.indexOf(":");
+  return separator === -1 ? spec : spec.slice(separator + 1);
 }
 
 async function huggingFaceAnswer(

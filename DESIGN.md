@@ -197,8 +197,11 @@ conversation history.
 The model returns a declarative sequence of spoken beats. Each beat contains text,
 absolute values for explicitly allowlisted parameters, and a short transition
 duration. The server validates names, types, ranges, length, and count before using
-the lesson's normal ElevenLabs voice and character timings to resolve the beats
-onto a temporary value-at-time track. Model output is data, never executable code.
+the configured assistant voice to resolve the beats onto a temporary value-at-time
+track. Providers with alignment use their character timings. A cloned-voice
+endpoint that returns only PCM WAV synthesizes one beat at a time and derives
+exact boundaries from sample counts before joining the clips. Model output is
+data, never executable code.
 
 The lesson clock remains paused. A separate answer-audio clock drives the temporary
 track, composed over the normal evaluated-and-reconciled state. Learner interaction

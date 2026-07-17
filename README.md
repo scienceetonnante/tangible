@@ -11,7 +11,7 @@ A platform for **interactive ("explorable") narrated video** — lessons that ar
 
 ## Status
 
-The v0.1 vertical slice works end to end: compile a script → synthesize audio (ElevenLabs or a fake adapter) → play, seek, drag-and-catch-up, board equations, captions, and narrated pause checkpoints. The bilingual **unit-circle** lesson is deployed with real voice and verified on Chrome, Safari, and iPad; it also has an optional pause-time lesson assistant that answers with Hugging Face Inference Providers, speaks in the lesson's ElevenLabs voice, and drives a temporary visual demonstration without changing the authored timeline. A second 2D **backpropagation** lesson validates agent authoring, live recomputation, and build-time computed processes: its `@bake` directives call the scene's real gradient-descent function and compile the results into ordinary tracks. A third **optimizer** lesson compares SGD, momentum, and AdamW on a navigable 3D conditioned or rough loss surface, with a shared start point and matched-step scrubber.
+The v0.1 vertical slice works end to end: compile a script → synthesize audio (ElevenLabs or a fake adapter) → play, seek, drag-and-catch-up, board equations, captions, and narrated pause checkpoints. The bilingual **unit-circle** lesson is deployed with real voice and verified on Chrome, Safari, and iPad; it also has an optional pause-time lesson assistant that answers with Hugging Face Inference Providers, speaks with a private Qwen3-TTS cloned-voice endpoint, and drives a temporary visual demonstration without changing the authored timeline. A second 2D **backpropagation** lesson validates agent authoring, live recomputation, and build-time computed processes: its `@bake` directives call the scene's real gradient-descent function and compile the results into ordinary tracks. A third **optimizer** lesson compares SGD, momentum, and AdamW on a navigable conditioned or rough 3D loss surface, with a shared start point and matched-step scrubber.
 
 ## How it works
 
@@ -40,7 +40,7 @@ When the optional assistant is enabled, the lesson clock stays paused while a se
 packages/
   core/         shared types, schema, easing, the value-at-time interpolator, reconciliation math
   compiler/     script.md → tracks.json + captions.vtt (parse→check/bake→synthesize→resolve→expand→emit)
-  tts/          TTS adapters: fake (deterministic) and ElevenLabs (with-timestamps)
+  tts/          TTS adapters: fake, ElevenLabs (with-timestamps), and cloned-voice HF endpoints
   player/       browser runtime: clock, state composition, interaction, board, captions, chrome, questions
   ingredients/  reusable scene helpers (e.g. camera-orbit handle)
   cli/          the `lesson` command
@@ -71,6 +71,8 @@ Optional, for real voice synthesis and live questions — create a `.env` at the
 ELEVENLABS_API_KEY=sk_...your_key...
 HF_TOKEN=hf_...your_token...
 HF_MODEL=org/model:provider
+TTS_ENDPOINT_URL=https://...endpoints.huggingface.cloud
+HF_TTS_TOKEN=hf_...private-endpoint-token...
 ```
 
 ## Quick start
@@ -84,7 +86,7 @@ pnpm build
 node packages/cli/dist/index.js build --bundle --lesson lessons/unit-circle
 
 # Serve it with live-reload (open http://localhost:5179). The assistant uses
-# the real providers when all three environment settings above are present.
+# the real providers when the Hugging Face model and voice settings above are present.
 node packages/cli/dist/index.js preview --lesson lessons/unit-circle
 ```
 
@@ -153,12 +155,14 @@ An assistant-enabled lesson also lists a semantic context file and an explicit c
 assistant:
   context:
     en: assistant.en.md
+  voice:
+    en: hf-endpoint:david_v1
   commandable: [theta, show.projection, show.cosLabel]
 ```
 
-`assistant.<lang>.md` describes the scene, layout, visible controls, terminology, and answer guidance. The build combines it with the full script, narration, schema, presets, and constants in `assistant.json`. The model returns one to six validated spoken beats with absolute parameter values; arbitrary code and non-allowlisted parameters never reach the player.
+`assistant.<lang>.md` describes the scene, layout, visible controls, terminology, and answer guidance. The build combines it with the full script, narration, schema, presets, and constants in `assistant.json`. The model returns one to six validated spoken beats with absolute parameter values; arbitrary code and non-allowlisted parameters never reach the player. `assistant.voice` may override the authored narration voice. The cloned-voice endpoint returns WAV without alignment, so the server synthesizes and joins each beat separately; sample counts give exact command boundaries at the cost of one endpoint request per beat.
 
-Assistant-enabled Hugging Face Spaces use the generated `Dockerfile` and `server.mjs`. Store `HF_TOKEN` and `ELEVENLABS_API_KEY` as Space secrets and `HF_MODEL` as a variable. Lessons without assistant configuration remain ordinary static bundles.
+Assistant-enabled Hugging Face Spaces use the generated `Dockerfile` and `server.mjs`. Store `HF_TOKEN` and `HF_TTS_TOKEN` as Space secrets, and `HF_MODEL` plus `TTS_ENDPOINT_URL` as variables. `HF_TTS_TOKEN` falls back to `HF_TOKEN` when one token has both permissions. Lessons without assistant configuration remain ordinary static bundles.
 
 ## Development
 
@@ -168,6 +172,6 @@ pnpm test       # Vitest unit tests
 pnpm test:e2e   # Playwright browser tests (Chromium + WebKit)
 ```
 
-CI (`.github/workflows/ci.yml`) runs the hermetic checks plus the Playwright suite — **fake TTS/answers, no network, no API keys**. Real ElevenLabs synthesis only happens on a local build or answer request when a key is present.
+CI (`.github/workflows/ci.yml`) runs the hermetic checks plus the Playwright suite — **fake TTS/answers, no network, no API keys**. Real ElevenLabs lesson synthesis and cloned-voice answers happen only when their provider settings are present.
 
 Handy checks without a browser: `lesson state --at <t>` (numeric state) and `lesson frame --at <t> -o f.png` (visual). Because state is a pure function of `t`, both are deterministic.
