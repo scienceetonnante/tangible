@@ -72,6 +72,7 @@ Performance capture requires a live performer, custom recording tooling, and a f
 That cost has since disappeared. Modern TTS APIs return precise timing information aligned to the input text:
 
 - **ElevenLabs** has a `with-timestamps` endpoint returning **character-level** start/end times aligned to the input text. A cue's time is computed from the character offset of its tag in the script. Best-in-class voice quality, strong in French.
+- **Private cloned-voice endpoints** may return only PCM audio. For these, the compiler synthesizes at the union of cue anchors and sentence boundaries, derives exact boundary times from sample counts, and estimates character timing only within each short segment.
 - **Google Cloud TTS** resolves SSML `<mark name="..."/>` tags to `{name, seconds}` timepoints in the batch synthesis response (v1beta1 only; a reported regression on some voices should be verified before committing).
 - **Azure Speech** fires `<bookmark>` events with audio offsets, via its SDK (not plain REST).
 - **Open models** (e.g. Kokoro) have community timestamp support, usable for fully local builds.
@@ -389,7 +390,7 @@ With synchronization automated and the player built once, the per-lesson cost co
 
 *The rules the built platform upholds — violations are bugs. Detailed data-format contracts, the interpolator, and the reconciler algorithm now live in the code (`packages/core` and its tests); this section is the durable statement of intent behind them.*
 
-**Fixed decisions.** Runtime is vanilla TypeScript with `@preact/signals-core` for reactivity — no React, no framework in the hot path. TTS is ElevenLabs (`with-timestamps`) behind a provider-adapter interface, with forced alignment of human recordings as a planned second adapter. Each lesson builds to a static asset bundle (HTML + JS + audio + JSON); assistant-enabled lessons add a small same-origin server for provider credentials, while all others remain deployable to any static host. Computed processes are compiler-only: `@bake` emits ordinary keyframes and requires no player support.
+**Fixed decisions.** Runtime is vanilla TypeScript with `@preact/signals-core` for reactivity — no React, no framework in the hot path. TTS is provider-based: ElevenLabs uses returned character timestamps, while the private Qwen3-TTS cloned voice uses cue-safe segmented synthesis; forced alignment of human recordings remains planned. Each lesson builds to a static asset bundle (HTML + JS + audio + JSON); assistant-enabled lessons add a small same-origin server for provider credentials, while all others remain deployable to any static host. Computed processes are compiler-only: `@bake` emits ordinary keyframes and requires no player support.
 
 **Guiding principles.**
 

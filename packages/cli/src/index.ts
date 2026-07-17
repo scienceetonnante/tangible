@@ -6,12 +6,12 @@ import { readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join, resolve as resolvePath } from "node:path";
 import { createHash } from "node:crypto";
-import { parseScript, check, compile, emit, synthesize, formatDiagnostic, ParseError } from "@narrable/compiler";
+import { parseScript, check, compile, emit, synthesize, narrationSegmentOffsets, formatDiagnostic, ParseError } from "@narrable/compiler";
 import type { SceneInfo } from "@narrable/compiler";
 import { buildIndex, evaluate } from "@narrable/core";
 import type { Schema, Keyframe, TtsAdapter, ParamSpec, ParamValue } from "@narrable/core";
 import { StateStore, Reconciler } from "@narrable/player";
-import { FakeTtsAdapter, ElevenLabsAdapter } from "@narrable/tts";
+import { FakeTtsAdapter, ElevenLabsAdapter, HuggingFaceVoiceAdapter } from "@narrable/tts";
 import { loadScene } from "./scene-loader.js";
 import { loadManifest, type Manifest } from "./manifest.js";
 import { refSheet } from "./ref.js";
@@ -113,9 +113,12 @@ async function cmdFrame(flags: Flags): Promise<void> {
   console.error(`rendered frame at t=${t} → ${out}`);
 }
 
-/** Choose a TTS adapter from the manifest voice spec ("elevenlabs:ID"). */
+/** Choose a TTS adapter from the manifest voice spec. */
 function selectTts(voiceSpec: string, fake: boolean): { adapter: TtsAdapter; voice: string } {
   const [provider, id] = voiceSpec.split(":");
+  if (!fake && provider === "hf-endpoint") {
+    return { adapter: new HuggingFaceVoiceAdapter(), voice: id ?? "" };
+  }
   if (!fake && provider === "elevenlabs" && process.env.ELEVENLABS_API_KEY) {
     return { adapter: new ElevenLabsAdapter(), voice: id ?? "" };
   }
@@ -140,6 +143,7 @@ async function buildLanguage(lessonDir: string, manifest: Manifest, scene: Scene
     language: lang,
     cacheDir: join(lessonDir, ".cache", "tts"),
     speed: manifest.tts?.speed,
+    segmentOffsets: narrationSegmentOffsets(parsed.narration, parsed.directives.map((directive) => directive.anchorOffset)),
   });
 
   // Real-voice MP3 seeks imprecisely in browsers (voice drifts from the animation

@@ -11,7 +11,7 @@ A platform for **interactive ("explorable") narrated video** — lessons that ar
 
 ## Status
 
-The v0.1 vertical slice works end to end: compile a script → synthesize audio (ElevenLabs or a fake adapter) → play, seek, drag-and-catch-up, board equations, captions, and narrated pause checkpoints. The bilingual **unit-circle** lesson is deployed with real voice and verified on Chrome, Safari, and iPad; it also has an optional pause-time lesson assistant that answers with Hugging Face Inference Providers, speaks with a private Qwen3-TTS cloned-voice endpoint, and drives a temporary visual demonstration without changing the authored timeline. A second 2D **backpropagation** lesson validates agent authoring, live recomputation, and build-time computed processes: its `@bake` directives call the scene's real gradient-descent function and compile the results into ordinary tracks. A third **optimizer** lesson compares SGD, momentum, and AdamW on a navigable conditioned or rough 3D loss surface, with a shared start point and matched-step scrubber.
+The v0.1 vertical slice works end to end: compile a script → synthesize audio (ElevenLabs, a private Qwen3-TTS endpoint, or a fake adapter) → play, seek, drag-and-catch-up, board equations, captions, and narrated pause checkpoints. The bilingual **unit-circle** lesson is deployed with real voice and verified on Chrome, Safari, and iPad; it also has an optional pause-time lesson assistant that answers with Hugging Face Inference Providers, speaks with a private Qwen3-TTS cloned-voice endpoint, and drives a temporary visual demonstration without changing the authored timeline. A second 2D **backpropagation** lesson validates agent authoring, live recomputation, and build-time computed processes: its `@bake` directives call the scene's real gradient-descent function and compile the results into ordinary tracks. A third **optimizer** lesson uses the cloned voice and compares SGD, momentum, and AdamW on a navigable conditioned or rough 3D loss surface, with a shared start point and matched-step scrubber.
 
 ## How it works
 
@@ -129,6 +129,12 @@ A lesson is a directory with three authored files:
   tts:
     speed: 0.9           # ElevenLabs speaking rate: 0.7 (slow) .. 1.2 (fast)
   ```
+
+  Use `hf-endpoint:david_v1` for the private cloned voice. Because that endpoint
+  returns PCM WAV without alignment, the compiler synthesizes at cue and sentence
+  boundaries, derives those exact times from sample counts, and estimates timing
+  only inside each segment. Set `TTS_ENDPOINT_URL` and `HF_TTS_TOKEN` before a
+  real build; `--fake` remains network-free.
 
 - **`scene.ts`** — the visualization: a parameter `schema`, optional `presets`/`constants`/`groups`, optional build-time `bakers`, and a `scene` module that renders as a pure function of state. Groups let one cue set several params at once; bakers expose deterministic computed processes such as a gradient step.
 
