@@ -1,13 +1,23 @@
 // A model answer is a second, temporary value-at-time timeline. It is composed
 // over the paused lesson state and never enters the lesson reconciler.
 
-import { blend, type ParamValue, type PlainState, type Schema, type TimedAnswerBeat } from "@narrable/core";
+import { blend, type AnswerBeat, type ParamValue, type PlainState, type Schema, type TimedAnswerBeat } from "@narrable/core";
 
 interface Segment {
   start: number;
   end: number;
   from: ParamValue;
   to: ParamValue;
+}
+
+/** Schedule visual beats at a comfortable reading pace without waiting for TTS. */
+export function timeAnswerBeats(beats: AnswerBeat[]): TimedAnswerBeat[] {
+  let t = 0;
+  return beats.map((beat) => {
+    const timed = { t, set: beat.set, over: beat.over };
+    t += Math.max(1.5, Math.min(5, beat.say.length / 18));
+    return timed;
+  });
 }
 
 export class AnswerTimeline {

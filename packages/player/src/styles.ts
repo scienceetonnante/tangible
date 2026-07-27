@@ -19,10 +19,9 @@ export const PLAYER_CSS = `
 .xv-chrome button:hover { background: rgba(0,0,0,0.06); }
 .xv-scrubber { flex: 1; height: 34px; cursor: pointer; }
 .xv-elapsed { font: 12px monospace; color: #333; min-width: 90px; text-align: right; }
-.xv-answer-audio { display: none; }
 .xv-assistant { border: 1px solid #ddd; border-top: 0; padding: 10px; background: #fff; color: #222; font: 14px/1.4 sans-serif; }
 .xv-assistant-transcript:empty { display: none; }
-.xv-assistant-transcript { max-height: 180px; overflow: auto; margin-bottom: 8px; }
+.xv-assistant-transcript { max-height: 180px; overflow: auto; margin-top: 8px; }
 .xv-assistant-turn { border-left: 3px solid #ddd; padding-left: 9px; margin: 8px 0; }
 .xv-assistant-question { margin: 0 0 4px; font-weight: 600; }
 .xv-assistant-question::before { content: "You: "; }

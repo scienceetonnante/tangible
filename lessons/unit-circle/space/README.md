@@ -20,7 +20,6 @@ a single text script. Available in **English** (default) and **French**
 (append `?lang=fr` to the URL).
 
 The lesson assets remain a self-contained static bundle. A small same-origin Node
-server protects the Hugging Face Inference Providers and private cloned-voice
-endpoint credentials used by the pause-time question box. Configure `HF_TOKEN`
-and `HF_TTS_TOKEN` as secrets, and `HF_MODEL` plus `TTS_ENDPOINT_URL` as Space
-variables. `HF_TTS_TOKEN` may be omitted when `HF_TOKEN` can call both services.
+server protects the Hugging Face Inference Providers credential used by the
+pause-time written question box. Configure `HF_TOKEN` as a Space secret; answers
+use the pinned `google/gemma-4-31B-it:cerebras` model.

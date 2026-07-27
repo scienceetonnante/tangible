@@ -48,7 +48,5 @@ export async function buildAssistantContext(
     constants: scene.constants ?? {},
     groups: scene.groups ?? {},
     commandable: config.commandable,
-    voice: config.voice?.[language] ?? manifest.voice[language] ?? "",
-    speed: manifest.tts?.speed,
   };
 }

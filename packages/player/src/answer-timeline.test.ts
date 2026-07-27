@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Schema } from "@narrable/core";
-import { AnswerTimeline } from "./answer-timeline.js";
+import { AnswerTimeline, timeAnswerBeats } from "./answer-timeline.js";
 
 const schema: Schema = {
   theta: { type: { kind: "scalar" }, default: 0, interpolate: "lerp", ownership: "script" },
@@ -8,6 +8,15 @@ const schema: Schema = {
 };
 
 describe("AnswerTimeline", () => {
+  it("starts the first written beat immediately and spaces later beats for reading", () => {
+    const beats = timeAnswerBeats([
+      { say: "First.", set: { theta: 1 }, over: 0 },
+      { say: "A longer second sentence.", set: { theta: 2 }, over: 0 },
+    ]);
+    expect(beats[0]!.t).toBe(0);
+    expect(beats[1]!.t).toBe(1.5);
+  });
+
   it("is inactive before a beat, transitions from the visible origin, then holds", () => {
     const timeline = new AnswerTimeline(schema, { theta: 2, visible: false }, [
       { t: 1, set: { theta: 6, visible: true }, over: 2 },

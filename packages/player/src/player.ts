@@ -14,7 +14,7 @@ import { Captions } from "./captions.js";
 import { PauseGate } from "./pause-gate.js";
 import { Chrome } from "./chrome.js";
 import { parseDevParams } from "./url.js";
-import { AnswerTimeline } from "./answer-timeline.js";
+import { AnswerTimeline, timeAnswerBeats } from "./answer-timeline.js";
 import { AssistantPanel } from "./assistant-panel.js";
 
 declare global {
@@ -35,16 +35,14 @@ export interface PlayerOptions {
     context: AssistantContext;
     endpoint?: string;
     fetchImpl?: typeof fetch;
-    createAudio?: () => HTMLAudioElement;
   };
 }
 
 interface ActiveAnswer {
-  audio: HTMLAudioElement;
   timeline: AnswerTimeline;
   state: PlainState;
   claimed: Set<string>;
-  url: string;
+  startedAt: number;
 }
 
 export class Player {
@@ -74,7 +72,6 @@ export class Player {
   private answerAbort?: AbortController;
   private assistantFetch?: typeof fetch;
   private assistantEndpoint = "/api/answer";
-  private answerAudio?: HTMLAudioElement;
 
   constructor(opts: PlayerOptions) {
     const schema: Schema = { ...opts.scene.schema, ...boardSchema(opts.tracks.tracks) };
@@ -137,13 +134,9 @@ export class Player {
     if (opts.assistant) {
       this.assistantFetch = opts.assistant.fetchImpl ?? ((input, init) => fetch(input, init));
       this.assistantEndpoint = opts.assistant.endpoint ?? "/api/answer";
-      this.answerAudio = opts.assistant.createAudio?.() ?? document.createElement("audio");
-      this.answerAudio.className = "xv-answer-audio";
-      this.container.append(this.answerAudio);
       this.assistant = new AssistantPanel({
         onAsk: (question) => void this.ask(question, opts.assistant!.context),
-        onCancel: () => this.cancelAnswer(),
-        onPlayAnswer: () => this.playAnswer(),
+        onCancel: () => this.cancelAnswer("Cancelled"),
       });
       this.shell.append(this.assistant.el);
       let hasPlayed = false;
@@ -193,7 +186,8 @@ export class Player {
     this.lastFrameT = t;
     for (const key of this.store.keys()) this.displayStore.set(key, this.store.plain[key]!);
     if (this.activeAnswer) {
-      const answer = this.activeAnswer.timeline.evaluate(this.activeAnswer.audio.currentTime, this.activeAnswer.state);
+      const elapsed = (performance.now() - this.activeAnswer.startedAt) / 1000;
+      const answer = this.activeAnswer.timeline.evaluate(elapsed, this.activeAnswer.state);
       for (const [param, value] of Object.entries(answer)) {
         if (!this.activeAnswer.claimed.has(param)) this.displayStore.set(param, value);
       }
@@ -206,6 +200,7 @@ export class Player {
   }
 
   private async ask(question: string, context: AssistantContext): Promise<void> {
+    this.clearActiveAnswer();
     this.answerAbort = new AbortController();
     this.assistant!.setBusy(true, "Thinking…");
     const body: AssistantRequest = {
@@ -225,7 +220,7 @@ export class Player {
       });
       if (!response.ok) throw new Error(await response.text());
       const answer = (await response.json()) as AssistantResponse;
-      if (!answer.answer || !Array.isArray(answer.beats) || !Array.isArray(answer.timedBeats)) throw new Error("invalid assistant response");
+      if (!answer.answer || !Array.isArray(answer.beats)) throw new Error("invalid assistant response");
       this.assistant!.addTurn(question, answer.answer, answer.beats);
       this.startAnswer(answer, context);
     } catch (error) {
@@ -236,50 +231,25 @@ export class Player {
   }
 
   private startAnswer(answer: AssistantResponse, context: AssistantContext): void {
-    const bytes = Uint8Array.from(atob(answer.audioBase64), (char) => char.charCodeAt(0));
-    const blob = new Blob([bytes], { type: mimeForAudio(`answer.${answer.audioFormat}`) });
-    const url = URL.createObjectURL(blob);
-    const audio = this.answerAudio!;
-    audio.src = url;
-    audio.currentTime = 0;
-    audio.onended = () => this.finishAnswer();
-    audio.onerror = () => this.finishAnswer("The answer audio could not be played.");
     const schema: Schema = {};
     for (const param of context.commandable) schema[param] = context.schema[param]!;
     this.activeAnswer = {
-      audio,
-      timeline: new AnswerTimeline(schema, this.displayStore.plain, answer.timedBeats),
+      timeline: new AnswerTimeline(schema, this.displayStore.plain, timeAnswerBeats(answer.beats)),
       state: {},
       claimed: new Set(),
-      url,
+      startedAt: performance.now(),
     };
-    this.assistant!.setBusy(true, "Answering…");
-    this.playAnswer();
+    this.assistant!.finish();
   }
 
-  private playAnswer(): void {
-    if (!this.activeAnswer) return;
-    void Promise.resolve(this.activeAnswer.audio.play()).catch(() => this.assistant?.showPlayFallback());
-  }
-
-  private finishAnswer(status = ""): void {
-    if (!this.activeAnswer) return;
-    URL.revokeObjectURL(this.activeAnswer.url);
-    this.activeAnswer.audio.onended = null;
-    this.activeAnswer.audio.onerror = null;
-    this.activeAnswer.audio.removeAttribute("src");
+  private clearActiveAnswer(): void {
     this.activeAnswer = undefined;
-    this.assistant?.finish(status);
   }
 
-  private cancelAnswer(): void {
+  private cancelAnswer(status = ""): void {
     this.answerAbort?.abort();
-    if (this.activeAnswer) {
-      this.activeAnswer.audio.pause();
-      this.finishAnswer();
-    } else {
-      this.assistant?.finish("Cancelled");
-    }
+    this.clearActiveAnswer();
+    this.assistant?.finish(status);
   }
 
   private resize(): void {

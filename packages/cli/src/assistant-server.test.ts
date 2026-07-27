@@ -15,7 +15,7 @@ describe("assistant server", () => {
     const context: AssistantContext = {
       version: 1, lessonId: "circle", language: "en", title: "Circle", guide: "Circle.", script: "Circle.", narration: "Circle.",
       schema: { theta: { type: { kind: "scalar", range: [0, 6.28] }, default: 0, interpolate: "lerp", ownership: "script" } },
-      presets: {}, constants: {}, groups: {}, commandable: ["theta"], voice: "elevenlabs:voice",
+      presets: {}, constants: {}, groups: {}, commandable: ["theta"],
     };
     await writeFile(join(siteDir, "en/assistant.json"), JSON.stringify(context));
     const request: AssistantRequest = { lessonId: "circle", language: "en", question: "Why?", t: 0, state: { theta: 0 }, history: [] };
@@ -33,7 +33,7 @@ describe("assistant server", () => {
     expect(status).toBe(200);
     expect((JSON.parse(body) as { answer: string }).answer).toContain("quarter turn");
     expect(logs.map((entry) => entry.event)).toEqual(["assistant.request", "assistant.success"]);
-    expect(logs[1]).toMatchObject({ lessonId: "circle", model: "fake", tts: "fake", beats: 2 });
+    expect(logs[1]).toMatchObject({ lessonId: "circle", model: "fake", beats: 2 });
     expect(logs[1]!.requestId).toBe(logs[0]!.requestId);
   });
 });

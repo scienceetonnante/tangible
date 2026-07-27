@@ -36,7 +36,6 @@ const assistantContext: AssistantContext = {
   constants: {},
   groups: {},
   commandable: ["theta"],
-  voice: "elevenlabs:test",
 };
 
 function stubScene(seen: PlainState[]): SceneModule {
@@ -118,11 +117,10 @@ describe("Player composition", () => {
     const seen: PlainState[] = [];
     const player = new Player({ mount, scene: stubScene(seen), tracks, assistant: { context: assistantContext } });
     const active = {
-      audio: { currentTime: 1 },
       timeline: new AnswerTimeline(assistantContext.schema, { theta: 0 }, [{ t: 0, set: { theta: 8 }, over: 0 }]),
       state: {},
       claimed: new Set<string>(),
-      url: "",
+      startedAt: performance.now() - 1000,
     };
     (player as unknown as { activeAnswer: typeof active }).activeAnswer = active;
 

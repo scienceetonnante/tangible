@@ -6,8 +6,8 @@
 #
 # Assumes `lesson build --bundle` has already produced build/site/, and that git
 # is authenticated for the Space remote (HF token as the git password, or a
-# configured credential helper). Configure HF_TOKEN and ELEVENLABS_API_KEY as
-# Space secrets and HF_MODEL as a Space variable before using the question box.
+# configured credential helper). Configure HF_TOKEN as a Space secret before
+# using the question box.
 set -euo pipefail
 
 SPACE_URL="${1:?Usage: deploy-space.sh <space-git-url>}"

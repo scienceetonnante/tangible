@@ -10,9 +10,9 @@ The current baseline includes the completed M-bake compiler milestone: the bilin
 unit-circle lesson is deployed, backpropagation uses its real gradient-descent
 function for three build-time computed steps, and the optimizer lesson uses a
 lesson-local Three.js viewport. The unit-circle and optimizer lessons both have an
-optional pause-time narrated assistant with validated scene commands and Docker
-Space deployment support. Optimizer authored narration and assistant answers use
-the private `david_v1` voice. The hermetic unit and dual-browser end-to-end suites
+optional pause-time written assistant with validated scene commands and Docker
+Space deployment support. Optimizer authored narration uses the private
+`david_v1` voice. The hermetic unit and dual-browser end-to-end suites
 are green.
 
 The next phases are deliberately ordered by unresolved product risk:
@@ -97,6 +97,6 @@ quaternion/orbit paths in real content.
 - Module-level Vite HMR.
 - Turborepo or alternate monorepo orchestration.
 - An audio abstraction beyond direct `<audio>`.
-- Streaming lesson-assistant text/audio; the first version resolves a complete timed answer before playback.
+- Streaming lesson-assistant text; the first version resolves a complete answer before display.
 - Persistent assistant conversations across reloads or devices; history is intentionally browser-session only.
 - Non-uniform step timings inside one `@bake`; use repeated one-step bakes first.

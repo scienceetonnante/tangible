@@ -94,11 +94,9 @@ export interface AssistantContext {
   constants: Record<string, number | number[]>;
   groups: Record<string, string[]>;
   commandable: string[];
-  voice: string;
-  speed?: number;
 }
 
-/** One model-authored spoken beat and its declarative scene writes. */
+/** One model-authored answer beat and its declarative scene writes. */
 export interface AnswerBeat {
   say: string;
   set: PlainState;
@@ -129,8 +127,4 @@ export interface TimedAnswerBeat {
 export interface AssistantResponse {
   answer: string;
   beats: AnswerBeat[];
-  timedBeats: TimedAnswerBeat[];
-  audioBase64: string;
-  audioFormat: "mp3" | "wav" | "webm" | "m4a";
-  duration: number;
 }

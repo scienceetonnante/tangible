@@ -6,7 +6,6 @@ import type { AnswerBeat, AssistantHistoryTurn } from "@narrable/core";
 export interface AssistantPanelOptions {
   onAsk(question: string): void;
   onCancel(): void;
-  onPlayAnswer(): void;
 }
 
 export class AssistantPanel {
@@ -16,7 +15,6 @@ export class AssistantPanel {
   private input: HTMLInputElement;
   private askButton: HTMLButtonElement;
   private cancelButton: HTMLButtonElement;
-  private playAnswerButton: HTMLButtonElement;
   private status: HTMLElement;
   private transcript: HTMLElement;
   private pauseEnabled = false;
@@ -42,10 +40,6 @@ export class AssistantPanel {
     this.cancelButton.type = "button";
     this.cancelButton.hidden = true;
     this.cancelButton.onclick = opts.onCancel;
-    this.playAnswerButton = button("Play answer", "xv-assistant-play-answer");
-    this.playAnswerButton.type = "button";
-    this.playAnswerButton.hidden = true;
-    this.playAnswerButton.onclick = opts.onPlayAnswer;
 
     form.onsubmit = (event) => {
       event.preventDefault();
@@ -53,7 +47,7 @@ export class AssistantPanel {
       if (!question || this.busy || !this.pauseEnabled) return;
       opts.onAsk(question);
     };
-    form.append(this.input, this.askButton, this.cancelButton, this.playAnswerButton);
+    form.append(this.input, this.askButton, this.cancelButton);
 
     this.status = div("xv-assistant-status");
     this.status.setAttribute("role", "status");
@@ -65,7 +59,7 @@ export class AssistantPanel {
     };
     const footer = div("xv-assistant-footer");
     footer.append(this.status, clear);
-    this.el.append(this.transcript, form, footer);
+    this.el.append(form, this.transcript, footer);
     this.updateEnabled();
   }
 
@@ -79,15 +73,6 @@ export class AssistantPanel {
     this.busy = busy;
     this.status.textContent = status;
     this.cancelButton.hidden = !busy;
-    this.playAnswerButton.hidden = true;
-    this.updateEnabled();
-  }
-
-  showPlayFallback(): void {
-    this.busy = true;
-    this.status.textContent = "Answer ready";
-    this.cancelButton.hidden = false;
-    this.playAnswerButton.hidden = false;
     this.updateEnabled();
   }
 
@@ -102,6 +87,7 @@ export class AssistantPanel {
     a.textContent = answer;
     turn.append(q, a);
     this.transcript.append(turn);
+    this.transcript.scrollTop = this.transcript.scrollHeight;
     this.input.value = "";
   }
 
@@ -109,7 +95,6 @@ export class AssistantPanel {
     this.busy = false;
     this.status.textContent = status;
     this.cancelButton.hidden = true;
-    this.playAnswerButton.hidden = true;
     this.updateEnabled();
   }
 

@@ -12,8 +12,6 @@ defaults:
 assistant:
   context:
     en: assistant.en.md
-  voice:
-    en: hf-endpoint:david_v1
   commandable:
     - kappa
     - roughness

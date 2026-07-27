@@ -195,22 +195,20 @@ script and narration, a per-language semantic description of the layout and
 controls, the scene schema and presets, the current visible state, and the bounded
 conversation history.
 
-The model returns a declarative sequence of spoken beats. Each beat contains text,
+The model returns a declarative sequence of written beats. Each beat contains text,
 absolute values for explicitly allowlisted parameters, and a short transition
-duration. The server validates names, types, ranges, length, and count before using
-the configured assistant voice to resolve the beats onto a temporary value-at-time
-track. Providers with alignment use their character timings. A cloned-voice
-endpoint that returns only PCM WAV synthesizes one beat at a time and derives
-exact boundaries from sample counts before joining the clips. Model output is
-data, never executable code.
+duration. The server validates names, types, ranges, length, and count, then returns
+the answer immediately without speech synthesis. Model output is data, never
+executable code.
 
-The lesson clock remains paused. A separate answer-audio clock drives the temporary
-track, composed over the normal evaluated-and-reconciled state. Learner interaction
-stays active: a parameter touched during an answer immediately masks the assistant
-for that parameter, while other answer tracks continue. Ending or cancelling the
-answer discards the temporary layer; `script`, `shared`, and `viewer` ownership in
-the underlying state were never modified. Resuming lesson playback also cancels an
-answer so the two narrations cannot overlap.
+The full answer appears below the question field while the lesson clock remains
+paused. A separate elapsed-time clock spaces scene commands at a comfortable
+reading pace and drives a temporary track composed over the normal
+evaluated-and-reconciled state. Learner interaction stays active: a parameter
+touched during an answer immediately masks the assistant for that parameter, while
+other answer tracks continue. Asking another question or resuming playback discards
+the temporary layer; `script`, `shared`, and `viewer` ownership in the underlying
+state were never modified.
 
 Provider credentials require a trusted same-origin server. Assistant-enabled
 bundles therefore include a small Node server and Dockerfile suitable for a
@@ -398,7 +396,7 @@ With synchronization automated and the player built once, the per-lesson cost co
 
 **Guiding principles.**
 
-1. **Value-at-time.** Every authored parameter's value is computable directly from lesson time `t`; nothing accumulates frame by frame. A dynamic assistant answer is a separate value-at-time overlay driven by answer-audio time and is discarded whole. This is what makes seeking, catch-up, state-dump, headless frame rendering, and exact removal of the answer layer possible.
+1. **Value-at-time.** Every authored parameter's value is computable directly from lesson time `t`; nothing accumulates frame by frame. A dynamic assistant answer is a separate value-at-time overlay driven by elapsed answer time and is discarded whole. This is what makes seeking, catch-up, state-dump, headless frame rendering, and exact removal of the answer layer possible.
 2. **Everything is text.** All authored artifacts are diffable text files; all generated artifacts are JSON/VTT/audio. No state lives only in a GUI.
 3. **Deterministic builds.** Same inputs (script + cached audio) → byte-identical outputs.
 4. **The compiler is the feedback loop.** Errors are precise, actionable, and produced without network access whenever possible (`check`).

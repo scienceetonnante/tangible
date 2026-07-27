@@ -5,16 +5,14 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { AssistantContext, AssistantRequest, TtsAdapter } from "@narrable/core";
-import { ElevenLabsAdapter, FakeTtsAdapter, HuggingFaceVoiceAdapter } from "@narrable/tts";
-import { answerQuestion } from "./assistant-service.js";
+import type { AssistantContext, AssistantRequest } from "@narrable/core";
+import { ASSISTANT_MODEL, answerQuestion } from "./assistant-service.js";
 import { serveFromDir } from "./static-server.js";
 
 export interface AssistantServerOptions {
   siteDir: string;
   port?: number;
   fake?: boolean;
-  tts?: TtsAdapter;
   logger?: (entry: Record<string, unknown>) => void;
 }
 
@@ -43,17 +41,14 @@ export function createAssistantApi(opts: AssistantServerOptions): AssistantApiHa
         historyTurns: request.history?.length,
       });
       const context = JSON.parse(await readFile(join(opts.siteDir, request.language, "assistant.json"), "utf8")) as AssistantContext;
-      const tts = opts.tts ?? selectAssistantTts(context.voice, opts.fake ?? false);
-      const answer = await answerQuestion(request, context, { tts, fake: opts.fake });
+      const answer = await answerQuestion(request, context, { fake: opts.fake });
       log({
         event: "assistant.success",
         requestId,
         lessonId: request.lessonId,
-        model: opts.fake ? "fake" : process.env.HF_MODEL,
-        tts: tts.id,
+        model: opts.fake ? "fake" : ASSISTANT_MODEL,
         beats: answer.beats.length,
         answerChars: answer.answer.length,
-        audioSeconds: answer.duration,
         latencyMs: Date.now() - started,
       });
       return json(res, 200, answer);
@@ -64,20 +59,13 @@ export function createAssistantApi(opts: AssistantServerOptions): AssistantApiHa
         requestId,
         lessonId: request?.lessonId,
         language: request?.language,
-        model: opts.fake ? "fake" : process.env.HF_MODEL,
+        model: opts.fake ? "fake" : ASSISTANT_MODEL,
         error: message,
         latencyMs: Date.now() - started,
       });
       return json(res, 400, { error: message });
     }
   };
-}
-
-function selectAssistantTts(voice: string, fake: boolean): TtsAdapter {
-  if (fake) return new FakeTtsAdapter();
-  if (voice.startsWith("hf-endpoint:")) return new HuggingFaceVoiceAdapter();
-  if (voice.startsWith("elevenlabs:")) return new ElevenLabsAdapter();
-  throw new Error(`unsupported assistant voice "${voice}"`);
 }
 
 export function serveLesson(opts: AssistantServerOptions): Server {

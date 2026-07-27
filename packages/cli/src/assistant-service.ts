@@ -1,13 +1,13 @@
 // Provider orchestration for lesson questions: Hugging Face produces a small,
-// declarative answer plan; the configured TTS adapter supplies voice and timing.
+// declarative written answer plan.
 
-import { validateValue, type AnswerBeat, type AssistantContext, type AssistantRequest, type AssistantResponse, type ParamType, type ParamValue, type TtsAdapter } from "@narrable/core";
+import { validateValue, type AnswerBeat, type AssistantContext, type AssistantRequest, type AssistantResponse, type ParamType, type ParamValue } from "@narrable/core";
+
+export const ASSISTANT_MODEL = "google/gemma-4-31B-it:cerebras";
 
 export interface AssistantProviders {
-  tts: TtsAdapter;
   fetchImpl?: typeof fetch;
   hfToken?: string;
-  hfModel?: string;
   fake?: boolean;
 }
 
@@ -20,36 +20,12 @@ export async function answerQuestion(
   const beats = providers.fake ? fakeAnswer(context) : await huggingFaceAnswer(request, context, providers);
   validateAnswer(beats, context);
 
-  const offsets: number[] = [];
   let answer = "";
   for (const beat of beats) {
     if (answer) answer += " ";
-    offsets.push(answer.length);
     answer += beat.say;
   }
-  const voice = providerVoice(context.voice);
-  const segmented = providers.tts.synthesizeSegments
-    ? await providers.tts.synthesizeSegments({ segments: beats.map((beat) => beat.say), voice, language: context.language, speed: context.speed })
-    : undefined;
-  const speech = segmented ?? await providers.tts.synthesize({ text: answer, voice, language: context.language, speed: context.speed });
-  const timedBeats = beats.map((beat, i) => ({
-    t: segmented?.segmentStarts[i] ?? charTime(offsets[i]!, speech.charTimes, speech.wordTimes),
-    set: beat.set,
-    over: beat.over,
-  }));
-  return {
-    answer,
-    beats,
-    timedBeats,
-    audioBase64: Buffer.from(speech.audio).toString("base64"),
-    audioFormat: speech.format,
-    duration: speech.duration,
-  };
-}
-
-function providerVoice(spec: string): string {
-  const separator = spec.indexOf(":");
-  return separator === -1 ? spec : spec.slice(separator + 1);
+  return { answer, beats };
 }
 
 async function huggingFaceAnswer(
@@ -58,9 +34,7 @@ async function huggingFaceAnswer(
   providers: AssistantProviders,
 ): Promise<AnswerBeat[]> {
   const token = providers.hfToken ?? process.env.HF_TOKEN ?? "";
-  const model = providers.hfModel ?? process.env.HF_MODEL ?? "";
   if (!token) throw new Error("HF_TOKEN is not set");
-  if (!model) throw new Error("HF_MODEL is not set");
 
   const messages: { role: "system" | "user" | "assistant"; content: string }[] = [
     { role: "system", content: systemPrompt(context) },
@@ -78,7 +52,7 @@ async function huggingFaceAnswer(
     method: "POST",
     headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
     body: JSON.stringify({
-      model,
+      model: ASSISTANT_MODEL,
       messages,
       temperature: 0.2,
       max_tokens: 1200,
@@ -99,9 +73,9 @@ function systemPrompt(context: AssistantContext): string {
   return [
     "You are the narrator of an interactive lesson. Answer in the lesson language.",
     "Use only the supplied lesson content. Be concise, correct, and pedagogical.",
-    "Return one to six spoken beats. Each beat may set allowed scene parameters using absolute values.",
+    "Return one to six written beats. Each beat may set allowed scene parameters using absolute values.",
     "Use an empty set object when no visual change helps. Never mention internal parameter names.",
-    "The learner may manipulate the scene while you speak, so the spoken explanation must remain understandable if they do.",
+    "The learner may manipulate the scene while reading, so the explanation must remain understandable if they do.",
     "LESSON CONTEXT:",
     JSON.stringify(context),
   ].join("\n");
@@ -116,7 +90,7 @@ export function validateAnswer(beats: unknown, context: AssistantContext): asser
     if (typeof beat.say !== "string" || !beat.say.trim()) throw new Error(`beat ${i + 1}.say must be non-empty text`);
     if (beat.say.length > 600) throw new Error(`beat ${i + 1}.say exceeds 600 characters`);
     chars += beat.say.length;
-    if (chars > 2000) throw new Error("answer speech exceeds 2000 characters");
+    if (chars > 2000) throw new Error("answer exceeds 2000 characters");
     if (!beat.set || typeof beat.set !== "object" || Array.isArray(beat.set)) throw new Error(`beat ${i + 1}.set must be an object`);
     if (typeof beat.over !== "number" || beat.over < 0 || beat.over > 2) throw new Error(`beat ${i + 1}.over must be between 0 and 2 seconds`);
     for (const [param, value] of Object.entries(beat.set as Record<string, ParamValue>)) {
@@ -199,13 +173,4 @@ function fakeAnswer(context: AssistantContext): AnswerBeat[] {
     ];
   }
   return [{ say: context.language === "fr" ? "Regardons cette situation dans la leçon." : "Let’s look at this situation in the lesson.", set: {}, over: 0 }];
-}
-
-function charTime(
-  offset: number,
-  charTimes: { start: number; end: number }[] | undefined,
-  wordTimes: { start: number; charOffset: number }[],
-): number {
-  if (charTimes?.[offset]) return charTimes[offset]!.start;
-  return wordTimes.find((word) => word.charOffset >= offset)?.start ?? 0;
 }
