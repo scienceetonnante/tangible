@@ -185,6 +185,8 @@ assistant:
 
 Assistant-enabled Hugging Face Spaces use the generated `Dockerfile` and `server.mjs`. This Docker Space hosts the lesson UI and its small Node orchestration server. Store `HF_TOKEN` as a Space secret. Lessons without assistant configuration remain ordinary static bundles.
 
+To release one lesson without publishing the monorepo, build it with `lesson build --bundle`, then copy only `lessons/<id>/build/site/` plus a Space `README.md` and `.gitattributes` into an artifact-only orphan branch such as `release/optimizers`. The branch must contain one root commit (record the source commit in its message); for later releases, replace the files, amend that commit, and push it with `--force-with-lease` to the Space's `main` branch. Configure the Space as a Docker Space through the root `README.md` front matter (`sdk: docker`, `app_port: 7860`). For an assistant-enabled lesson, add a dedicated fine-grained Hugging Face token with permission to call Inference Providers as the `HF_TOKEN` Space secret; keep deployment credentials and build-only TTS credentials such as `HF_TTS_TOKEN`, `TTS_ENDPOINT_URL`, and `ELEVENLABS_API_KEY` local or in CI, never in the release branch or Space variables.
+
 The lesson server writes one JSON log line for each `assistant.request`,
 `assistant.success`, or `assistant.error`. Local logs appear in the terminal running
 `lesson serve` or `lesson preview`; Docker deployments expose the same stdout/stderr
