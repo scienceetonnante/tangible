@@ -1,7 +1,7 @@
 ---
 title: Why Adaptive Optimizers Exist
 emoji: 🏔️
-colorFrom: amber
+colorFrom: yellow
 colorTo: indigo
 sdk: docker
 app_port: 7860
