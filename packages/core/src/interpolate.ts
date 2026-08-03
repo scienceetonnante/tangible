@@ -130,10 +130,42 @@ function interpInto(out: PlainState, key: string, mode: InterpolateMode, a: Para
     case "orbit":
       orbitInto(ensureOrbit(out, key), a as OrbitState, b as OrbitState, u);
       return;
+    case "typewriter":
+      out[key] = typewriter(a as string, b as string, u);
+      return;
     case "snap":
       assignInto(out, key, a); // snap holds the from-value (handled upstream too)
       return;
   }
+}
+
+/** Delete to the shared prefix, then type the target; newlines add a short pause. */
+function typewriter(a: string, b: string, u: number): string {
+  if (u <= 0) return a;
+  if (u >= 1) return b;
+  let shared = 0;
+  while (shared < a.length && shared < b.length && a[shared] === b[shared]) shared++;
+
+  const deleted = [...a.slice(shared)].reverse();
+  const inserted = [...b.slice(shared)];
+  const weight = (char: string) => char === "\n" ? 4 : 1;
+  const total = [...deleted, ...inserted].reduce((sum, char) => sum + weight(char), 0);
+  let budget = u * total;
+  let remaining = a.length;
+  for (const char of deleted) {
+    const cost = weight(char);
+    if (budget < cost) return a.slice(0, remaining);
+    budget -= cost;
+    remaining--;
+  }
+  let typed = "";
+  for (const char of inserted) {
+    const cost = weight(char);
+    if (budget < cost) break;
+    budget -= cost;
+    typed += char;
+  }
+  return a.slice(0, shared) + typed;
 }
 
 function lerpArrayInto(dst: number[], a: number[], b: number[], u: number): void {

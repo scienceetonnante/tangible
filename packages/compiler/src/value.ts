@@ -1,11 +1,11 @@
 // Interpret a raw cue value token against a parameter's type. Supports numbers,
-// booleans, enum strings, vectors/quaternions ([a, b, c]), and named constants
+// booleans, text/enum strings, vectors/quaternions ([a, b, c]), and named constants
 // declared by the scene module.
 
 import type { ParamType, ParamValue } from "@narrable/core";
 import { validateValue } from "@narrable/core";
 
-export type Constants = Record<string, number | number[]>;
+export type Constants = Record<string, ParamValue>;
 
 export function parseValue(
   type: ParamType,
@@ -35,6 +35,7 @@ export function parseValue(
       break;
     case "enum":
     case "boardItem":
+    case "text":
       value = unquote(r);
       break;
     case "vec2":

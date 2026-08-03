@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from "vitest";
 import { Player } from "./player.js";
-import type { SceneModule } from "./scene-host.js";
+import type { SceneModule, SceneContext } from "./scene-host.js";
 import type { AssistantContext, LessonTracks, PlainState } from "@narrable/core";
 import { AnswerTimeline } from "./answer-timeline.js";
 
@@ -132,6 +132,35 @@ describe("Player composition", () => {
     player.driver.tick();
     expect(seen.at(-1)!.theta).toBe(0);
     (player as unknown as { activeAnswer?: typeof active }).activeAnswer = undefined;
+    player.dispose();
+  });
+
+  it("routes DOM scene writes and resets through normal reconciliation", () => {
+    const mount = document.createElement("div");
+    let ctx: SceneContext | undefined;
+    const scene: SceneModule = {
+      schema: {
+        code: { type: { kind: "text" }, default: "scripted", interpolate: "typewriter", ownership: "shared" },
+      },
+      create: (sceneContext) => {
+        ctx = sceneContext;
+        return { render: () => {}, handles: () => [], dispose: () => {} };
+      },
+    };
+    const codeTracks: LessonTracks = {
+      ...tracks,
+      tracks: { code: [{ t: 0, v: "scripted" }, { t: 10, v: "next" }] },
+      boardItems: {},
+    };
+    const player = new Player({ mount, scene, tracks: codeTracks });
+
+    ctx!.write("code", "learner edit");
+    player.driver.tick();
+    expect(player.store.plain.code).toBe("learner edit");
+
+    ctx!.reset("code");
+    player.driver.tick();
+    expect(player.store.plain.code).toBe("scripted");
     player.dispose();
   });
 });

@@ -13,6 +13,8 @@ describe("validateSchema — interpolate-for-type legality", () => {
     { type: { kind: "vec3" }, interpolate: "nlerp", legal: true },
     { type: { kind: "boolean" }, interpolate: "snap", legal: true },
     { type: { kind: "boolean" }, interpolate: "lerp", legal: false },
+    { type: { kind: "text" }, interpolate: "typewriter", legal: true },
+    { type: { kind: "text" }, interpolate: "lerp", legal: false },
     { type: { kind: "enum", values: ["a", "b"] }, interpolate: "snap", legal: true },
   ];
 
@@ -45,6 +47,10 @@ describe("validateValue", () => {
     const t: ParamType = { kind: "enum", values: ["a", "b"] };
     expect(validateValue(t, "a")).toBeNull();
     expect(validateValue(t, "c")).not.toBeNull();
+  });
+  it("text requires a string", () => {
+    expect(validateValue({ kind: "text" }, "print('hi')")).toBeNull();
+    expect(validateValue({ kind: "text" }, 3)).not.toBeNull();
   });
   it("boardItem requires hidden/shown/dimmed", () => {
     expect(validateValue({ kind: "boardItem" }, "shown")).toBeNull();
@@ -104,6 +110,8 @@ function defaultFor(type: ParamType) {
       return { target: [0, 0, 0] as [number, number, number], distance: 1, azimuth: 0, elevation: 0 };
     case "boolean":
       return false;
+    case "text":
+      return "";
     case "enum":
       return type.values[0]!;
     case "boardItem":

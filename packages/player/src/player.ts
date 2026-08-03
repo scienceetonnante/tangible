@@ -112,6 +112,12 @@ export class Player {
       canvas: this.canvas,
       overlay,
       viewport: () => ({ width: this.canvas.width, height: this.canvas.height }),
+      write: (param, value) => this.writeSceneParam(param, value, schema),
+      reset: (param) => {
+        this.store.resetInteraction(param);
+        this.activeAnswer?.claimed.add(param);
+      },
+      pause: () => this.clock.pause(),
     });
     this.reconciler = new Reconciler(this.store, this.index, schema);
     this.driver = new TimelineDriver(this.clock, this.index, this.store, { onFrame: (t) => this.frame(t) }, this.reconciler);
@@ -197,6 +203,12 @@ export class Player {
     this.pauseGate.update(t);
     this.chrome?.update(t);
     if (this.dumpState) window.__XV_STATE__ = { ...this.store.plain };
+  }
+
+  private writeSceneParam(param: string, value: PlainState[string], schema: Schema): void {
+    if (!(param in schema)) throw new Error(`scene wrote unknown parameter: ${param}`);
+    this.store.touch(param, value, performance.now() / 1000, this.clock.t);
+    this.activeAnswer?.claimed.add(param);
   }
 
   private async ask(question: string, context: AssistantContext): Promise<void> {

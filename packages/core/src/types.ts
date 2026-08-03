@@ -16,6 +16,7 @@ export type ParamType =
   | { kind: "quaternion" } // [w, x, y, z], unit
   | { kind: "orbit" }
   | { kind: "boolean" }
+  | { kind: "text" }
   | { kind: "enum"; values: string[] }
   | { kind: "boardItem" }; // BoardItemState
 
@@ -35,7 +36,7 @@ export interface BakerDefinition {
 
 export type Bakers = Record<string, BakerDefinition>;
 
-export type InterpolateMode = "lerp" | "nlerp" | "orbit" | "snap";
+export type InterpolateMode = "lerp" | "nlerp" | "orbit" | "typewriter" | "snap";
 export type Ownership = "script" | "shared" | "viewer";
 
 export interface ParamSpec {
@@ -91,7 +92,7 @@ export interface AssistantContext {
   narration: string;
   schema: Schema;
   presets: Record<string, Record<string, ParamValue>>;
-  constants: Record<string, number | number[]>;
+  constants: Record<string, ParamValue>;
   groups: Record<string, string[]>;
   commandable: string[];
 }

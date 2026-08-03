@@ -13,6 +13,7 @@ const LEGAL_INTERPOLATE: Record<ParamType["kind"], readonly string[]> = {
   quaternion: ["nlerp", "snap"],
   orbit: ["orbit", "snap"],
   boolean: ["snap"],
+  text: ["typewriter", "snap"],
   enum: ["snap"],
   boardItem: ["snap"],
 };
@@ -38,6 +39,8 @@ export function validateValue(type: ParamType, v: ParamValue): string | null {
       return isOrbit(v) ? null : "expected an OrbitState { target, distance, azimuth, elevation }";
     case "boolean":
       return typeof v === "boolean" ? null : "expected a boolean";
+    case "text":
+      return typeof v === "string" ? null : "expected text";
     case "enum":
       if (typeof v !== "string" || !type.values.includes(v))
         return `expected one of: ${type.values.join(", ")}`;

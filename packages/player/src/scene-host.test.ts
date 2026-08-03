@@ -7,6 +7,9 @@ function fakeCtx(): SceneContext {
     canvas: {} as HTMLCanvasElement,
     overlay: {} as HTMLElement,
     viewport: () => ({ width: 800, height: 600 }),
+    write: () => {},
+    reset: () => {},
+    pause: () => {},
   };
 }
 

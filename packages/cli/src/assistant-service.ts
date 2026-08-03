@@ -143,6 +143,7 @@ function valueJsonSchema(type: ParamType): Record<string, unknown> {
   switch (type.kind) {
     case "scalar": return { type: "number", ...(type.range ? { minimum: type.range[0], maximum: type.range[1] } : {}) };
     case "boolean": return { type: "boolean" };
+    case "text": return { type: "string" };
     case "enum": return { type: "string", enum: type.values };
     case "boardItem": return { type: "string", enum: ["hidden", "shown", "dimmed"] };
     case "vec2": return numberArray(2);

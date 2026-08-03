@@ -96,6 +96,28 @@ describe("evaluate — continuity of continuous kernels", () => {
   });
 });
 
+describe("typewriter — deterministic text editing", () => {
+  it("types appended text and pauses briefly at newlines", () => {
+    const schema: Schema = {
+      code: { type: { kind: "text" }, default: "", interpolate: "typewriter", ownership: "shared" },
+    };
+    const idx = buildIndex({ code: [{ t: 0, v: "" }, { t: 1, v: "a\nb", ease: "linear" }] }, schema);
+    expect(evaluate(idx, 0).code).toBe("");
+    expect(evaluate(idx, 0.2).code).toBe("a");
+    expect(evaluate(idx, 0.5).code).toBe("a");
+    expect(evaluate(idx, 1).code).toBe("a\nb");
+  });
+
+  it("deletes to the common prefix before typing a replacement", () => {
+    const schema: Schema = {
+      code: { type: { kind: "text" }, default: "cat", interpolate: "typewriter", ownership: "shared" },
+    };
+    const idx = buildIndex({ code: [{ t: 0, v: "cat" }, { t: 1, v: "car", ease: "linear" }] }, schema);
+    expect(evaluate(idx, 0.6).code).toBe("ca");
+    expect(evaluate(idx, 1).code).toBe("car");
+  });
+});
+
 describe("nlerp — quaternion shortest path", () => {
   it("blends toward identity the short way for a near-antipodal representation", () => {
     // 350° about X ≡ -10°; its quaternion has negative w.

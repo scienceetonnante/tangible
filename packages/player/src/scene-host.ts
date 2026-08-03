@@ -10,6 +10,9 @@ export interface SceneContext {
   canvas: HTMLCanvasElement;
   overlay: HTMLElement; // for DOM labels / in-scene KaTeX
   viewport(): { width: number; height: number };
+  write(param: string, value: ParamValue): void; // DOM controls enter normal reconciliation
+  reset(param: string): void;
+  pause(): void;
 }
 
 export interface SceneInstance {
@@ -21,7 +24,7 @@ export interface SceneInstance {
 export interface SceneModule {
   schema: Schema;
   presets?: Record<string, Record<string, ParamValue>>;
-  constants?: Record<string, number | number[]>;
+  constants?: Record<string, ParamValue>;
   create(ctx: SceneContext): SceneInstance;
 }
 

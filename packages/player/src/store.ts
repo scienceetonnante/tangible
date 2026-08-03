@@ -63,6 +63,17 @@ export class StateStore {
     if (m) m.dragging = dragging;
   }
 
+  resetInteraction(key: string): void {
+    const m = this.meta.get(key);
+    if (!m) return;
+    m.userValue = undefined;
+    m.lastTouched = -Infinity;
+    m.touchT = -Infinity;
+    m.touchedEver = false;
+    m.modified = false;
+    m.dragging = false;
+  }
+
   /** Clear all interaction state (on seek: rejoin the narration). */
   resetInteractions(): void {
     for (const m of this.meta.values()) {

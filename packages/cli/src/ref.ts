@@ -58,6 +58,7 @@ function refs(params: string[]): string {
 function typeExtras(t: ParamType): string {
   if (t.kind === "scalar" && t.range) return `[${t.range[0]}, ${t.range[1]}]`;
   if (t.kind === "enum") return t.values.join(" \\| ");
+  if (t.kind === "text") return "typewriter text";
   if (t.kind === "boardItem") return "hidden \\| shown \\| dimmed";
   return "—";
 }
