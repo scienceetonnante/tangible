@@ -1,0 +1,17 @@
+id: python-sampler
+title:
+  en: Temperature in ten lines of Python
+scene: ./scene.ts
+languages: [en]
+voice:
+  en: hf-endpoint:david_v1
+defaults:
+  anticipation: -0.1
+  ease: inOutCubic
+  transition: 0.8
+assistant:
+  context:
+    en: assistant.en.md
+  commandable:
+    - code
+

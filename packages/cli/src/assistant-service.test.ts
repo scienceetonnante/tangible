@@ -34,6 +34,15 @@ describe("assistant service", () => {
     expect(() => validateAnswer([{ say: "x", set: { theta: 9 }, over: 0 }], context)).toThrow("outside");
   });
 
+  it("accepts assistant edits to an allowlisted text parameter", () => {
+    const codeContext: AssistantContext = {
+      ...context,
+      schema: { code: { type: { kind: "text" }, default: "", interpolate: "typewriter", ownership: "shared" } },
+      commandable: ["code"],
+    };
+    expect(() => validateAnswer([{ say: "Try this.", set: { code: 'print("hello")' }, over: 1 }], codeContext)).not.toThrow();
+  });
+
   it("sends full context, history, state, and a strict schema to Hugging Face", async () => {
     let sent: Record<string, unknown> = {};
     const fetchImpl: typeof fetch = async (_input, init) => {

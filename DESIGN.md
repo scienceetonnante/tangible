@@ -131,12 +131,19 @@ export const parameters = {
   "show.projection": { type: "boolean", default: false,  ownership: "script" },
   form:        { type: "enum",       values: ["components", "angleAxis"],
                  default: "components", ownership: "shared" },
+  code:        { type: "text",       default: "", interpolate: "typewriter",
+                 ownership: "shared" },
 };
 
 export function render(state, ctx) { /* three.js / canvas drawing from state */ }
 ```
 
 `ownership` encodes the reconciliation policy per parameter: `script` (viewer may perturb; catch-up pulls it back), `viewer` (the script never overwrites it once touched — typically the camera), `shared` (viewer's choice holds until the script next sets it). Getting these right per-parameter is, as the exemplar shows, most of what makes the medium feel correct.
+
+DOM-based scene controls write and reset declared parameters through the scene
+context, entering the same reconciliation path as canvas handles. The `text` type's
+`typewriter` interpolation deletes to the common prefix and types the replacement,
+with a short deterministic pause at line breaks.
 
 A scene may also export named build-time **bakers**. Each baker declares the schema
 parameters it reads and writes, then returns one absolute state per requested step.

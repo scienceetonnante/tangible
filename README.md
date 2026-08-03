@@ -11,7 +11,7 @@ A platform for **interactive ("explorable") narrated video** — lessons that ar
 
 ## Status
 
-The v0.1 vertical slice works end to end: compile a script → synthesize audio (ElevenLabs, a private Qwen3-TTS endpoint, or a fake adapter) → play, seek, drag-and-catch-up, board equations, captions, and narrated pause checkpoints. The bilingual **unit-circle** lesson is deployed with real voice and verified on Chrome, Safari, and iPad; it also has an optional pause-time lesson assistant that answers in writing with Hugging Face Inference Providers and drives a temporary visual demonstration without changing the authored timeline. A second 2D **backpropagation** lesson validates agent authoring, live recomputation, and build-time computed processes: its `@bake` directives call the scene's real gradient-descent function and compile the results into ordinary tracks. A third **optimizer** lesson compares SGD, momentum, and AdamW on a navigable conditioned or rough 3D loss surface. Its authored narration uses the cloned `david_v1` voice, and the written assistant can demonstrate answers with every meaningful optimizer control. This flow has been validated locally end to end with the live Hugging Face providers.
+The v0.1 vertical slice works end to end: compile a script → synthesize audio (ElevenLabs, a private Qwen3-TTS endpoint, or a fake adapter) → play, seek, drag-and-catch-up, board equations, captions, and narrated pause checkpoints. The bilingual **unit-circle** lesson is deployed with real voice and verified on Chrome, Safari, and iPad; it also has an optional pause-time lesson assistant that answers in writing with Hugging Face Inference Providers and drives a temporary visual demonstration without changing the authored timeline. A second 2D **backpropagation** lesson validates agent authoring, live recomputation, and build-time computed processes: its `@bake` directives call the scene's real gradient-descent function and compile the results into ordinary tracks. A third **optimizer** lesson compares SGD, momentum, and AdamW on a navigable conditioned or rough 3D loss surface. Its authored narration uses the cloned `david_v1` voice, and the written assistant can demonstrate answers with every meaningful optimizer control. The local **Python sampler** demo adds seekable character-by-character code, learner edits, captured output, and worker-isolated browser Python. This flow has been validated locally end to end with the live Hugging Face providers.
 
 ## How it works
 
@@ -57,6 +57,7 @@ lessons/
   unit-circle/  the first lesson: lesson.yaml, scene.ts, script.en.md (+ script.fr.md)
   backprop/     the second 2D lesson: agent-authored network, gradients, draggable weights
   optimizers/   live optimizer paths on a navigable conditioned or rough 3D loss surface
+  python-sampler/ editable Python and output for a one-minute temperature demo
 e2e/            Playwright browser tests (Chromium + WebKit)
 ```
 
@@ -107,6 +108,15 @@ node packages/cli/dist/index.js build --bundle --lesson lessons/unit-circle
 node packages/cli/dist/index.js preview --lesson lessons/unit-circle
 ```
 
+Run the local Python-editor demo with deterministic placeholder narration:
+
+```bash
+node packages/cli/dist/index.js preview --fake --lesson lessons/python-sampler
+```
+
+Its first manual Run downloads Pyodide, then executes subsequent variants in the
+same browser worker. Authored runs and outputs remain ordinary seekable tracks.
+
 For a free/offline authoring loop (silent placeholder audio, no API calls) add `--fake` to `build`/`preview`.
 
 ## The `lesson` CLI
@@ -153,7 +163,7 @@ A lesson is a directory with three authored files:
   only inside each segment. Set `TTS_ENDPOINT_URL` and `HF_TTS_TOKEN` before a
   real build; `--fake` remains network-free.
 
-- **`scene.ts`** — the visualization: a parameter `schema`, optional `presets`/`constants`/`groups`, optional build-time `bakers`, and a `scene` module that renders as a pure function of state. Groups let one cue set several params at once; bakers expose deterministic computed processes such as a gradient step.
+- **`scene.ts`** — the visualization: a parameter `schema`, optional `presets`/`constants`/`groups`, optional build-time `bakers`, and a `scene` module that renders as a pure function of state. Groups let one cue set several params at once; bakers expose deterministic computed processes such as a gradient step. Text parameters may use `interpolate: "typewriter"`; DOM controls call the scene context's `write` and `reset` methods so edits follow the same ownership rules as canvas handles.
 
 - **`script.<lang>.md`** — narration prose with embedded directives. Prose is spoken verbatim; directives are stripped and anchored to the word that follows them. A taste:
 
