@@ -19,7 +19,15 @@ type Timing = Pick<TtsResult, "charTimes" | "wordTimes" | "duration">;
 const ANTICIPATED = new Set(["cue", "bake", "show", "hide", "camera", "board", "highlight", "dim", "clear"]);
 
 export function resolve(directives: Directive[], narration: string, timing: Timing, opts: ResolveOptions): ResolvedCue[] {
-  const cues = directives.map((d) => ({ t: timeFor(d, narration, timing, opts), directive: d }));
+  let pauseBarrier = 0;
+  const cues = directives.map((d) => {
+    let t = timeFor(d, narration, timing, opts);
+    // A future visual must never anticipate across an authored checkpoint. The
+    // player stops exactly at the spoken prompt boundary, before the next word.
+    if (d.kind === "pause") pauseBarrier = Math.max(pauseBarrier, t);
+    else t = Math.max(t, pauseBarrier);
+    return { t, directive: d };
+  });
   // Stable sort by time (preserves source order on ties).
   return cues
     .map((c, i) => ({ c, i }))

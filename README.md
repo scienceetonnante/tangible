@@ -178,7 +178,7 @@ A lesson is a directory with three authored files:
   @pause(prompt: "Drag the red point yourself and watch the cosine.")
   ```
 
-  Directives include `@cue` (assign parameters, instant `=` or animated `-> … over: … ease: …`), `@bake` (run a scene-exported computed process at build time), `@show`/`@hide`, `@camera`, `@scene`, `@chapter`, `@board`/`@highlight`/`@dim`/`@clear`, and `@pause` (a narrated checkpoint — the prompt is spoken, playback pauses after a short tail, and the normal play button resumes; add `speak: false` to keep it silent). Full grammar in [DESIGN.md §6](./DESIGN.md).
+  Directives include `@cue` (assign parameters, instant `=` or animated `-> … over: … ease: …`), `@bake` (run a scene-exported computed process at build time), `@show`/`@hide`, `@camera`, `@scene`, `@chapter`, `@board`/`@highlight`/`@dim`/`@clear`, and `@pause` (a narrated checkpoint — the prompt is spoken, playback stops at its boundary before the next narration or visual, and the normal play button resumes; add `speak: false` to keep it silent). Full grammar in [DESIGN.md §6](./DESIGN.md).
 
 Run `lesson ref` on a scene to get the exact parameters, ranges, presets, groups, and bakers you can drive.
 

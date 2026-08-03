@@ -248,7 +248,7 @@ voice: elevenlabs:antoine        # or  human: ./assets/voix-david.wav (forced-al
 |---|---|
 | `@scene(name)` | Switch the active scene/sub-scene (a discrete parameter; snaps). |
 | `@chapter(Titre)` | Chapter marker on the scrubber. |
-| `@pause(prompt: "Essayez de déplacer le point.")` | Hard checkpoint: the prompt is spoken, the clock halts after a short audio tail, and the normal play control resumes it. The scene remains fully interactive while paused. |
+| `@pause(prompt: "Essayez de déplacer le point.")` | Hard checkpoint: the prompt is spoken, then the clock halts at its boundary before any following narration or anticipated visual. The normal play control resumes it, and the scene remains fully interactive while paused. |
 
 ### 6.3 Inline directives
 
@@ -351,7 +351,7 @@ The compiler strips the directives, synthesizes the remaining prose, gets back t
     "board.cosdef":    [ { "t": 0, "v": "hidden" }, { "t": 27.30, "v": "shown" } ]
   },
   "chapters": [ { "t": 0, "title": "Le cercle et l'angle" } ],
-  "pauses":   [ { "t": 29.75, "prompt": "Déplacez le point rouge…", "tail": 0.5 } ]
+  "pauses":   [ { "t": 29.75, "prompt": "Déplacez le point rouge…", "tail": 0 } ]
 }
 ```
 

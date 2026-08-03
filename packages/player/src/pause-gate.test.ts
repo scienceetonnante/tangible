@@ -33,20 +33,16 @@ beforeEach(() => {
 });
 
 describe("PauseGate", () => {
-  it("pauses half a second after the checkpoint", () => {
+  it("pauses at the checkpoint boundary", () => {
     gate.update(4.9);
-    gate.update(5.49);
-    expect(media.paused).toBe(false);
-
-    gate.update(5.51);
+    gate.update(5.01);
     expect(media.paused).toBe(true);
-    expect(media.currentTime).toBe(5.5);
+    expect(media.currentTime).toBe(5);
   });
 
   it("resumes from the normal play control and does not re-trigger", () => {
     gate.update(4.9);
-    gate.update(5.49);
-    gate.update(5.51);
+    gate.update(5.01);
     clock.play();
     expect(media.paused).toBe(false);
     gate.update(5.6); // still past the gate, already satisfied
@@ -64,37 +60,33 @@ describe("PauseGate", () => {
     gate.update(10); // satisfied
     gate.update(0.2); // seek to start → re-arm
     gate.update(4.9);
-    gate.update(5.49);
-    gate.update(5.51);
+    gate.update(5.01);
     expect(media.paused).toBe(true);
   });
 
   it("re-arms after resuming, then seeking back to just before the gate", () => {
     gate.update(4.9);
-    gate.update(5.49);
-    gate.update(5.51); // triggered
+    gate.update(5.01); // triggered
     clock.play(); // resume → satisfied
     gate.update(6); // playing on past it
     gate.update(4); // seek back to before the gate (not the start) → re-arm
     gate.update(4.9);
-    gate.update(5.49);
-    gate.update(5.51); // re-cross
+    gate.update(5.01); // re-cross
     expect(media.paused).toBe(true);
   });
 
   it("re-arms when seeking backward while stopped at the gate", () => {
     gate.update(4.9);
-    gate.update(5.49);
-    gate.update(5.51); // triggered
+    gate.update(5.01); // triggered
     gate.update(4); // seek backward before resuming
     clock.play();
-    gate.update(5.49);
-    gate.update(5.51);
+    gate.update(4.9);
+    gate.update(5.01);
 
     expect(media.paused).toBe(true);
   });
 
-  it("uses the available audio tail for a checkpoint near the end", () => {
-    expect(pauseTime({ t: 19.8 }, 20)).toBe(19.95);
+  it("leaves the final checkpoint at its boundary by default", () => {
+    expect(pauseTime({ t: 19.8 }, 20)).toBe(19.8);
   });
 });

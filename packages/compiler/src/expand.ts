@@ -192,7 +192,7 @@ export function expand(cues: ResolvedCue[], scene: SceneInfo, opts: ExpandOption
         chapters.push({ t, title: d.title });
         break;
       case "pause":
-        pauses.push({ t, id: `pause-${pauses.length}`, prompt: d.prompt, tail: d.speak ? 0.5 : 0 });
+        pauses.push({ t, id: `pause-${pauses.length}`, prompt: d.prompt, tail: 0 });
         break;
       case "track":
       case "unknown":

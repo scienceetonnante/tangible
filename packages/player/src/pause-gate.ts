@@ -10,7 +10,7 @@ interface Pause {
   tail?: number;
 }
 
-export const PAUSE_TAIL_SECONDS = 0.5;
+export const PAUSE_TAIL_SECONDS = 0;
 
 export function pauseTime(pause: Pick<Pause, "t" | "tail">, duration: number): number {
   const delayed = pause.t + (pause.tail ?? PAUSE_TAIL_SECONDS);

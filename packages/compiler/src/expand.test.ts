@@ -65,7 +65,19 @@ describe("expand — worked example (DESIGN §6.5)", () => {
     expect(result.chapters[0]!.title).toBe("Le cercle et l'angle");
     expect(result.pauses).toHaveLength(1);
     expect(result.pauses[0]!.prompt).toContain("Déplacez le point rouge");
-    expect(result.pauses[0]!.tail).toBe(0.5);
+    expect(result.pauses[0]!.tail).toBe(0);
+  });
+
+  it("does not let the next anticipated visual leak across a spoken pause", () => {
+    const parsed = parseScript('Before. @pause(prompt: "Try it now.") @cue(theta -> 3, over: 1s) Here we continue.');
+    const timing = fakeTiming(parsed.narration);
+    const cues = resolve(parsed.directives, parsed.narration, timing, { anticipation: -0.2 });
+    const pause = cues.find((cue) => cue.directive.kind === "pause")!;
+    const next = cues.find((cue) => cue.directive.kind === "cue")!;
+    const result = expand(cues, SCENE, { language: "en", defaults: DEFAULTS });
+
+    expect(next.t).toBe(pause.t);
+    expect(result.pauses[0]!.tail).toBe(0);
   });
 
   it("does not delay a silent pause into the following narration", () => {
