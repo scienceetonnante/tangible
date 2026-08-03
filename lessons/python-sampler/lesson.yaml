@@ -1,6 +1,6 @@
 id: python-sampler
 title:
-  en: Temperature in ten lines of Python
+  en: Sampling temperature in Python
 scene: ./scene.ts
 languages: [en]
 voice:
@@ -14,4 +14,3 @@ assistant:
     en: assistant.en.md
   commandable:
     - code
-

@@ -1,7 +1,16 @@
 import type { ParamValue, Schema } from "@narrable/core";
 import type { SceneContext, SceneInstance, SceneModule } from "@narrable/player";
 import { PythonEditor } from "./editor.js";
-import { COLD_OUTPUT, COLD_PROGRAM, HOT_OUTPUT, HOT_PROGRAM, SCORE_SETUP } from "./programs.js";
+import {
+  COLD_OUTPUT,
+  COLD_PROGRAM,
+  HOT_OUTPUT,
+  HOT_PROGRAM,
+  IMPORTS,
+  SAMPLER_FUNCTION,
+  SCORE_SETUP,
+  WEIGHT_FUNCTION,
+} from "./programs.js";
 
 export const schema: Schema = {
   scene: { type: { kind: "enum", values: ["editor"] }, default: "editor", interpolate: "snap", ownership: "script" },
@@ -11,7 +20,10 @@ export const schema: Schema = {
 };
 
 export const constants: Record<string, ParamValue> = {
+  IMPORTS,
   SCORE_SETUP,
+  WEIGHT_FUNCTION,
+  SAMPLER_FUNCTION,
   COLD_PROGRAM,
   HOT_PROGRAM,
   COLD_OUTPUT,
@@ -62,7 +74,7 @@ body.python-page { background: #090c12; }
 .python-panel { min-width: 0; overflow: hidden; border: 1px solid #273249; border-radius: 9px; background: rgba(12, 17, 28, 0.96); box-shadow: 0 14px 36px rgba(0,0,0,.25); }
 .python-panelbar { height: 38px; display: flex; align-items: center; justify-content: space-between; padding: 0 11px 0 14px; border-bottom: 1px solid #273249; color: #91a0ba; font-size: 12px; box-sizing: border-box; }
 .python-code { position: relative; height: calc(100% - 38px); background: #0d111b; overflow: hidden; }
-.python-lines, .python-highlight, .python-input { position: absolute; top: 0; bottom: 0; margin: 0; border: 0; box-sizing: border-box; font: 14px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; tab-size: 4; white-space: pre; overflow: auto; }
+.python-lines, .python-highlight, .python-input { position: absolute; top: 0; bottom: 0; margin: 0; border: 0; box-sizing: border-box; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; tab-size: 4; white-space: pre; overflow: auto; }
 .python-lines { left: 0; width: 46px; padding: 13px 10px; color: #46536b; text-align: right; background: #0b0f18; overflow: hidden; user-select: none; }
 .python-highlight, .python-input { left: 46px; right: 0; width: calc(100% - 46px); padding: 13px 16px 70px; }
 .python-highlight { color: #d8dee9; pointer-events: none; }
@@ -96,4 +108,3 @@ body.python-page { background: #090c12; }
 .xv-shell:has(.python-lesson) .xv-assistant button { border-color: #35435e; background: #141c2b; color: #dce5f5; }
 .xv-shell:has(.python-lesson) .xv-assistant-footer { color: #8190aa; }
 `;
-
