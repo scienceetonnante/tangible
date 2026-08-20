@@ -212,7 +212,8 @@ bundle, replace the `HF_TOKEN` secret with a new inference-only token, revoke th
 old token, and test one question after the resulting restart. Make the Space public
 only after those steps succeed. Never probe a deployed server with a sensitive file
 such as `/proc/self/environ`; use a harmless traversal target such as
-`/etc/os-release` and expect `404`.
+`/etc/os-release` and expect rejection (`404` locally, or `400` from the Hugging
+Face proxy).
 
 The lesson server writes one JSON log line for each `assistant.request`,
 `assistant.success`, `assistant.limited`, or `assistant.error`. Local logs appear in the terminal running
