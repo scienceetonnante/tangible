@@ -15,7 +15,7 @@ export interface FrameOptions {
 
 export async function renderFrame(siteDir: string, opts: FrameOptions): Promise<void> {
   const server = staticServer(siteDir);
-  const port = await new Promise<number>((res) => server.listen(0, () => res((server.address() as AddressInfo).port)));
+  const port = await new Promise<number>((res) => server.listen(0, "127.0.0.1", () => res((server.address() as AddressInfo).port)));
   const [w, h] = (opts.size ?? "1280x720").split("x").map(Number);
 
   const browser = await chromium.launch({ args: ["--autoplay-policy=no-user-gesture-required"] });

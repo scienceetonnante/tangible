@@ -56,7 +56,7 @@ async function main() {
       await cmdRef(flags);
       return;
     default:
-      die(`unknown command "${cmd ?? ""}"\nusage: lesson <new|check|build|frame|preview|serve|state|ref> [--lang fr] [--lesson dir] [--at t] [--drag p=v] [--bundle] [-o file] [--size WxH] [--port n] [--fake]`);
+      die(`unknown command "${cmd ?? ""}"\nusage: lesson <new|check|build|frame|preview|serve|state|ref> [--lang fr] [--lesson dir] [--at t] [--drag p=v] [--bundle] [-o file] [--size WxH] [--port n] [--host address] [--fake]`);
   }
 }
 
@@ -192,6 +192,7 @@ async function cmdPreview(flags: Flags): Promise<void> {
     watchPaths,
     rebuild,
     port: flags.port,
+    host: flags.host,
     assistantApi: manifest.assistant ? createAssistantApi({ siteDir, fake: flags.fake }) : undefined,
   });
 }
@@ -200,7 +201,7 @@ async function cmdServe(flags: Flags): Promise<void> {
   const lessonDir = flags.lesson ?? process.cwd();
   const siteDir = join(lessonDir, "build", "site");
   if (!existsSync(join(siteDir, "index.html"))) die('no static bundle — run "lesson build --bundle" first');
-  serveLesson({ siteDir, port: flags.port, fake: flags.fake });
+  serveLesson({ siteDir, port: flags.port, host: flags.host, fake: flags.fake });
 }
 
 async function cmdState(flags: Flags): Promise<void> {
@@ -306,6 +307,7 @@ interface Flags {
   size?: string;
   drag?: string;
   port?: number;
+  host?: string;
 }
 
 function parseFlags(args: string[]): Flags {
@@ -320,6 +322,7 @@ function parseFlags(args: string[]): Flags {
     else if (args[i] === "--size") f.size = args[++i];
     else if (args[i] === "--drag") f.drag = args[++i];
     else if (args[i] === "--port") f.port = Number(args[++i]);
+    else if (args[i] === "--host") f.host = args[++i];
   }
   return f;
 }

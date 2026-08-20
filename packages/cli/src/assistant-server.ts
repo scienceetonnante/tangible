@@ -12,6 +12,7 @@ import { serveFromDir } from "./static-server.js";
 export interface AssistantServerOptions {
   siteDir: string;
   port?: number;
+  host?: string;
   fake?: boolean;
   logger?: (entry: Record<string, unknown>) => void;
 }
@@ -77,7 +78,8 @@ export function serveLesson(opts: AssistantServerOptions): Server {
     })().catch((error) => json(res, 500, { error: String(error) }));
   });
   const port = opts.port ?? 7860;
-  server.listen(port, () => console.error(`lesson server on http://localhost:${port}`));
+  const host = opts.host ?? "127.0.0.1";
+  server.listen(port, host, () => console.error(`lesson server on http://${host}:${port}`));
   return server;
 }
 

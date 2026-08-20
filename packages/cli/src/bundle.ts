@@ -79,7 +79,7 @@ async function bundleAssistantServer(outDir: string): Promise<void> {
   const serverPath = join(dirname(fileURLToPath(import.meta.url)), "assistant-server.js");
   await build({
     stdin: {
-      contents: `import { serveLesson } from ${JSON.stringify(serverPath)}; serveLesson({ siteDir: process.cwd(), port: Number(process.env.PORT ?? 7860) });`,
+      contents: `import { serveLesson } from ${JSON.stringify(serverPath)}; serveLesson({ siteDir: process.cwd(), port: Number(process.env.PORT ?? 7860), host: "0.0.0.0" });`,
       resolveDir: outDir,
       sourcefile: "server-entry.mjs",
     },
