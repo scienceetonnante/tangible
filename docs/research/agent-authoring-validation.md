@@ -8,7 +8,7 @@ We deliberately went **harder than the original plan**. Rather than have an agen
 
 The agent was given: the authoring docs (scene contract + directive grammar), the `unit-circle` lesson as a worked example, the project design documents available at the time, and the CLI loop (`ref` → `check` → `build --fake` → `state --at`). It was **not** given a scene to start from, human choreography, or real TTS. It kept an honest friction log as it worked.
 
-Deliverable lesson: [`lessons/backprop/`](../lessons/backprop/) — `lesson.yaml`, `scene.ts` (~290 lines), `script.en.md`, and the raw agent log [`FINDINGS.md`](../lessons/backprop/FINDINGS.md).
+Deliverable lesson: [`lessons/backprop/`](../../lessons/backprop/) — `lesson.yaml`, `scene.ts` (~290 lines), `script.en.md`, and the raw agent log [`FINDINGS.md`](../../lessons/backprop/FINDINGS.md).
 
 ## Verdict
 
@@ -50,7 +50,7 @@ Frame review across the timeline (`lesson frame` at 6 timestamps) caught two leg
 ## Recommendations (ranked)
 
 1. **Let the agent verify interaction, not just scripted state** — e.g. `state --at <t> --drag w11=0.9` that runs the reconciler, so the interactive payoff is checkable headlessly. (Biggest gap.)
-2. **A first-class way to animate a computed process** — a build-time computed cue value evaluated from scene-exported functions, or a `@bake` directive that asks the scene for a `Keyframe[]` given a start state and a step count. At minimum, a lint that recomputes and warns when pasted literals don't match a declared update rule. **Designed:** see [computed-cues-design-note.md](./computed-cues-design-note.md) — recommends a `@bake` directive (build-time, checkable, preserves value-at-time).
+2. **A first-class way to animate a computed process** — a build-time computed cue value evaluated from scene-exported functions, or a `@bake` directive that asks the scene for a `Keyframe[]` given a start state and a step count. At minimum, a lint that recomputes and warns when pasted literals don't match a declared update rule. **Designed:** see [the computed-process decision](../decisions/0001-computed-processes.md) — recommends a `@bake` directive (build-time, checkable, preserves value-at-time).
 3. **Fix the overlap warning** — dedupe per cue, use the real filename, name the truncated cue's source line.
 4. **Make a visual check work in-sandbox** — `frame` binds a local server socket the sandbox blocks, so the agent's only *visual* check is unavailable; document a supported stub-canvas smoke-test pattern otherwise.
 5. **`lesson new`** should honor `--lesson` and language; **multi-assignment cue** sugar (array/group form) would keep a step from burying its sentence.
@@ -61,7 +61,7 @@ The immediately actionable findings and the later computed-process milestone hav
 shipped:
 
 - **#1 headless interaction** → `lesson state --at <t> --drag <param>=<value>` now runs the real reconciler in Node and prints the hold-then-glide trajectory (scripted vs displayed). The `shared` behaviors above are now checkable without a browser.
-- **#2 computed process** → the build-time, checkable `@bake` directive is implemented. Backprop now calls its real descent function at all three narration anchors and contains no pasted weight targets; see [computed-cues-design-note.md](./computed-cues-design-note.md).
+- **#2 computed process** → the build-time, checkable `@bake` directive is implemented. Backprop now calls its real descent function at all three narration anchors and contains no pasted weight targets; see [the computed-process decision](../decisions/0001-computed-processes.md).
 - **overlap warning** → now one warning per cue, with the real filename and the truncated cue's source line.
 - **`lesson new`** → honors `--lesson <dir>` and `--lang`; the scaffold passes `check` cleanly.
 - **#6 multi-assignment cue** → named parameter **groups**: a scene exports `groups`, and `@cue(weights -> [ … ])` sets the whole group in one readable cue (validated by `check`, shown by `ref`). Backprop retains its `weights` group for authored snapshots, while descent now uses `@bake`.

@@ -1,6 +1,9 @@
 # Interactive ("Explorable") Video
 
-*A primer on the medium pioneered by the 3blue1brown + Ben Eater quaternion series ([eater.net/quaternions](https://eater.net/quaternions), 2018), together with a technical dissection of that platform (from an inspection of the deployed site, February 2026 build) and a proposed architecture for producing lessons in this medium on arbitrary topics, from a single authored script. The platform described here has since been built; see [PLAN.md](./PLAN.md) for build status and [README.md](./README.md) for how to run it. §10 below records the normative invariants the implementation upholds.*
+*Historical research and the original architecture proposal. It is retained as a
+record, not as current reference documentation. See the current
+[architecture](../framework/architecture.md), [roadmap](../../ROADMAP.md), and
+[README](../../README.md).*
 
 ---
 

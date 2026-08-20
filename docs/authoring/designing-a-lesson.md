@@ -1,4 +1,9 @@
-# Designing a Narrated Explorable Lesson
+# Designing a Narrable lesson
+
+Use this guide to write the human-owned `brief.md` before scene implementation
+begins. The brief defines the pedagogical intent; it is not a technical scene
+specification. Continue with the
+[authoring workflow](./getting-started.md) when the concept is ready.
 
 
 ## The medium in one minute

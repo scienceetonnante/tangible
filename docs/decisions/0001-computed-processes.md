@@ -1,7 +1,8 @@
 # Design note — animating a computed process
 
-*Status: implemented. The durable contract is documented in [DESIGN.md](../DESIGN.md)
-and the authoring guide in [README.md](../README.md).*
+*Status: implemented. The durable contract is documented in the
+[architecture](../framework/architecture.md) and
+[directive reference](../reference/directives.md).*
 
 ## Problem
 

@@ -1,235 +1,72 @@
-# Explorable Video
+# Narrable
 
-A platform for **interactive ("explorable") narrated video** — lessons that are a live 2D/3D scene driven by a recorded voiceover, where the learner can grab the canvas, drag a parameter, or scrub a value at any time and watch everything recompute, then glides back to whatever the narration has reached. Think of the 3blue1brown + Ben Eater quaternion series, but authored from a single **text script** instead of performance capture.
+Narrable is a framework for building narrated interactive lessons. A recorded
+voiceover drives a live 2D or 3D scene, while learners remain free to manipulate
+the model and see its connected representations recompute.
 
-- **[DESIGN.md](./DESIGN.md)** — what the medium is and why: the primer, the architecture rationale, and (§10) the normative implementation invariants.
-- **[BRIEF.md](./BRIEF.md)** — an educator-facing guide to choosing and shaping scientific concepts for narrated explorable lessons.
-- **[PLAN.md](./PLAN.md)** — phased build plan with current status and locked/deferred decisions.
-- **[docs/](./docs/)** — dated notes and records (design proposals, validation reports).
+Lessons are authored from text: a pedagogical brief, narration with timed scene
+cues, a declarative scene schema, and TypeScript rendering code.
 
-> Naming note: the project's package scope is `@narrable/*`; the CLI command is `lesson`.
+## Choose your path
 
-## Status
+- **Create a lesson:** start with the
+  [lesson-authoring guide](./docs/authoring/getting-started.md). No knowledge of
+  Narrable internals is expected.
+- **Develop the framework:** read the
+  [contributor guide](./docs/framework/contributing.md) and
+  [architecture](./docs/framework/architecture.md).
+- **Find a command or format:** use the [reference docs](./docs/README.md#reference).
+- **See future work:** read the [roadmap](./ROADMAP.md).
 
-The v0.1 vertical slice works end to end: compile a script → synthesize audio (ElevenLabs, a private Qwen3-TTS endpoint, or a fake adapter) → play, seek, drag-and-catch-up, board equations, captions, and narrated pause checkpoints. The bilingual **unit-circle** lesson is deployed with real voice and verified on Chrome, Safari, and iPad; it also has an optional pause-time lesson assistant that answers in writing with Hugging Face Inference Providers and drives a temporary visual demonstration without changing the authored timeline. A second 2D **backpropagation** lesson validates agent authoring, live recomputation, and build-time computed processes: its `@bake` directives call the scene's real gradient-descent function and compile the results into ordinary tracks. A third **optimizer** lesson compares SGD, momentum, and AdamW on a navigable conditioned or rough 3D loss surface. Its authored narration uses the cloned `david_v1` voice, and the written assistant can demonstrate answers with every meaningful optimizer control. The local **Python sampler** demo adds seekable character-by-character code, learner edits, captured output, and worker-isolated browser Python. This flow has been validated locally end to end with the live Hugging Face providers.
+The complete documentation index is in [docs/README.md](./docs/README.md).
 
-## How it works
+## Current capabilities
 
-Three layers with a hard separation (DESIGN §5):
+The end-to-end pipeline supports script validation, fake or real TTS, seekable
+value-at-time tracks, interactive reconciliation, equations, captions, narrated
+pause checkpoints, deterministic frame and state inspection, multilingual
+lessons, and optional written lesson assistants. Bundled lessons can be deployed
+as static sites or as Docker-based Hugging Face Spaces when a server-side
+assistant is enabled.
 
-```
-script.md ─┐
-           ├─ compile ─► tracks.json + captions.vtt + audio.(m4a|wav)
-scene.ts ──┘                              │
-                                          ▼
-              player (shared): <audio> clock ► interpolator ► state ◄ interaction
-                                                                 │
-                                                                 ▼
-                                                       scene render = f(state)
-```
+Reference lessons live in `lessons/`:
 
-Every parameter's value is a pure function of time `t` (**value-at-time**), which is what makes seeking, catch-up, and headless frame rendering possible. The compiler bakes all easing/timing into dense keyframe tracks; the runtime just looks up and interpolates.
-
-Narration-bound controls use `ownership: "script"`: a learner change stays completely frozen while playback is paused. Resuming starts a fresh three-second hold measured in playback time, then the value glides back to the scenario. Seeking discards the interaction and rejoins the timeline. Use `viewer` for persistent navigation such as the camera, and reserve `shared` for choices that should persist until a later script cue.
-
-When the optional assistant is enabled, the lesson clock stays paused while a second, ephemeral text-timed clock drives allowlisted scene parameters. Learner interaction remains live and wins per parameter; the answer layer remains until the learner asks another question or resumes the lesson.
-
-The lesson server makes a single provider call:
-
-```
-browser ─► lesson server /api/answer ─► Hugging Face router (written answer plan)
-        ◄─ validated text + beats ─────
-```
-
-Tokens remain on this same-origin server and are never sent to the browser.
-
-## Repository layout
-
-```
-packages/
-  core/         shared types, schema, easing, the value-at-time interpolator, reconciliation math
-  compiler/     script.md → tracks.json + captions.vtt (parse→check/bake→synthesize→resolve→expand→emit)
-  tts/          TTS adapters: fake, ElevenLabs (with-timestamps), and cloned-voice HF endpoints
-  player/       browser runtime: clock, state composition, interaction, board, captions, chrome, questions
-  ingredients/  reusable scene helpers (e.g. camera-orbit handle)
-  cli/          the `lesson` command
-lessons/
-  unit-circle/  the first lesson: lesson.yaml, scene.ts, script.en.md (+ script.fr.md)
-  backprop/     the second 2D lesson: agent-authored network, gradients, draggable weights
-  optimizers/   live optimizer paths on a navigable conditioned or rough 3D loss surface
-  python-sampler/ editable Python and output for a one-minute temperature demo
-e2e/            Playwright browser tests (Chromium + WebKit)
-```
-
-Dependency rule (enforced by `scripts/check-boundaries.mjs`): `core` depends on nothing; `compiler`/`tts`/`player`/`ingredients` depend on `core` only; `cli` depends on everything. **`player` never imports `compiler` or `tts`** — the runtime consumes only built artifacts.
-
-## Prerequisites
-
-- **Node ≥ 22**
-- **pnpm** (`corepack enable pnpm`)
-
-## Setup
-
-```bash
-pnpm install
-pnpm build        # compile all packages (tsc --build)
-```
-
-Optional, for real narration synthesis and live questions — create a `.env` at the repo root (gitignored):
-
-```
-ELEVENLABS_API_KEY=sk_...your_key...
-HF_TOKEN=hf_...your_token...
-TTS_ENDPOINT_URL=https://...endpoints.huggingface.cloud
-HF_TTS_TOKEN=hf_...private-endpoint-token...
-```
-
-Live questions are pinned to `google/gemma-4-31B-it:cerebras`.
-
-The CLI loads `.env` from both the directory where it is invoked and the selected
-lesson directory. This makes it possible to keep shared credentials in the root
-`.env` while placing a lesson-specific `TTS_ENDPOINT_URL` in, for example,
-`lessons/optimizers/.env`; both files are gitignored. `HF_TTS_TOKEN` is optional
-when `HF_TOKEN` is authorized for both the LLM router and the private voice
-endpoint.
+- `unit-circle`: bilingual 2D lesson and primary integration example;
+- `backprop`: agent-authored network with build-time computed steps;
+- `optimizers`: navigable 3D optimizer comparison;
+- `python-sampler`: editable, worker-isolated browser Python.
 
 ## Quick start
 
-Build and preview the unit-circle lesson:
+Prerequisites: Node 22 or newer and pnpm.
 
 ```bash
+pnpm install
 pnpm build
-
-# Compile the lesson (uses ElevenLabs if a key + voice IDs are set, else pass --fake)
-node packages/cli/dist/index.js build --bundle --lesson lessons/unit-circle
-
-# Serve it with live-reload (open http://localhost:5179). The assistant uses
-# the real provider when HF_TOKEN is present.
-node packages/cli/dist/index.js preview --lesson lessons/unit-circle
+pnpm lesson preview --fake --lesson lessons/unit-circle
 ```
 
-Run the local Python-editor demo with deterministic placeholder narration:
+Open <http://localhost:5179>. The `--fake` flag keeps the authoring loop local,
+deterministic, and free of provider calls.
+
+Common checks:
 
 ```bash
-node packages/cli/dist/index.js preview --fake --lesson lessons/python-sampler
+pnpm lesson check --lesson lessons/unit-circle
+pnpm lesson build --fake --bundle --lesson lessons/unit-circle
+pnpm check
+pnpm test:e2e
 ```
 
-Its first manual Run downloads Pyodide, then executes subsequent variants in the
-same browser worker. Authored runs and outputs remain ordinary seekable tracks.
+## Repository layout
 
-For a free/offline authoring loop (silent placeholder audio, no API calls) add `--fake` to `build`/`preview`.
-
-## The `lesson` CLI
-
-Run as `node packages/cli/dist/index.js <command>` (after `pnpm build`).
-
-| Command | What it does |
-|---|---|
-| `new <id>` | Scaffold a lesson directory (manifest, template scene, script skeleton). |
-| `check [--lang en]` | Parse + validate a script against the scene schema. No network. Non-zero exit on error. The fast authoring/agent loop. |
-| `build [--lang en] [--bundle] [--fake]` | Full pipeline → `build/<lang>/`. `--bundle` emits the site and, for assistant-enabled lessons, a Docker server bundle. `--fake` uses deterministic fake voice and answer providers. |
-| `preview [--fake] [--port 5179] [--host address]` | Serve with file-watch and browser live-reload; assistant-enabled lessons get the same-origin answer API. Binds `127.0.0.1` by default. |
-| `serve [--fake] [--port 7860] [--host address]` | Serve an existing bundle and its answer API without file watching. Binds `127.0.0.1`; generated Docker bundles explicitly bind `0.0.0.0`. |
-| `frame --at <t> -o <file.png> [--lang en] [--size WxH]` | Headless-render the lesson at time `t` to a PNG (deterministic). |
-| `state --at <t> [--lang en] [--drag p=v]` | Print the full scene state at time `t` as JSON (no browser). With `--drag <param>=<value>`, simulate a viewer grabbing that param at `t` and print the reconciled trajectory (scripted vs displayed) — a headless check of interaction ownership. |
-| `ref` | Emit the scene's **cue-reference sheet** (params, presets, constants) as Markdown. |
-
-Common flags: `--lesson <dir>` (defaults to the current directory), `--lang <code>`.
-Use `--host 0.0.0.0` only when another device on the local network must reach a
-preview, such as for touch testing.
-
-## Authoring a lesson
-
-A lesson is a directory with three authored files:
-
-- **`lesson.yaml`** — manifest: id, title, scene path, languages, per-language voices, defaults, and TTS settings:
-
-  ```yaml
-  id: unit-circle
-  title: { en: The unit circle }
-  scene: ./scene.ts
-  languages: [en]
-  voice:
-    en: elevenlabs:YOUR_VOICE_ID
-  defaults:
-    anticipation: -0.2   # seconds; cues slightly precede the word they illustrate
-    ease: inOutCubic
-    transition: 1.0
-  tts:
-    speed: 0.9           # ElevenLabs speaking rate: 0.7 (slow) .. 1.2 (fast)
-  ```
-
-  Use `hf-endpoint:david_v1` for the private cloned voice. Because that endpoint
-  returns PCM WAV without alignment, the compiler synthesizes at cue and sentence
-  boundaries, derives those exact times from sample counts, and estimates timing
-  only inside each segment. Set `TTS_ENDPOINT_URL` and `HF_TTS_TOKEN` before a
-  real build; `--fake` remains network-free.
-
-- **`scene.ts`** — the visualization: a parameter `schema`, optional `presets`/`constants`/`groups`, optional build-time `bakers`, and a `scene` module that renders as a pure function of state. Groups let one cue set several params at once; bakers expose deterministic computed processes such as a gradient step. Text parameters may use `interpolate: "typewriter"`; DOM controls call the scene context's `write` and `reset` methods so edits follow the same ownership rules as canvas handles.
-
-- **`script.<lang>.md`** — narration prose with embedded directives. Prose is spoken verbatim; directives are stripped and anchored to the word that follows them. A taste:
-
-  ```markdown
-  @scene(circle)
-  @chapter(The circle and the angle)
-
-  Watch what happens when we let it @cue(theta -> 6.2832, over: 4s) vary.
-  @show(projection) Its projection onto the horizontal axis is
-  @cue(show.cosLabel = true) the cosine. @board(cosdef: $x = \cos\theta$)
-
-  @pause(prompt: "Drag the red point yourself and watch the cosine.")
-  ```
-
-  Directives include `@cue` (assign parameters, instant `=` or animated `-> … over: … ease: …`), `@bake` (run a scene-exported computed process at build time), `@show`/`@hide`, `@camera`, `@scene`, `@chapter`, `@board`/`@highlight`/`@dim`/`@clear`, and `@pause` (a narrated checkpoint — the prompt is spoken, playback stops at its boundary before the next narration or visual, and the normal play button resumes; add `speak: false` to keep it silent). Full grammar in [DESIGN.md §6](./DESIGN.md).
-
-Run `lesson ref` on a scene to get the exact parameters, ranges, presets, groups, and bakers you can drive.
-
-An assistant-enabled lesson also lists a semantic context file and an explicit command allowlist in `lesson.yaml`:
-
-```yaml
-assistant:
-  context:
-    en: assistant.en.md
-  commandable: [theta, show.projection, show.cosLabel]
+```text
+packages/    framework packages: core, compiler, TTS, player, ingredients, CLI
+lessons/     lesson source projects and integration examples
+docs/        authoring, reference, deployment, framework, decisions, and research
+e2e/         browser integration tests
 ```
 
-`assistant.<lang>.md` describes the scene, layout, visible controls, terminology, and answer guidance. The build combines it with the full script, narration, schema, presets, and constants in `assistant.json`. The model returns one to six validated written beats with absolute parameter values; arbitrary code and non-allowlisted parameters never reach the player. The full answer appears directly below the question box, while scene commands are spaced at a comfortable reading pace.
-
-Assistant-enabled Hugging Face Spaces use the generated `Dockerfile` and `server.mjs`. This Docker Space hosts the lesson UI and its small Node orchestration server. Store `HF_TOKEN` as a Space secret. Lessons without assistant configuration remain ordinary static bundles.
-
-The anonymous assistant API has three in-memory limits: 120 provider calls per
-rolling hour globally, eight calls per browser per ten minutes, and two concurrent
-provider calls. Override them with positive integer Space variables
-`ASSISTANT_HOURLY_LIMIT`, `ASSISTANT_CLIENT_10M_LIMIT`, and
-`ASSISTANT_MAX_CONCURRENT`. The browser identifier is only a fairness mechanism;
-the global limit is the cost boundary. All counters reset when the container
-restarts.
-
-To release one lesson without publishing the monorepo, build it with `lesson build --bundle`, then copy only `lessons/<id>/build/site/` plus a Space `README.md` and `.gitattributes` into an artifact-only orphan branch such as `release/optimizers`. The branch must contain one root commit (record the source commit in its message); for later releases, replace the files, amend that commit, and push it with `--force-with-lease` to the Space's `main` branch. Configure the Space as a Docker Space through the root `README.md` front matter (`sdk: docker`, `app_port: 7860`). For an assistant-enabled lesson, add a dedicated fine-grained Hugging Face token with permission to call Inference Providers as the `HF_TOKEN` Space secret; keep deployment credentials and build-only TTS credentials such as `HF_TTS_TOKEN`, `TTS_ENDPOINT_URL`, and `ELEVENLABS_API_KEY` local or in CI, never in the release branch or Space variables.
-
-For a credential rotation, keep the Space private, deploy and verify the patched
-bundle, replace the `HF_TOKEN` secret with a new inference-only token, revoke the
-old token, and test one question after the resulting restart. Make the Space public
-only after those steps succeed. Never probe a deployed server with a sensitive file
-such as `/proc/self/environ`; use a harmless traversal target such as
-`/etc/os-release` and expect rejection (`404` locally, or `400` from the Hugging
-Face proxy).
-
-The lesson server writes one JSON log line for each `assistant.request`,
-`assistant.success`, `assistant.limited`, or `assistant.error`. Local logs appear in the terminal running
-`lesson serve` or `lesson preview`; Docker deployments expose the same stdout/stderr
-as container logs. Logs include request IDs, provider/model, latency, answer size,
-safe error categories, and quota events, but not question text, scene-state values,
-provider response bodies, filesystem paths, or tokens.
-
-## Development
-
-```bash
-pnpm check      # typecheck + lint + dependency boundaries + unit tests (hermetic)
-pnpm test       # Vitest unit tests
-pnpm test:e2e   # Playwright browser tests (Chromium + WebKit)
-```
-
-CI (`.github/workflows/ci.yml`) runs the hermetic checks plus the Playwright suite — **fake TTS/answers, no network, no API keys**. Real ElevenLabs lesson synthesis and cloned-voice answers happen only when their provider settings are present.
-
-Handy checks without a browser: `lesson state --at <t>` (numeric state) and `lesson frame --at <t> -o f.png` (visual). Because state is a pure function of `t`, both are deterministic.
+Framework dependencies follow one enforced rule: `core` depends on nothing;
+`compiler`, `tts`, `player`, and `ingredients` depend only on `core`; `cli` may
+compose all packages. The runtime player never imports the compiler or TTS.
