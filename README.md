@@ -10,7 +10,7 @@ cues, a declarative scene schema, and TypeScript rendering code.
 ## Choose your path
 
 - **Create a lesson:** start with the
-  [lesson-authoring guide](./docs/authoring/getting-started.md). No knowledge of
+  [lesson-authoring guide](./docs/authoring/0-getting-started.md). No knowledge of
   Narrable internals is expected.
 - **Develop the framework:** read the
   [contributor guide](./docs/framework/contributing.md) and

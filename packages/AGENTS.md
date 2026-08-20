@@ -34,7 +34,7 @@ providers in automated tests.
 
 When framework work changes lesson syntax or workflow, update the relevant file in
 `docs/reference/` or `docs/authoring/`; do not put current instructions into
-`docs/research/`.
+`docs/archives/`.
 
 ## VERY IMPORTANT: how to talke to me
  
@@ -51,4 +51,4 @@ Clarity is my top priority: I use your answers to make decisions, so if I cannot
 
 **Explain like a teacher.**
 - Give enough context and background that a non-expert can follow.
-- Avoid the curse of knowledge: do not assume I already know what you know.  
+- Avoid the curse of knowledge: do not assume I already know what you know.

@@ -85,5 +85,5 @@ language: ${lang}
 @chapter(Introduction)
 
 Write the spoken narration here.
-<!-- scene: describe the visual change and the phrase it should support -->
+[[Describe the visual change and the phrase it should support.]]
 `;

@@ -13,7 +13,7 @@ describe("scaffold", () => {
 
       expect(await readFile(join(dir, "brief.md"), "utf8")).toContain("## Explorable relationship");
       expect(await readFile(join(dir, "lesson.yaml"), "utf8")).toContain("languages: [fr]");
-      expect(await readFile(join(dir, "script.fr.md"), "utf8")).toContain("<!-- scene:");
+      expect(await readFile(join(dir, "script.fr.md"), "utf8")).toContain("[[Describe the visual change");
       expect((await stat(join(dir, "assets"))).isDirectory()).toBe(true);
     } finally {
       await rm(root, { recursive: true, force: true });

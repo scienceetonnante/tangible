@@ -7,7 +7,7 @@
 - For framework code, shared tooling, or integration tests, read
   `packages/AGENTS.md` and `docs/framework/architecture.md`.
 - For lesson design, scenes, narration, review, or deployment, read
-  `lessons/AGENTS.md` and `docs/authoring/getting-started.md`.
+  `lessons/AGENTS.md` and `docs/authoring/0-getting-started.md`.
 - For work spanning both, apply both scoped instruction files and explain why the
   boundary must change.
 

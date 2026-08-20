@@ -1,7 +1,7 @@
 # Narration directive reference
 
-Narration is Markdown. Prose is spoken verbatim. Front matter, HTML comments, and
-formal directives are stripped before TTS and captions.
+Narration is Markdown. Prose is spoken verbatim. Front matter, double-bracket
+hints, and formal directives are stripped before TTS and captions.
 
 Inline directives anchor to the onset of the next word. Block directives occupy
 their own line.
@@ -64,11 +64,11 @@ Repeat one-step bakes when each update needs a separate narration anchor.
 
 ## Natural-language hints
 
-HTML comments are not directives. They let a human describe choreography before
-the scene contract is known:
+Double brackets let a human describe choreography before the scene contract is
+known:
 
 ```markdown
-<!-- scene: reveal the projection as the narrator says "horizontal" -->
+[[Reveal the projection as the narrator says "horizontal".]]
 ```
 
-The implementing agent translates these comments into the formal syntax above.
+The implementing agent translates these hints into the formal syntax above.

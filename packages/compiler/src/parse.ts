@@ -116,11 +116,11 @@ function tokenize(body: string, startLine: number, file?: string): { textRaw: st
 
   while (i < body.length) {
     const c = body[i]!;
-    if (body.startsWith("<!--", i)) {
-      const end = body.indexOf("-->", i + 4);
-      if (end === -1) throw new ParseError("unterminated HTML comment", { file, line, col });
+    if (body.startsWith("[[", i)) {
+      const end = body.indexOf("]]", i + 2);
+      if (end === -1) throw new ParseError("unterminated scene hint", { file, line, col });
       if (textRaw.length && !/\s$/.test(textRaw)) textRaw += " ";
-      const consumeTo = end + 3;
+      const consumeTo = end + 2;
       for (let k = i; k < consumeTo; k++) {
         if (body[k] === "\n") {
           line++;

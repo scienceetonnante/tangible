@@ -14,17 +14,17 @@ verification, and authorized deployment.
 Always read:
 
 - `lessons/AGENTS.md`;
-- `docs/authoring/getting-started.md`;
+- `docs/authoring/0-getting-started.md`;
 - the target lesson's `brief.md`, manifest, scene, and relevant narration.
 
 Read additional docs when the stage requires them:
 
-- concept work: `docs/authoring/designing-a-lesson.md`;
-- narration or choreography: `docs/authoring/writing-narration.md` and
+- concept work: `docs/authoring/1-designing-a-lesson.md`;
+- narration or choreography: `docs/authoring/3-writing-narration.md` and
   `docs/reference/directives.md`;
-- scene work: `docs/authoring/building-a-scene.md` and
+- scene work: `docs/authoring/2-building-a-scene.md` and
   `docs/reference/lesson-format.md`;
-- review: `docs/authoring/reviewing.md`;
+- review: `docs/authoring/4-reviewing.md`;
 - release: `docs/deployment/hugging-face-spaces.md` and the installed `hf-cli`
   skill when available.
 
@@ -81,11 +81,11 @@ were approved.
 
 ## 3. Preserve narration and interpret hints
 
-Treat non-comment prose in `script.<lang>.md` as human-owned and spoken verbatim.
-Natural-language hints use stripped HTML comments:
+Treat prose outside hints and formal directives in `script.<lang>.md` as
+human-owned and spoken verbatim. Write natural-language hints in double brackets:
 
 ```markdown
-<!-- scene: increase conditioning during this sentence while learning rate stays fixed -->
+[[Increase conditioning during this sentence while learning rate stays fixed.]]
 ```
 
 Interpret each hint against the implemented schema and the surrounding argument.
@@ -100,7 +100,7 @@ directives. Anchor each change to the phrase it supports and avoid unnecessary
 simultaneous motion.
 
 Keep hints until their cues have been reviewed; then remove them or keep them
-synchronized as intent comments. Run `lesson check` after every meaningful cue
+synchronized as intent hints. Run `lesson check` after every meaningful cue
 pass. Use fake TTS during structural iteration.
 
 ## 5. Review in layers
@@ -113,7 +113,7 @@ Ask the human to review pedagogy and visual direction. Iterate with fake narrati
 until prose and cue order are stable. Build with the real voice only then, and tune
 timing to its prosody without changing the teaching argument.
 
-Before release, follow every item in `docs/authoring/reviewing.md` and run the
+Before release, follow every item in `docs/authoring/4-reviewing.md` and run the
 lesson-specific tests plus `pnpm lesson check`.
 
 ## 6. Deploy only with authorization

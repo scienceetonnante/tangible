@@ -14,14 +14,14 @@ review, and deployment.
 
 For a new lesson or a substantial lesson-production task, use the repo-local
 `create-narrable-lesson` skill in `.agents/skills/` and follow
-`docs/authoring/getting-started.md`.
+`docs/authoring/0-getting-started.md`.
 
 ## Production sequence
 
 1. Start from an approved `brief.md`.
 2. Implement the smallest scene that expresses its central relationship.
 3. Ask the human to test the scene before formal choreography.
-4. Preserve narration prose and translate `<!-- scene: ... -->` comments into
+4. Preserve narration prose and translate `[[natural-language hint]]` into
    schema-valid directives.
 5. Iterate with fake providers, then tune against real narration.
 6. Deploy only when the user has requested deployment and the private build has

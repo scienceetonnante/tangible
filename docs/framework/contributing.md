@@ -2,7 +2,7 @@
 
 This guide is for changes under `packages/`, shared build tooling, and browser
 integration tests. Lesson production follows the
-[authoring workflow](../authoring/getting-started.md) instead.
+[authoring workflow](../authoring/0-getting-started.md) instead.
 
 ## Setup
 

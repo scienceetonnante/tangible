@@ -12,7 +12,7 @@ You do not need to understand the compiler or player to begin.
 ## 1. Write the brief
 
 Create `brief.md` using the scaffold and the prompts in
-[designing-a-lesson.md](./designing-a-lesson.md):
+[designing-a-lesson.md](./1-designing-a-lesson.md):
 
 ```bash
 pnpm build
@@ -39,17 +39,17 @@ be manipulable, connected, visible, or easier to notice.
 ## 3. Write narration with scene hints
 
 Write `script.<lang>.md` as spoken prose. Add natural-language instructions inside
-HTML comments wherever the scene should change:
+double brackets wherever the scene should change:
 
 ```markdown
 The same algorithm now zigzags from wall to wall.
-<!-- scene: increase conditioning gradually during this sentence; use a low
-camera angle so the narrow valley is obvious -->
+[[Increase conditioning gradually during this sentence. Use a low camera angle
+so the narrow valley is obvious.]]
 ```
 
-Scene comments are removed from narration and captions. They are instructions for
+Scene hints are removed from narration and captions. They are instructions for
 the implementing agent, not formal Narrable syntax. See
-[writing-narration.md](./writing-narration.md) for guidance.
+[writing-narration.md](./3-writing-narration.md) for guidance.
 
 ## 4. Let the agent encode choreography
 
@@ -76,7 +76,7 @@ pnpm lesson preview --fake --lesson lessons/my-lesson
 
 Review the pedagogy, interaction, visual composition, cue order, and pause
 prompts. Once the prose is stable, build with the real voice and tune timing
-against its prosody. Use the [review checklist](./reviewing.md).
+against its prosody. Use the [review checklist](./4-reviewing.md).
 
 ## 6. Deploy
 

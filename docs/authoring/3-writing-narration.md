@@ -12,7 +12,7 @@ intent to formal choreography.
 - Put prediction or manipulation prompts before the explanation they test.
 - Read the prose aloud before tuning animation.
 
-Everything outside front matter, formal directives, and HTML comments is spoken
+Everything outside front matter, formal directives, and double-bracket hints is spoken
 verbatim and used for captions.
 
 ## Add natural-language scene hints
@@ -21,8 +21,8 @@ Place a hint near the sentence it supports:
 
 ```markdown
 I have not changed the step size. I have only made the bowl narrower.
-<!-- scene: animate the conditioning from round to a narrow valley across these
-two sentences; keep SGD's learning rate fixed -->
+[[Animate the conditioning from round to a narrow valley across these two
+sentences. Keep SGD's learning rate fixed.]]
 ```
 
 Useful hints state:
@@ -36,9 +36,9 @@ Avoid encoding implementation guesses such as parameter names or exact numeric
 values unless they are pedagogically meaningful. The agent should choose those
 from the actual scene schema.
 
-HTML comments do not enter TTS or captions and may contain ordinary `@` signs.
+Double-bracket hints do not enter TTS or captions and may contain ordinary `@` signs.
 Keep a hint until its formal choreography has been reviewed; then either remove it
-or keep it synchronized as an intent comment.
+or keep it synchronized as an intent hint.
 
 ## Formal cues belong to the agent loop
 

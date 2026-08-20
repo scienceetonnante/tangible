@@ -1,7 +1,7 @@
 # Build a scene
 
 This is the advanced lane for implementing agents and technical authors. Human
-lesson directors can stay in the [brief-first workflow](./getting-started.md).
+lesson directors can stay in the [brief-first workflow](./0-getting-started.md).
 
 ## Scene contract
 
