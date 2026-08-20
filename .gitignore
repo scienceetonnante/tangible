@@ -19,4 +19,3 @@ lessons/*/.cache/
 # OS / editor
 .DS_Store
 .idea
-AGENTS.md

@@ -1,56 +1,50 @@
-# CLAUDE.md
+# Repository agent instructions
 
-## Project documents
-- README.md for setup and current capabilities
-- DESIGN.md for architecture and normative invariants
-- PLAN.md for remaining work only
+`AGENTS.md` links to this file so the same rules apply across agent clients.
 
-## General Guidelines
+## First choose the workstream
 
-Prioritize:
-- **Simplicity and readability** over defensive programming
-- **Explicit failures** over graceful error handling
-- **Straightforward implementations** over abstraction layers
-- **Fast iteration** over bulletproof code
+- For framework code, shared tooling, or integration tests, read
+  `packages/AGENTS.md` and `docs/framework/architecture.md`.
+- For lesson design, scenes, narration, review, or deployment, read
+  `lessons/AGENTS.md` and `docs/authoring/getting-started.md`.
+- For work spanning both, apply both scoped instruction files and explain why the
+  boundary must change.
+
+Do not read historical research as current specification. `docs/research/` records
+how decisions were reached; current behavior is defined by task-oriented docs,
+types, tests, and CLI diagnostics.
+
+## General priorities
+
+- Prefer simplicity and readability over defensive programming.
+- Prefer explicit failures over silent recovery.
+- Implement only what the request requires.
+- Keep changes small enough to review and commit independently.
+- Preserve unrelated work in a dirty worktree.
 
 ## Workflow
 
-### Planning
-- Ask clarifying questions using AskUserQuestionTool; interview the user thoroughly about requirements
-- State assumptions explicitly
-- Break unrelated features into independent incremental changes
-- Write a plan with logical commit points
-- Propose tests only for critical/tricky logic
+1. Inspect the relevant code, docs, and local agent instructions.
+2. State assumptions that affect behavior or scope.
+3. Ask questions only when a reasonable assumption could materially change the
+   result.
+4. Plan independent changes with logical commit points.
+5. Test correctness-critical or non-obvious behavior.
+6. Update the canonical task-oriented documentation when behavior changes.
+7. Commit completed increments; do not mix unrelated work in one commit.
 
-### Post-processing
-- Update README.md with concise info if relevant
-- Commit at planned points
+## Code style
 
+- Prefer flat, direct implementations over abstraction layers.
+- Avoid abstractions used only once.
+- Keep files near 300 lines when a natural split exists.
+- Use one-line docstrings and section comments by default.
+- Let impossible states fail explicitly; avoid broad catch blocks.
 
-## Coding Style
+## Tooling
 
-### Simplicity First
-- Make every change as simple as possible; impact minimal code
-- No features beyond what was asked
-- No abstractions for single-use code; prefer flat over nested
-- No error handling for impossible scenarios
-- If you write 200 lines and it could be 50, rewrite it
-
-### Code Structure
-- ~300 lines max per file; suggest breakdown when relevant
-- Don't break up long functions unless it avoids duplication
-
-### Comments
-- One-liner docstrings by default
-- Prefer block comments above sections over line-by-line
-
-### Error Handling
-- Prefer explicit crashes over defensive programming
-- Assume input data is correct; let errors propagate naturally
-
-## Python
-
-- Use `uv` exclusively for package management: `uv run`, `uv add`, etc.
-- Type hints for function signatures and class attributes
-- Use `logging` module
-- Avoid try/catch blocks unless absolutely necessary
+- Use pnpm for Node and TypeScript work.
+- Use `uv` exclusively if Python tooling is introduced or changed.
+- Run `pnpm check` for framework changes and proportionate lesson checks for
+  content work.
