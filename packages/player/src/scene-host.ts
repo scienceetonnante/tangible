@@ -1,4 +1,4 @@
-// SceneHost and the scene-module contract (DESIGN §5.2). A scene renders as
+// SceneHost and the scene-module contract. A scene renders as
 // a pure function of state — it may cache expensive geometry but must not keep
 // mutable state that affects output across frames (that would break value-at-time).
 

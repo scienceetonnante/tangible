@@ -9,6 +9,7 @@
   },
   "scripts": {
     "build": "tsc --build",
+    "lesson": "node packages/cli/dist/index.js",
     "typecheck": "tsc --build",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",

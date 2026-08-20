@@ -28,7 +28,7 @@ async function compileFixture() {
   return { parsed, timing, cues, result };
 }
 
-describe("expand — worked example (DESIGN §6.5)", () => {
+describe("expand — worked example", () => {
   it("produces the expected track set with no warnings", async () => {
     const { result } = await compileFixture();
     expect(result.warnings).toEqual([]);

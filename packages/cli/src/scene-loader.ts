@@ -1,6 +1,6 @@
 // Load a scene module's data exports (schema/presets/constants/groups/bakers) in Node by
 // transpiling scene.ts with esbuild to a temp ESM file and importing it. The
-// schema export must not require a DOM (DESIGN §5.2).
+// schema export must not require a DOM.
 
 import { build } from "esbuild";
 import { mkdtemp, rm } from "node:fs/promises";

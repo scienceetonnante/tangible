@@ -1,6 +1,6 @@
 // Player — composes the runtime: DOM layers, store, clock, timeline driver, scene
 // host, reconciler, interaction, board, captions, pause gates, and chrome. One
-// Player per lesson page (DESIGN §5.4).
+// Player for one lesson page.
 
 import { buildIndex, type AssistantContext, type AssistantRequest, type AssistantResponse, type LessonTracks, type Schema, type PlainState, type TrackIndex } from "@narrable/core";
 import { AudioClock } from "./clock.js";

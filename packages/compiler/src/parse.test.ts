@@ -85,6 +85,19 @@ describe("parseScript — directives and anchors", () => {
 });
 
 describe("parseScript — escapes and edge cases", () => {
+  it("strips natural-language scene comments before parsing directives and narration", () => {
+    const p = parseScript("Before. <!-- scene: move @camera freely --> After @cue(theta = 1) now.");
+    expect(p.narration).toBe("Before. After now.");
+    expect(p.directives).toHaveLength(1);
+    expect(p.narration.startsWith("now", p.directives[0]!.anchorOffset)).toBe(true);
+  });
+
+  it("reports an unterminated scene comment at its source location", () => {
+    expect(() => parseScript("Before.\n<!-- scene: move", "script.en.md")).toThrowError(
+      new ParseError("unterminated HTML comment", { file: "script.en.md", line: 2, col: 1 }),
+    );
+  });
+
   it("treats \\@ as a literal @ in narration", () => {
     const p = parseScript("Envoyez un mail \\@ moi.");
     expect(p.narration).toBe("Envoyez un mail @ moi.");

@@ -1,4 +1,4 @@
-// Shared fixtures for compiler tests: the worked example from DESIGN §6.5 and a
+// Shared fixtures for compiler tests: the original worked example and a
 // matching scene description.
 
 import type { SceneInfo } from "./check.js";
