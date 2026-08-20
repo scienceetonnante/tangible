@@ -24,6 +24,7 @@ Read additional docs when the stage requires them:
   `docs/reference/directives.md`;
 - scene work: `docs/authoring/2-building-a-scene.md` and
   `docs/reference/lesson-format.md`;
+- assistant work: `docs/authoring/5-adding-an-assistant.md`;
 - review: `docs/authoring/4-reviewing.md`;
 - release: `docs/deployment/hugging-face-spaces.md` and the installed `hf-cli`
   skill when available.

@@ -70,6 +70,13 @@ pnpm lesson check --lesson lessons/my-lesson
 pnpm lesson build --fake --bundle --lesson lessons/my-lesson
 ```
 
+## Optional: Add a lesson assistant
+
+If the lesson should answer questions while paused, follow
+[adding a lesson assistant](./5-adding-an-assistant.md). The assistant is an
+optional framework feature that requires lesson-specific context and a deliberate
+choice of any scene parameters it may change.
+
 ## 5. Review and iterate
 
 Use a fake-voice preview for structural iteration:

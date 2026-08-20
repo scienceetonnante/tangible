@@ -35,4 +35,6 @@ Review in layers. A technically valid build can still be a weak explanation.
 - Review the deployed lesson privately on its target browsers.
 - Verify captions and every language offered in the manifest.
 - For assistant-enabled lessons, test one real answer, rate limits, logs, and the
-  absence of credentials from browser assets.
+  absence of credentials from browser assets. Follow the
+  [assistant authoring guide](./5-adding-an-assistant.md) for the complete
+  assistant-specific review.

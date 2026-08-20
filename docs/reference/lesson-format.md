@@ -60,4 +60,6 @@ assistant:
 
 The context describes the scene, controls, terminology, and answer guidance. Only
 allowlisted parameters may be returned by the provider. Assistant-enabled bundles
-include a same-origin server; other lessons remain static.
+include a same-origin server; other lessons remain static. Follow
+[the assistant authoring guide](../authoring/5-adding-an-assistant.md) to choose the
+allowlist, write the context, and test fake and real answers.
