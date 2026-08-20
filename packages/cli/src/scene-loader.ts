@@ -9,7 +9,7 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import type { SceneInfo } from "@narrable/compiler";
 
-export async function loadScene(scenePath: string): Promise<SceneInfo> {
+export async function loadScene(scenePath: string, options: { requireRuntime?: boolean } = {}): Promise<SceneInfo> {
   const dir = await mkdtemp(join(tmpdir(), "xv-scene-"));
   const outfile = join(dir, "scene.mjs");
   try {
@@ -30,8 +30,12 @@ export async function loadScene(scenePath: string): Promise<SceneInfo> {
       constants?: SceneInfo["constants"];
       groups?: SceneInfo["groups"];
       bakers?: SceneInfo["bakers"];
+      scene?: { create?: unknown };
     };
     if (!mod.schema) throw new Error(`${scenePath} does not export a "schema"`);
+    if (options.requireRuntime && (!mod.scene || typeof mod.scene.create !== "function")) {
+      throw new Error(`${scenePath} does not export a runtime "scene" with create(ctx)`);
+    }
     return { schema: mod.schema, presets: mod.presets, constants: mod.constants, groups: mod.groups, bakers: mod.bakers };
   } finally {
     await rm(dir, { recursive: true, force: true });

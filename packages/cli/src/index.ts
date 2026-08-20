@@ -8,12 +8,12 @@ import { join, resolve as resolvePath } from "node:path";
 import { createHash } from "node:crypto";
 import { parseScript, check, compile, emit, synthesize, narrationSegmentOffsets, formatDiagnostic, ParseError } from "@narrable/compiler";
 import type { SceneInfo } from "@narrable/compiler";
-import { buildIndex, evaluate } from "@narrable/core";
+import { buildIndex, evaluate, validateSchema } from "@narrable/core";
 import type { Schema, Keyframe, TtsAdapter, ParamSpec, ParamValue } from "@narrable/core";
 import { StateStore, Reconciler } from "@narrable/player";
 import { FakeTtsAdapter, ElevenLabsAdapter, HuggingFaceVoiceAdapter } from "@narrable/tts";
 import { loadScene } from "./scene-loader.js";
-import { loadManifest, type Manifest } from "./manifest.js";
+import { loadManifest, loadSceneManifest, type Manifest } from "./manifest.js";
 import { refSheet } from "./ref.js";
 import { scaffold } from "./scaffold.js";
 import { bundleSite } from "./bundle.js";
@@ -22,13 +22,14 @@ import { preview } from "./preview.js";
 import { transcodeToM4a } from "./transcode.js";
 import { buildAssistantContext, emitAssistantContext } from "./assistant-context.js";
 import { createAssistantApi, serveLesson } from "./assistant-server.js";
+import { bundleScenePreview } from "./scene-preview-bundle.js";
 
 async function main() {
   const argv = process.argv.slice(2);
   const cmd = argv[0];
   const flags = parseFlags(argv.slice(1));
 
-  loadDotenv(flags.lesson ?? process.cwd()); // pick up ELEVENLABS_API_KEY etc. from .env
+  if (cmd !== "scene") loadDotenv(flags.lesson ?? process.cwd()); // scene preview never needs provider credentials
 
   switch (cmd) {
     case "new":
@@ -46,6 +47,9 @@ async function main() {
     case "preview":
       await cmdPreview(flags);
       return;
+    case "scene":
+      await cmdScene(flags);
+      return;
     case "serve":
       await cmdServe(flags);
       return;
@@ -56,7 +60,7 @@ async function main() {
       await cmdRef(flags);
       return;
     default:
-      die(`unknown command "${cmd ?? ""}"\nusage: lesson <new|check|build|frame|preview|serve|state|ref> [--lang fr] [--lesson dir] [--at t] [--drag p=v] [--bundle] [-o file] [--size WxH] [--port n] [--host address] [--fake]`);
+      die(`unknown command "${cmd ?? ""}"\nusage: lesson <new|check|build|frame|preview|scene|serve|state|ref> [--lang fr] [--lesson dir] [--at t] [--drag p=v] [--bundle] [-o file] [--size WxH] [--port n] [--host address] [--fake]`);
   }
 }
 
@@ -194,6 +198,27 @@ async function cmdPreview(flags: Flags): Promise<void> {
     port: flags.port,
     host: flags.host,
     assistantApi: manifest.assistant ? createAssistantApi({ siteDir, fake: flags.fake }) : undefined,
+  });
+}
+
+async function cmdScene(flags: Flags): Promise<void> {
+  const lessonDir = flags.lesson ?? process.cwd();
+  const manifest = await loadSceneManifest(lessonDir);
+  const scenePath = resolvePath(lessonDir, manifest.scene);
+  const rebuild = async () => {
+    const info = await loadScene(scenePath, { requireRuntime: true });
+    const errors = validateSchema(info.schema);
+    if (errors.length) throw new Error(`invalid scene schema:\n${errors.map((error) => `- ${error}`).join("\n")}`);
+    return bundleScenePreview(lessonDir, manifest.id, manifest.scene);
+  };
+  const initial = await rebuild();
+  preview({
+    siteDir: initial.siteDir,
+    watchPaths: initial.watchPaths,
+    rebuild: async () => (await rebuild()).watchPaths,
+    port: flags.port,
+    host: flags.host,
+    label: "scene preview",
   });
 }
 
