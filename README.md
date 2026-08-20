@@ -128,13 +128,15 @@ Run as `node packages/cli/dist/index.js <command>` (after `pnpm build`).
 | `new <id>` | Scaffold a lesson directory (manifest, template scene, script skeleton). |
 | `check [--lang en]` | Parse + validate a script against the scene schema. No network. Non-zero exit on error. The fast authoring/agent loop. |
 | `build [--lang en] [--bundle] [--fake]` | Full pipeline → `build/<lang>/`. `--bundle` emits the site and, for assistant-enabled lessons, a Docker server bundle. `--fake` uses deterministic fake voice and answer providers. |
-| `preview [--fake] [--port 5179]` | Serve with file-watch and browser live-reload; assistant-enabled lessons get the same-origin answer API. |
-| `serve [--fake] [--port 7860]` | Serve an existing bundle and its answer API without file watching; this is the Docker Space entry path. |
+| `preview [--fake] [--port 5179] [--host address]` | Serve with file-watch and browser live-reload; assistant-enabled lessons get the same-origin answer API. Binds `127.0.0.1` by default. |
+| `serve [--fake] [--port 7860] [--host address]` | Serve an existing bundle and its answer API without file watching. Binds `127.0.0.1`; generated Docker bundles explicitly bind `0.0.0.0`. |
 | `frame --at <t> -o <file.png> [--lang en] [--size WxH]` | Headless-render the lesson at time `t` to a PNG (deterministic). |
 | `state --at <t> [--lang en] [--drag p=v]` | Print the full scene state at time `t` as JSON (no browser). With `--drag <param>=<value>`, simulate a viewer grabbing that param at `t` and print the reconciled trajectory (scripted vs displayed) — a headless check of interaction ownership. |
 | `ref` | Emit the scene's **cue-reference sheet** (params, presets, constants) as Markdown. |
 
 Common flags: `--lesson <dir>` (defaults to the current directory), `--lang <code>`.
+Use `--host 0.0.0.0` only when another device on the local network must reach a
+preview, such as for touch testing.
 
 ## Authoring a lesson
 
@@ -195,13 +197,29 @@ assistant:
 
 Assistant-enabled Hugging Face Spaces use the generated `Dockerfile` and `server.mjs`. This Docker Space hosts the lesson UI and its small Node orchestration server. Store `HF_TOKEN` as a Space secret. Lessons without assistant configuration remain ordinary static bundles.
 
+The anonymous assistant API has three in-memory limits: 120 provider calls per
+rolling hour globally, eight calls per browser per ten minutes, and two concurrent
+provider calls. Override them with positive integer Space variables
+`ASSISTANT_HOURLY_LIMIT`, `ASSISTANT_CLIENT_10M_LIMIT`, and
+`ASSISTANT_MAX_CONCURRENT`. The browser identifier is only a fairness mechanism;
+the global limit is the cost boundary. All counters reset when the container
+restarts.
+
 To release one lesson without publishing the monorepo, build it with `lesson build --bundle`, then copy only `lessons/<id>/build/site/` plus a Space `README.md` and `.gitattributes` into an artifact-only orphan branch such as `release/optimizers`. The branch must contain one root commit (record the source commit in its message); for later releases, replace the files, amend that commit, and push it with `--force-with-lease` to the Space's `main` branch. Configure the Space as a Docker Space through the root `README.md` front matter (`sdk: docker`, `app_port: 7860`). For an assistant-enabled lesson, add a dedicated fine-grained Hugging Face token with permission to call Inference Providers as the `HF_TOKEN` Space secret; keep deployment credentials and build-only TTS credentials such as `HF_TTS_TOKEN`, `TTS_ENDPOINT_URL`, and `ELEVENLABS_API_KEY` local or in CI, never in the release branch or Space variables.
 
+For a credential rotation, keep the Space private, deploy and verify the patched
+bundle, replace the `HF_TOKEN` secret with a new inference-only token, revoke the
+old token, and test one question after the resulting restart. Make the Space public
+only after those steps succeed. Never probe a deployed server with a sensitive file
+such as `/proc/self/environ`; use a harmless traversal target such as
+`/etc/os-release` and expect `404`.
+
 The lesson server writes one JSON log line for each `assistant.request`,
-`assistant.success`, or `assistant.error`. Local logs appear in the terminal running
+`assistant.success`, `assistant.limited`, or `assistant.error`. Local logs appear in the terminal running
 `lesson serve` or `lesson preview`; Docker deployments expose the same stdout/stderr
 as container logs. Logs include request IDs, provider/model, latency, answer size,
-and errors, but not question text, scene-state values, or tokens.
+safe error categories, and quota events, but not question text, scene-state values,
+provider response bodies, filesystem paths, or tokens.
 
 ## Development
 
