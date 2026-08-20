@@ -1,6 +1,6 @@
 // Reconciler — merges scripted state with user interaction per parameter (§5.5).
 // While dragging, the user wins. After a touch: `viewer` sticks forever; `script`
-// holds for HOLD then glides back exponentially (discrete types revert instantly);
+// holds for HOLD seconds of playback then glides back exponentially (discrete types revert instantly);
 // `shared` holds until the script's next keyframe, then glides. On seek, all
 // interaction clears and the display rejoins the narration.
 
@@ -10,7 +10,7 @@ import type { StateStore } from "./store.js";
 const EPS = 1e-3; // convergence epsilon to snap-and-clear a gliding parameter
 
 export interface ReconcilerConfig {
-  hold?: number; // seconds; default DEFAULT_HOLD
+  hold?: number; // seconds of playback; default 3
   tau?: number; // seconds; default DEFAULT_TAU
 }
 
@@ -31,8 +31,24 @@ export class Reconciler {
   }
 
   /** Merge scripted → displayed for every parameter and write to the store. */
-  reconcile(scripted: PlainState, t: number, now: number, dt: number): void {
-    for (const key of this.keys) this.store.set(key, this.compute(key, scripted[key]!, t, now, dt));
+  reconcile(scripted: PlainState, t: number, dt: number, playing = true): void {
+    for (const key of this.keys) this.store.set(key, this.compute(key, scripted[key]!, t, dt, playing));
+  }
+
+  /** Snapshot modified values when playback pauses so no catch-up continues. */
+  freeze(t: number): void {
+    for (const key of this.keys) {
+      const meta = this.store.meta.get(key)!;
+      if (meta.modified && !meta.dragging && meta.holdT !== t) this.store.freezeInteraction(key);
+    }
+  }
+
+  /** Give script-owned interactions a fresh playback-time hold after resume. */
+  resume(t: number): void {
+    for (const key of this.keys) {
+      const meta = this.store.meta.get(key)!;
+      if (meta.modified && this.schema[key]!.ownership === "script") meta.holdT = t;
+    }
   }
 
   /** Clear all interaction state (called on seek). */
@@ -40,10 +56,11 @@ export class Reconciler {
     this.store.resetInteractions();
   }
 
-  private compute(key: string, sc: ParamValue, t: number, now: number, dt: number): ParamValue {
+  private compute(key: string, sc: ParamValue, t: number, dt: number, playing: boolean): ParamValue {
     const meta = this.store.meta.get(key)!;
     if (meta.dragging) return meta.userValue!;
     if (!meta.touchedEver || !meta.modified) return sc;
+    if (!playing) return meta.userValue!;
 
     const spec = this.schema[key]!;
     const prev = this.store.plain[key]!;
@@ -53,7 +70,7 @@ export class Reconciler {
       case "viewer":
         return meta.userValue!;
       case "script":
-        if (holdActive(now, meta.lastTouched, this.hold)) return meta.userValue!;
+        if (holdActive(t, meta.holdT, this.hold)) return meta.userValue!;
         return discrete ? this.revert(meta, sc) : this.glide(meta, prev, sc, spec.interpolate, dt);
       case "shared":
         if (t < this.nextKeyframeAfter(key, meta.touchT)) return meta.userValue!;

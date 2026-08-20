@@ -20,6 +20,7 @@ export class TimelineDriver {
   private lastNow = -1;
   private raf = 0;
   private running = false;
+  private lastPlaying: boolean;
 
   constructor(
     private clock: AudioClock,
@@ -27,7 +28,9 @@ export class TimelineDriver {
     private store: StateStore,
     private hooks: DriverHooks = {},
     private reconciler?: Reconciler,
-  ) {}
+  ) {
+    this.lastPlaying = clock.playing;
+  }
 
   start(): void {
     this.running = true;
@@ -50,15 +53,19 @@ export class TimelineDriver {
     const now = this.hooks.now?.() ?? performance.now() / 1000;
     const dt = this.lastNow < 0 ? 0 : Math.max(0, now - this.lastNow);
     const seeked = Math.abs(t - this.lastT) > SEEK_THRESHOLD;
+    const playing = this.clock.playing;
 
     evaluate(this.index, t, this.buf);
     if (seeked) this.reconciler?.reset();
-    if (this.reconciler) this.reconciler.reconcile(this.buf, t, now, dt);
+    if (!seeked && this.lastPlaying && !playing) this.reconciler?.freeze(t);
+    if (!seeked && !this.lastPlaying && playing) this.reconciler?.resume(t);
+    if (this.reconciler) this.reconciler.reconcile(this.buf, t, dt, playing);
     else for (const key of this.index.keys) this.store.set(key, this.buf[key]!);
 
     if (seeked) this.hooks.onSeek?.(t);
     this.hooks.onFrame?.(t);
     this.lastT = t;
     this.lastNow = now;
+    this.lastPlaying = playing;
   }
 }

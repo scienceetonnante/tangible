@@ -248,7 +248,7 @@ function simulateDrag(idx: ReturnType<typeof buildIndex>, schema: Schema, sceneS
   const recon = new Reconciler(store, idx, schema);
   const seed = evaluate(idx, grabT);
   for (const k of Object.keys(schema)) store.set(k, seed[k]!);
-  store.touch(param, value, grabT, grabT); // grabbed and released at grabT
+  store.touch(param, value, grabT); // grabbed and released at grabT
 
   const dt = 1 / 60;
   const window = Math.min(duration - grabT, 8); // seconds of playback to simulate
@@ -260,7 +260,7 @@ function simulateDrag(idx: ReturnType<typeof buildIndex>, schema: Schema, sceneS
   for (let i = 0; grabT + i * dt <= grabT + window + 1e-9; i++) {
     const tt = grabT + i * dt;
     const scripted = evaluate(idx, tt);
-    recon.reconcile(scripted, tt, tt, dt); // now == media time (continuous playback from the grab)
+    recon.reconcile(scripted, tt, dt);
     const overriding = store.meta.get(param)!.modified;
     if (tt - grabT >= nextSample - 1e-9) {
       trajectory.push({ t: Math.round(tt * 1000) / 1000, scripted: round(scripted[param]!), displayed: round(store.plain[param]!), overriding });

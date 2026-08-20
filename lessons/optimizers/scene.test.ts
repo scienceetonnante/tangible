@@ -36,20 +36,27 @@ describe("optimizer scene", () => {
     expect(schema["start.y"]!.type).toEqual({ kind: "scalar", range: [-2, 2] });
   });
 
-  it("returns learner changes to the narration even while paused at the beginning", () => {
+  it("freezes learner changes while paused, then returns after a fresh resume hold", () => {
     const scripted = defaultState();
     const store = new StateStore(schema);
     const reconciler = new Reconciler(store, buildIndex({}, schema), schema, { hold: 3, tau: 0.2 });
 
-    store.touch("sgd.lr", 0.02, 0, 0);
-    reconciler.reconcile(scripted, 0, 2, 0.016);
+    store.touch("sgd.lr", 0.02, 0);
+    reconciler.reconcile(scripted, 0, 0.016, false);
     expect(store.plain["sgd.lr"]).toBe(0.02);
 
-    reconciler.reconcile(scripted, 0, 3.1, 0.1);
+    reconciler.reconcile(scripted, 0, 30, false);
+    expect(store.plain["sgd.lr"]).toBe(0.02);
+
+    reconciler.resume(0);
+    reconciler.reconcile(scripted, 2.99, 0.1);
+    expect(store.plain["sgd.lr"]).toBe(0.02);
+
+    reconciler.reconcile(scripted, 3.1, 0.1);
     expect(store.plain["sgd.lr"] as number).toBeGreaterThan(0.02);
     expect(store.plain["sgd.lr"] as number).toBeLessThan(schema["sgd.lr"]!.default as number);
 
-    reconciler.reconcile(scripted, 0, 4, 0.9);
+    reconciler.reconcile(scripted, 4, 0.9);
     expect(store.plain["sgd.lr"]).toBeCloseTo(schema["sgd.lr"]!.default as number, 3);
   });
 
@@ -59,16 +66,16 @@ describe("optimizer scene", () => {
     const reconciler = new Reconciler(store, buildIndex({}, schema), schema, { hold: 3, tau: 0.2 });
     const moved = presets.ravineView!.camera!;
 
-    store.touch("camera", moved, 0, 0);
-    reconciler.reconcile(scripted, 0, 2, 0.016);
+    store.touch("camera", moved, 0);
+    reconciler.reconcile(scripted, 2, 0.016);
     expect(store.plain.camera).toEqual(moved);
 
-    reconciler.reconcile(scripted, 0, 3.1, 0.1);
+    reconciler.reconcile(scripted, 3.1, 0.1);
     const returning = store.plain.camera as { elevation: number };
     expect(returning.elevation).toBeGreaterThan((moved as { elevation: number }).elevation);
     expect(returning.elevation).toBeLessThan((schema.camera.default as { elevation: number }).elevation);
 
-    reconciler.reconcile(scripted, 0, 5.1, 2);
+    reconciler.reconcile(scripted, 5.1, 2);
     expect((store.plain.camera as { elevation: number }).elevation).toBeCloseTo(
       (schema.camera.default as { elevation: number }).elevation,
       3,

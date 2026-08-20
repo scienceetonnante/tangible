@@ -127,7 +127,6 @@ export class Player {
       this.host,
       this.store,
       this.clock,
-      undefined,
       () => this.displayStore.plain,
       (param) => this.activeAnswer?.claimed.add(param),
     );
@@ -209,7 +208,7 @@ export class Player {
 
   private writeSceneParam(param: string, value: PlainState[string], schema: Schema): void {
     if (!(param in schema)) throw new Error(`scene wrote unknown parameter: ${param}`);
-    this.store.touch(param, value, performance.now() / 1000, this.clock.t);
+    this.store.touch(param, value, this.clock.t);
     this.activeAnswer?.claimed.add(param);
   }
 

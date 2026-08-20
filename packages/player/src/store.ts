@@ -7,7 +7,7 @@ import type { Schema, ParamValue, PlainState, OrbitState } from "@narrable/core"
 
 export interface InteractionMeta {
   userValue?: ParamValue;
-  lastTouched: number; // wall-clock seconds of last touch
+  holdT: number; // playback time when the current `script` hold began
   touchT: number; // timeline time at last touch (for `shared` resume)
   touchedEver: boolean;
   modified: boolean; // still overriding/gliding back to scripted
@@ -24,7 +24,7 @@ export class StateStore {
       const v = clone(spec.default);
       this.signals.set(key, signal(v));
       this.plain[key] = v;
-      this.meta.set(key, { lastTouched: -Infinity, touchT: -Infinity, touchedEver: false, modified: false, dragging: false });
+      this.meta.set(key, { holdT: -Infinity, touchT: -Infinity, touchedEver: false, modified: false, dragging: false });
     }
   }
 
@@ -48,11 +48,11 @@ export class StateStore {
   }
 
   /** Record a user interaction on a parameter (for the Reconciler). */
-  touch(key: string, value: ParamValue, now: number, t: number): void {
+  touch(key: string, value: ParamValue, t: number): void {
     const m = this.meta.get(key);
     if (!m) return;
     m.userValue = clone(value);
-    m.lastTouched = now;
+    m.holdT = t;
     m.touchT = t;
     m.touchedEver = true;
     m.modified = true;
@@ -63,11 +63,17 @@ export class StateStore {
     if (m) m.dragging = dragging;
   }
 
+  /** Freeze the currently displayed value for a paused interaction. */
+  freezeInteraction(key: string): void {
+    const m = this.meta.get(key);
+    if (m) m.userValue = clone(this.plain[key]!);
+  }
+
   resetInteraction(key: string): void {
     const m = this.meta.get(key);
     if (!m) return;
     m.userValue = undefined;
-    m.lastTouched = -Infinity;
+    m.holdT = -Infinity;
     m.touchT = -Infinity;
     m.touchedEver = false;
     m.modified = false;
@@ -78,7 +84,7 @@ export class StateStore {
   resetInteractions(): void {
     for (const m of this.meta.values()) {
       m.userValue = undefined;
-      m.lastTouched = -Infinity;
+      m.holdT = -Infinity;
       m.touchT = -Infinity;
       m.touchedEver = false;
       m.modified = false;

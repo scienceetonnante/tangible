@@ -30,7 +30,7 @@ scene.ts ──┘                              │
 
 Every parameter's value is a pure function of time `t` (**value-at-time**), which is what makes seeking, catch-up, and headless frame rendering possible. The compiler bakes all easing/timing into dense keyframe tracks; the runtime just looks up and interpolates.
 
-Narration-bound controls use `ownership: "script"`: a learner change holds for three seconds, then glides back to the scenario value even while playback is paused. Use `viewer` for persistent navigation such as the camera, and reserve `shared` for choices that should persist until a later script cue.
+Narration-bound controls use `ownership: "script"`: a learner change stays completely frozen while playback is paused. Resuming starts a fresh three-second hold measured in playback time, then the value glides back to the scenario. Seeking discards the interaction and rejoins the timeline. Use `viewer` for persistent navigation such as the camera, and reserve `shared` for choices that should persist until a later script cue.
 
 When the optional assistant is enabled, the lesson clock stays paused while a second, ephemeral text-timed clock drives allowlisted scene parameters. Learner interaction remains live and wins per parameter; the answer layer remains until the learner asks another question or resumes the lesson.
 

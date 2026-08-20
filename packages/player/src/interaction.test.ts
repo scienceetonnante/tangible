@@ -38,7 +38,7 @@ describe("InteractionManager", () => {
     canvas.height = 400;
     const store = new StateStore(schema);
     const clock = new AudioClock(new FakeMedia());
-    new InteractionManager(canvas, { handles: () => [testHandle] }, store, clock, () => 1);
+    new InteractionManager(canvas, { handles: () => [testHandle] }, store, clock);
 
     canvas.dispatchEvent(ptr("pointerdown", 200, 200));
     const m = store.meta.get("theta")!;
@@ -59,7 +59,7 @@ describe("InteractionManager", () => {
     canvas.height = 400;
     const store = new StateStore(schema);
     const clock = new AudioClock(new FakeMedia());
-    new InteractionManager(canvas, { handles: () => [testHandle] }, store, clock, () => 1);
+    new InteractionManager(canvas, { handles: () => [testHandle] }, store, clock);
     canvas.dispatchEvent(ptr("pointerdown", 0, 0));
     canvas.dispatchEvent(ptr("pointermove", 50, 50));
     expect(store.meta.get("theta")!.touchedEver).toBe(false);
@@ -76,7 +76,7 @@ describe("InteractionManager", () => {
       hitTest: () => true,
       onWheel: (_px, _py, deltaY) => ({ theta: deltaY / 100 }),
     };
-    new InteractionManager(canvas, { handles: () => [wheelHandle] }, store, clock, () => 1);
+    new InteractionManager(canvas, { handles: () => [wheelHandle] }, store, clock);
 
     const event = new WheelEvent("wheel", { clientX: 200, clientY: 200, deltaY: 50, cancelable: true });
     canvas.dispatchEvent(event);
@@ -96,7 +96,7 @@ describe("InteractionManager", () => {
       ...testHandle,
       hitTest: (_px, _py, state) => state.theta === 9,
     };
-    new InteractionManager(canvas, { handles: () => [handle] }, store, clock, () => 1, () => ({ theta: 9 }), (param) => written.push(param));
+    new InteractionManager(canvas, { handles: () => [handle] }, store, clock, () => ({ theta: 9 }), (param) => written.push(param));
 
     canvas.dispatchEvent(ptr("pointerdown", 20, 20));
     expect(store.meta.get("theta")!.touchedEver).toBe(true);

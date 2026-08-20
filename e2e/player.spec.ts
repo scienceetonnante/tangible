@@ -37,7 +37,7 @@ test("checkpoint pauses after the spoken tail and resumes from the play button",
   }, pauseT);
   await page.waitForFunction(() => (window as any).__player.clock.playing === false, null, { timeout: 6000 });
   const stoppedAt = await page.evaluate(() => (window as any).__player.clock.t as number);
-  expect(stoppedAt).toBeCloseTo(pauseT + 0.5, 1);
+  expect(stoppedAt).toBeCloseTo(pauseT, 1);
   await expect(page.locator(".xv-gate")).toHaveCount(0);
   await expect(page.locator(".xv-assistant-input")).toBeEnabled();
 
@@ -45,7 +45,7 @@ test("checkpoint pauses after the spoken tail and resumes from the play button",
   await page.waitForFunction(() => (window as any).__player.clock.playing === true);
 });
 
-test("catch-up: a touched parameter holds, then glides back to scripted", async ({ page }) => {
+test("catch-up: a paused edit freezes, then holds and glides after resume", async ({ page }) => {
   await ready(page);
   // Seek first and let the rAF loop settle (a seek clears interactions).
   await page.evaluate(() => {
@@ -57,13 +57,27 @@ test("catch-up: a touched parameter holds, then glides back to scripted", async 
   // Now simulate an interaction and observe it holds this frame.
   const held = await page.evaluate(() => {
     const p = (window as any).__player;
-    p.store.touch("theta", 0.123, performance.now() / 1000, 12);
+    p.store.touch("theta", 0.123, 12);
     p.driver.tick();
     return p.store.plain.theta as number;
   });
   expect(Math.abs(held - 0.123)).toBeLessThan(1e-6); // user value during the hold
 
-  await page.waitForTimeout(4500); // past the 3s hold + exponential glide
-  const back = await page.evaluate(() => (window as any).__player.store.plain.theta as number);
-  expect(Math.abs(back - scriptedTheta(12))).toBeLessThan(0.05);
+  await page.waitForTimeout(3500); // wall time does not expire a paused hold
+  const stillHeld = await page.evaluate(() => (window as any).__player.store.plain.theta as number);
+  expect(Math.abs(stillHeld - 0.123)).toBeLessThan(1e-6);
+
+  await page.evaluate(() => (window as any).__player.clock.play());
+  await page.waitForFunction(() => (window as any).__player.clock.t >= 14.9, null, { timeout: 8000 });
+  const heldAfterResume = await page.evaluate(() => (window as any).__player.store.plain.theta as number);
+  expect(Math.abs(heldAfterResume - 0.123)).toBeLessThan(1e-6);
+
+  await page.waitForFunction(() => (window as any).__player.clock.t >= 15.5, null, { timeout: 8000 });
+  const back = await page.evaluate(() => {
+    const p = (window as any).__player;
+    p.clock.pause();
+    p.driver.tick();
+    return { t: p.clock.t as number, theta: p.store.plain.theta as number };
+  });
+  expect(Math.abs(back.theta - scriptedTheta(back.t))).toBeLessThan(Math.abs(0.123 - scriptedTheta(back.t)));
 });

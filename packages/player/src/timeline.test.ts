@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { buildIndex } from "@narrable/core";
 import type { Schema } from "@narrable/core";
 import { AudioClock, type MediaClockSource } from "./clock.js";
+import { Reconciler } from "./reconciler.js";
 import { StateStore } from "./store.js";
 import { TimelineDriver } from "./timeline.js";
 
@@ -77,6 +78,40 @@ describe("TimelineDriver.tick", () => {
       driver.tick();
     }
     expect(seeks).toEqual([]);
+  });
+
+  it("freezes a paused edit, restarts its hold on play, and clears it on seek", () => {
+    const media = new FakeMedia();
+    const clock = new AudioClock(media);
+    const store = new StateStore(schema);
+    const index = buildIndex(tracks, schema);
+    const reconciler = new Reconciler(store, index, schema, { hold: 3, tau: 0.2 });
+    let now = 0;
+    const driver = new TimelineDriver(clock, index, store, { now: () => now }, reconciler);
+
+    store.touch("x", 42, 0);
+    driver.tick();
+    now = 100;
+    driver.tick();
+    expect(store.plain.x).toBe(42);
+
+    clock.play();
+    for (let i = 0; i <= 14; i++) {
+      media.currentTime = i * 0.2;
+      now += 0.2;
+      driver.tick();
+    }
+    expect(store.plain.x).toBe(42);
+
+    media.currentTime = 3;
+    now += 0.2;
+    driver.tick();
+    expect(store.plain.x).toBeLessThan(42);
+
+    media.currentTime = 8;
+    driver.tick();
+    expect(store.plain.x).toBeCloseTo(80, 9);
+    expect(store.meta.get("x")!.modified).toBe(false);
   });
 });
 

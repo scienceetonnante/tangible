@@ -12,18 +12,15 @@ export interface InteractionTarget {
 
 export class InteractionManager {
   private active?: Handle;
-  private now: () => number;
 
   constructor(
     private canvas: HTMLCanvasElement,
     private target: InteractionTarget,
     private store: StateStore,
     private clock: AudioClock,
-    now?: () => number,
     private displayedState: () => Readonly<Record<string, ParamValue>> = () => store.plain,
     private onWrite?: (param: string) => void,
   ) {
-    this.now = now ?? (() => performance.now() / 1000);
     canvas.addEventListener("pointerdown", this.onDown);
     canvas.addEventListener("pointermove", this.onMove);
     canvas.addEventListener("pointerup", this.onUp);
@@ -85,10 +82,9 @@ export class InteractionManager {
   };
 
   private write(writes: Record<string, ParamValue>): void {
-    const now = this.now();
     const t = this.clock.t;
     for (const [param, value] of Object.entries(writes)) {
-      this.store.touch(param, value, now, t);
+      this.store.touch(param, value, t);
       this.onWrite?.(param);
       // Scene-change rule: changing the active scene while playing pauses audio.
       if (param === "scene" && this.clock.playing) this.clock.pause();
