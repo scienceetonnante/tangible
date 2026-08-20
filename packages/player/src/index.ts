@@ -3,6 +3,7 @@ export * from "./clock.js";
 export * from "./store.js";
 export * from "./timeline.js";
 export * from "./scene-host.js";
+export * from "./scene-preview.js";
 export * from "./reconciler.js";
 export * from "./interaction.js";
 export * from "./board.js";

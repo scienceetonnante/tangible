@@ -4,7 +4,12 @@
 
 import type { Handle, ParamValue } from "@narrable/core";
 import type { StateStore } from "./store.js";
-import type { AudioClock } from "./clock.js";
+
+export interface InteractionClock {
+  readonly t: number;
+  readonly playing: boolean;
+  pause(): void;
+}
 
 export interface InteractionTarget {
   handles(): Handle[];
@@ -17,7 +22,7 @@ export class InteractionManager {
     private canvas: HTMLCanvasElement,
     private target: InteractionTarget,
     private store: StateStore,
-    private clock: AudioClock,
+    private clock: InteractionClock,
     private displayedState: () => Readonly<Record<string, ParamValue>> = () => store.plain,
     private onWrite?: (param: string) => void,
   ) {
