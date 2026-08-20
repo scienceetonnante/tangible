@@ -1,8 +1,7 @@
 # Framework architecture
 
-This document describes the current system and its normative invariants. For the
-historical investigation and original proposal, see
-[original-design.md](../research/original-design.md).
+This document describes the current system and its normative invariants. 
+For the historical investigation and original proposal, see archives.
 
 ## System boundary
 

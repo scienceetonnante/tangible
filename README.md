@@ -63,7 +63,7 @@ pnpm test:e2e
 ```text
 packages/    framework packages: core, compiler, TTS, player, ingredients, CLI
 lessons/     lesson source projects and integration examples
-docs/        authoring, reference, deployment, framework, decisions, and research
+docs/        authoring, reference, deployment, framework, decisions, and archives
 e2e/         browser integration tests
 ```
 

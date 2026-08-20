@@ -26,7 +26,7 @@ unit tests. The end-to-end suite uses fake providers and requires no credentials
 - Add tests for behavior that is correctness-critical or difficult to inspect.
 - Use a real lesson to validate changes to the authoring contract.
 - Keep current instructions in task-oriented docs; place rationale in a decision
-  record and completed experiments in `docs/research/`.
+  record and completed experiments in `docs/archives/`.
 
 ## Provider credentials
 

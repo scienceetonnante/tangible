@@ -1,7 +1,6 @@
 # Narrable documentation
 
-Use the path that matches the work you are doing. Historical research and
-decision records are retained for context but are not prerequisites.
+Use the path that matches the work you are doing.
 
 ## Create a lesson
 
@@ -26,9 +25,3 @@ decision records are retained for context but are not prerequisites.
 - [CLI commands](./reference/cli.md)
 - [Lesson files and manifest](./reference/lesson-format.md)
 - [Narration directives](./reference/directives.md)
-
-## Decisions and research
-
-- [Build-time computed processes](./decisions/0001-computed-processes.md)
-- [Original design investigation](./research/original-design.md)
-- [Agent-authoring validation](./research/agent-authoring-validation.md)
