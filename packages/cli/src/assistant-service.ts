@@ -5,6 +5,13 @@ import { validateValue, type AnswerBeat, type AssistantContext, type AssistantRe
 
 export const ASSISTANT_MODEL = "google/gemma-4-31B-it:cerebras";
 
+export class AssistantProviderError extends Error {
+  constructor(readonly status: number) {
+    super(`assistant provider returned HTTP ${status}`);
+    this.name = "AssistantProviderError";
+  }
+}
+
 export interface AssistantProviders {
   fetchImpl?: typeof fetch;
   hfToken?: string;
@@ -16,7 +23,7 @@ export async function answerQuestion(
   context: AssistantContext,
   providers: AssistantProviders,
 ): Promise<AssistantResponse> {
-  validateRequest(request, context);
+  validateAssistantRequest(request, context);
   const beats = providers.fake ? fakeAnswer(context) : await huggingFaceAnswer(request, context, providers);
   validateAnswer(beats, context);
 
@@ -45,7 +52,7 @@ async function huggingFaceAnswer(
   }
   messages.push({
     role: "user",
-    content: JSON.stringify({ question: request.question, lessonTime: request.t, visibleState: request.state }),
+    content: JSON.stringify({ question: request.question, lessonTime: request.t, visibleState: visibleState(request, context) }),
   });
 
   const response = await (providers.fetchImpl ?? fetch)("https://router.huggingface.co/v1/chat/completions", {
@@ -62,7 +69,10 @@ async function huggingFaceAnswer(
       },
     }),
   });
-  if (!response.ok) throw new Error(`Hugging Face ${response.status}: ${await response.text()}`);
+  if (!response.ok) {
+    await response.body?.cancel();
+    throw new AssistantProviderError(response.status);
+  }
   const body = (await response.json()) as { choices?: { message?: { content?: string } }[] };
   const content = body.choices?.[0]?.message?.content;
   if (!content) throw new Error("Hugging Face returned no answer");
@@ -105,13 +115,39 @@ export function validateAnswer(beats: unknown, context: AssistantContext): asser
   }
 }
 
-function validateRequest(request: AssistantRequest, context: AssistantContext): void {
+export function validateAssistantRequest(request: AssistantRequest, context: AssistantContext): void {
+  if (!request || typeof request !== "object" || Array.isArray(request)) throw new Error("question request must be an object");
   if (request.lessonId !== context.lessonId || request.language !== context.language) throw new Error("question does not match the lesson context");
   if (typeof request.question !== "string" || !request.question.trim() || request.question.length > 1000) {
     throw new Error("question must contain 1 to 1000 characters");
   }
   if (!Number.isFinite(request.t)) throw new Error("lesson time must be finite");
+  if (!request.state || typeof request.state !== "object" || Array.isArray(request.state)) throw new Error("scene state must be an object");
+  visibleState(request, context);
   if (!Array.isArray(request.history) || request.history.length > 8) throw new Error("conversation history is limited to eight turns");
+  for (const [index, turn] of request.history.entries()) {
+    if (!turn || typeof turn !== "object" || Array.isArray(turn)) throw new Error(`history turn ${index + 1} must be an object`);
+    if (typeof turn.question !== "string" || !turn.question.trim() || turn.question.length > 1000) {
+      throw new Error(`history turn ${index + 1} has an invalid question`);
+    }
+    if (typeof turn.answer !== "string" || turn.answer.length > 2000) throw new Error(`history turn ${index + 1} has an invalid answer`);
+    validateAnswer(turn.beats, context);
+  }
+}
+
+function visibleState(request: AssistantRequest, context: AssistantContext): Record<string, ParamValue> {
+  const state: Record<string, ParamValue> = {};
+  for (const [param, spec] of Object.entries(context.schema)) {
+    const value = request.state[param];
+    if (value === undefined) continue;
+    const error = validateValue(spec.type, value);
+    if (error) throw new Error(`${param}: ${error}`);
+    if (spec.type.kind === "scalar" && spec.type.range && typeof value === "number") {
+      if (value < spec.type.range[0] || value > spec.type.range[1]) throw new Error(`${param}: ${value} is outside [${spec.type.range.join(", ")}]`);
+    }
+    state[param] = value;
+  }
+  return state;
 }
 
 function answerJsonSchema(context: AssistantContext): Record<string, unknown> {

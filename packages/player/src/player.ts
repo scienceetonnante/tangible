@@ -72,6 +72,7 @@ export class Player {
   private answerAbort?: AbortController;
   private assistantFetch?: typeof fetch;
   private assistantEndpoint = "/api/answer";
+  private assistantClientId?: string;
 
   constructor(opts: PlayerOptions) {
     const schema: Schema = { ...opts.scene.schema, ...boardSchema(opts.tracks.tracks) };
@@ -140,6 +141,7 @@ export class Player {
     if (opts.assistant) {
       this.assistantFetch = opts.assistant.fetchImpl ?? ((input, init) => fetch(input, init));
       this.assistantEndpoint = opts.assistant.endpoint ?? "/api/answer";
+      this.assistantClientId = persistentClientId();
       this.assistant = new AssistantPanel({
         onAsk: (question) => void this.ask(question, opts.assistant!.context),
         onCancel: () => this.cancelAnswer("Cancelled"),
@@ -226,7 +228,7 @@ export class Player {
     try {
       const response = await this.assistantFetch!(this.assistantEndpoint, {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: { "content-type": "application/json", "x-narrable-client-id": this.assistantClientId! },
         body: JSON.stringify(body),
         signal: this.answerAbort.signal,
       });
@@ -300,4 +302,24 @@ function mimeForAudio(src: string): string {
   if (src.endsWith(".webm")) return "audio/webm";
   if (src.endsWith(".ogg")) return "audio/ogg";
   return "audio/wav";
+}
+
+const CLIENT_ID_KEY = "narrable.assistantClientId";
+
+function persistentClientId(): string {
+  try {
+    const stored = localStorage.getItem(CLIENT_ID_KEY);
+    if (stored && /^[a-zA-Z0-9_-]{16,64}$/.test(stored)) return stored;
+    const created = randomClientId();
+    localStorage.setItem(CLIENT_ID_KEY, created);
+    return created;
+  } catch {
+    return randomClientId();
+  }
+}
+
+function randomClientId(): string {
+  const bytes = new Uint8Array(16);
+  crypto.getRandomValues(bytes);
+  return [...bytes].map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }

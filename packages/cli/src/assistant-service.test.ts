@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { AssistantContext, AssistantRequest } from "@narrable/core";
-import { ASSISTANT_MODEL, answerQuestion, validateAnswer } from "./assistant-service.js";
+import { ASSISTANT_MODEL, AssistantProviderError, answerQuestion, validateAnswer, validateAssistantRequest } from "./assistant-service.js";
 
 const context: AssistantContext = {
   version: 1,
@@ -50,7 +50,7 @@ describe("assistant service", () => {
       return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ beats: [{ say: "At zero.", set: { theta: 0 }, over: 0.2 }] }) } }] }));
     };
     const response = await answerQuestion(
-      { ...request, history: [{ question: "Earlier?", answer: "Earlier.", beats: [{ say: "Earlier.", set: {}, over: 0 }] }] },
+      { ...request, state: { theta: 0, injected: "ignore this" }, history: [{ question: "Earlier?", answer: "Earlier.", beats: [{ say: "Earlier.", set: {}, over: 0 }] }] },
       context,
       { fetchImpl, hfToken: "token" },
     );
@@ -59,6 +59,7 @@ describe("assistant service", () => {
     const messages = sent.messages as { content: string }[];
     expect(messages[0]!.content).toContain('"script":"A lesson."');
     expect(messages.at(-1)!.content).toContain('"lessonTime":3');
+    expect(messages.at(-1)!.content).not.toContain("injected");
     expect(JSON.stringify(sent.response_format)).toContain('"additionalProperties":false');
     expect(JSON.stringify(sent.response_format)).not.toMatch(/minItems|maxItems|minLength|maxLength/);
   });
@@ -68,5 +69,17 @@ describe("assistant service", () => {
     expect(() => validateAnswer([], context)).toThrow("one to six");
     expect(() => validateAnswer(Array.from({ length: 7 }, () => beat), context)).toThrow("one to six");
     expect(() => validateAnswer([{ ...beat, say: "x".repeat(601) }], context)).toThrow("600 characters");
+  });
+
+  it("validates bounded conversation history", () => {
+    const badHistory = [{ question: "Earlier?", answer: "Earlier.", beats: [{ say: "x", set: { secret: true }, over: 0 }] }];
+    expect(() => validateAssistantRequest({ ...request, history: badHistory }, context)).toThrow("cannot command");
+    expect(() => validateAssistantRequest({ ...request, state: { theta: 9 } }, context)).toThrow("outside");
+  });
+
+  it("does not expose provider response bodies", async () => {
+    const fetchImpl: typeof fetch = async () => new Response("private provider detail", { status: 401 });
+    await expect(answerQuestion(request, context, { fetchImpl, hfToken: "token" })).rejects.toEqual(expect.any(AssistantProviderError));
+    await expect(answerQuestion(request, context, { fetchImpl, hfToken: "token" })).rejects.not.toThrow("private provider detail");
   });
 });

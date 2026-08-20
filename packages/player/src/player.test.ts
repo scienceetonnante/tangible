@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { Player } from "./player.js";
 import type { SceneModule, SceneContext } from "./scene-host.js";
 import type { AssistantContext, LessonTracks, PlainState } from "@narrable/core";
@@ -110,6 +110,29 @@ describe("Player composition", () => {
     player.audio.dispatchEvent(new Event("pause"));
     expect(input.disabled).toBe(false);
     player.dispose();
+  });
+
+  it("sends a persistent anonymous client id with assistant requests", async () => {
+    localStorage.clear();
+    let requestHeaders: Headers | undefined;
+    const fetchImpl: typeof fetch = async (_input, init) => {
+      requestHeaders = new Headers(init?.headers);
+      return new Response(JSON.stringify({ answer: "At zero.", beats: [{ say: "At zero.", set: {}, over: 0 }] }));
+    };
+    const mount = document.createElement("div");
+    document.body.append(mount);
+    const player = new Player({ mount, scene: stubScene([]), tracks, assistant: { context: assistantContext, fetchImpl } });
+    player.audio.dispatchEvent(new Event("play"));
+    player.audio.dispatchEvent(new Event("pause"));
+    const input = mount.querySelector(".xv-assistant-input") as HTMLInputElement;
+    input.value = "Why?";
+    mount.querySelector(".xv-assistant-form")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    await vi.waitFor(() => expect(requestHeaders).toBeDefined());
+
+    expect(requestHeaders!.get("x-narrable-client-id")).toMatch(/^[a-f0-9]{32}$/);
+    expect(localStorage.getItem("narrable.assistantClientId")).toBe(requestHeaders!.get("x-narrable-client-id"));
+    player.dispose();
+    mount.remove();
   });
 
   it("composes answer state over the lesson until the learner claims that parameter", () => {
