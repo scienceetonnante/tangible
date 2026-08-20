@@ -29,8 +29,12 @@ Ask the agent to implement the smallest scene that realizes the brief. It should
 
 1. choose a small set of meaningful parameters;
 2. implement a pure rendering function and direct manipulation;
-3. run `pnpm lesson ref`, `check`, and a fake build;
-4. show you a local preview.
+3. run `pnpm lesson ref` and the scene-specific tests; and
+4. show you a narration-free local preview with:
+
+```bash
+pnpm lesson scene --lesson lessons/my-lesson
+```
 
 Test the scene before writing final narration. Try off-path values, resizing, and
 touch interaction where relevant. Ask for changes in conceptual terms: what must

@@ -13,6 +13,7 @@ pnpm lesson <command> [options]
 | `check` | Validate scripts and scene exports without network calls. |
 | `build` | Compile narration and tracks into `build/<lang>/`. |
 | `preview` | Rebuild on changes and serve a local preview. |
+| `scene` | Rebuild and serve an interactive scene without narration or lesson playback. |
 | `serve` | Serve an existing bundle without file watching. |
 | `ref` | Print the scene's parameters, ranges, presets, groups, constants, and bakers. |
 | `state --at <t>` | Print evaluated scene state at a lesson time. |
@@ -30,3 +31,19 @@ Common options:
 
 `preview` and `serve` bind to `127.0.0.1` by default. Use `--host 0.0.0.0` only
 when another device must reach the local server.
+
+## Scene development without narration
+
+Use `scene` while the scene is being implemented and the narration does not yet
+exist:
+
+```bash
+pnpm lesson scene --lesson lessons/my-lesson
+```
+
+This command reads only `id` and `scene` from `lesson.yaml`. It loads the scene
+from its schema defaults, preserves interactions until reset or reload, and
+watches the scene's lesson-local source dependencies. It does not read
+`script.<lang>.md`, language or voice settings, assistant context, or generated
+lesson artifacts. It writes its temporary browser bundle to
+`build/scene-preview/`.

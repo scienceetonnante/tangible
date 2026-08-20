@@ -69,9 +69,7 @@ Verify with:
 
 ```bash
 pnpm lesson ref --lesson lessons/<id>
-pnpm lesson check --lesson lessons/<id>
-pnpm lesson build --fake --bundle --lesson lessons/<id>
-pnpm lesson preview --fake --lesson lessons/<id>
+pnpm lesson scene --lesson lessons/<id>
 ```
 
 Test scientific or mathematical logic where mistakes would undermine the lesson.

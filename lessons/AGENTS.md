@@ -38,7 +38,15 @@ For a new lesson or a substantial lesson-production task, use the repo-local
 
 ## Validation loop
 
-Use the local command entry point:
+Before narration exists, validate the scene contract and let the human manipulate
+the scene independently:
+
+```bash
+pnpm lesson ref --lesson lessons/<id>
+pnpm lesson scene --lesson lessons/<id>
+```
+
+After narration exists, use the complete lesson loop:
 
 ```bash
 pnpm lesson ref --lesson lessons/<id>

@@ -49,6 +49,15 @@ pnpm lesson preview --fake --lesson lessons/unit-circle
 Open <http://localhost:5179>. The `--fake` flag keeps the authoring loop local,
 deterministic, and free of provider calls.
 
+To develop an interactive scene before narration exists, run:
+
+```bash
+pnpm lesson scene --lesson lessons/unit-circle
+```
+
+This command loads schema defaults and the scene runtime without reading scripts,
+building audio, or showing lesson playback controls.
+
 Common checks:
 
 ```bash

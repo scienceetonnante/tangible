@@ -23,6 +23,11 @@ resolves narration-relative cues, and emits static tracks. The browser player
 consumes built artifacts and a scene bundle; it does not parse scripts or call
 TTS providers.
 
+During scene development, the CLI can bundle `scene.ts` directly into a browser
+preview. This development path initializes state from schema defaults and uses
+the player package's scene host and interaction code, but it does not construct a
+lesson player or involve scripts, tracks, audio, or providers.
+
 ## Package boundaries
 
 - `core`: schema, types, interpolation, easing, and reconciliation math;

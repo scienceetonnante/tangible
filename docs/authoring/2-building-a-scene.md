@@ -22,6 +22,21 @@ state frame by frame; seeking to any time must reconstruct the same view directl
 
 ## Implementation loop
 
+Before narration exists, use the scene preview. It starts from schema defaults
+and does not read scripts or call a provider:
+
+```bash
+pnpm lesson ref --lesson lessons/<id>
+pnpm lesson scene --lesson lessons/<id>
+```
+
+The scene preview rebuilds when the scene entry or one of its lesson-local
+dependencies changes. All interactions persist because there is no narration
+timeline to reclaim a parameter.
+
+After narration and cues exist, inspect their compiled state and representative
+frames:
+
 ```bash
 pnpm lesson ref --lesson lessons/<id>
 pnpm lesson check --lesson lessons/<id>
