@@ -4,7 +4,6 @@ import { loadScene } from "./scene-loader.js";
 import { refSheet } from "./ref.js";
 
 const SCENE_PATH = join(process.cwd(), "lessons/unit-circle/scene.ts");
-const BACKPROP_SCENE_PATH = join(process.cwd(), "lessons/backprop/scene.ts");
 const OPTIMIZER_SCENE_PATH = join(process.cwd(), "lessons/optimizers/scene.ts");
 
 describe("loadScene", () => {
@@ -14,12 +13,6 @@ describe("loadScene", () => {
     expect(scene.schema.theta!.type.kind).toBe("scalar");
     expect(scene.presets?.sideView).toBeDefined();
     expect(scene.constants?.HALF_PI).toBe(1.5708);
-  });
-
-  it("loads build-time bakers without instantiating the scene", async () => {
-    const scene = await loadScene(BACKPROP_SCENE_PATH);
-    expect(scene.bakers?.descent?.reads).toContain("lr");
-    expect(scene.bakers?.descent?.writes).toEqual(["w11", "w12", "w21", "w22", "wo1", "wo2"]);
   });
 
   it("loads a Three.js scene without instantiating its renderer", async () => {

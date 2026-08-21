@@ -4,17 +4,7 @@ This file contains future work only. Current capabilities belong in
 [README.md](./README.md), and durable constraints belong in the
 [architecture](./docs/framework/architecture.md).
 
-## 1. Release and validate backprop
-
-- Build the backprop lesson with its real voice.
-- Review cue timing, frames, desktop interaction, and touch interaction.
-- Deploy it as a public static Hugging Face Space.
-- Record only findings that change the framework or authoring workflow.
-
-**Done when:** the public lesson demonstrates build-time computation, live
-recomputation, and `shared` ownership.
-
-## 2. Performance capture
+## 1. Performance capture
 
 - Add a development-only record toolbar.
 - Sample manipulated viewer-owned parameters and export compact JSON tracks.
@@ -24,7 +14,7 @@ recomputation, and `shared` ownership.
 **Done when:** spatial choreography can be recorded, edited as text, rebuilt,
 and replayed without shipping the recording UI.
 
-## 3. Reusable 3D scene host
+## 2. Reusable 3D scene host
 
 - Extract the optimizer lesson's local Three.js viewport into a reusable host.
 - Add ingredients only when demanded by a real spatial lesson.
@@ -34,7 +24,7 @@ and replayed without shipping the recording UI.
 **Done when:** the spatial lesson ships without requiring broad framework
 changes.
 
-## 4. External lesson projects
+## 3. External lesson projects
 
 Keep framework and lessons together while the authoring contract is still
 changing. Prepare an eventual split by:
