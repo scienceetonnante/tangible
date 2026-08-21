@@ -15,9 +15,9 @@ test("paused question writes, demonstrates, yields to interaction, and resumes",
   await page.locator(".xv-play").click();
   await expect(input).toBeEnabled();
 
-  await input.fill("Pourquoi le cosinus vaut-il zéro à un quart de tour ?");
+  await input.fill("Why is the cosine zero at a quarter turn?");
   await page.locator(".xv-assistant-ask").click();
-  await expect(page.locator(".xv-assistant-answer")).toContainText("quart de tour");
+  await expect(page.locator(".xv-assistant-answer")).toContainText("quarter turn");
   const formBox = (await page.locator(".xv-assistant-form").boundingBox())!;
   const answerBox = (await page.locator(".xv-assistant-answer").boundingBox())!;
   expect(formBox.y).toBeLessThan(answerBox.y);
