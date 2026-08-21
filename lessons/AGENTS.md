@@ -5,8 +5,8 @@ review, and deployment.
 
 ## Roles and source of truth
 
-- The human owns `brief.md`, spoken narration, natural-language scene intent, and
-  final pedagogical and aesthetic judgment.
+- The human owns the spoken narration, natural-language scene intent, and final
+  pedagogical and aesthetic judgment.
 - The agent owns scene implementation, formal choreography, technical validation,
   and deployment execution when explicitly requested.
 - Do not rewrite human narration unless the user asks. Report a scene hint that
@@ -18,13 +18,12 @@ For a new lesson or a substantial lesson-production task, use the repo-local
 
 ## Production sequence
 
-1. Start from an approved `brief.md`.
-2. Implement the smallest scene that expresses its central relationship.
-3. Ask the human to test the scene before formal choreography.
-4. Preserve narration prose and translate `[[natural-language hint]]` into
+1. Implement the smallest scene that expresses the author's intended relationship.
+2. Ask the human to test the scene before formal choreography.
+3. Preserve narration prose and translate `[[natural-language hint]]` into
    schema-valid directives.
-5. Iterate with fake providers, then tune against real narration.
-6. Deploy only when the user has requested deployment and the private build has
+4. Iterate with fake providers, then tune against real narration.
+5. Deploy only when the user has requested deployment and the private build has
    passed the release checklist.
 
 ## Scene rules

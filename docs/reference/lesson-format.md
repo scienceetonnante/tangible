@@ -3,7 +3,6 @@
 ## Authored files
 
 ```text
-brief.md                pedagogical intent and review criteria
 lesson.yaml             identity, languages, defaults, providers, assistant
 scene.ts                schema, scene implementation, optional helpers
 script.<lang>.md         narration, natural-language hints, and formal directives

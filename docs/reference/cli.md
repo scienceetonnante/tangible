@@ -9,7 +9,7 @@ pnpm lesson <command> [options]
 
 | Command | Purpose |
 |---|---|
-| `new <id>` | Scaffold `brief.md`, a manifest, a scene, and one narration file. |
+| `new <id>` | Scaffold a manifest, a scene, and one narration file. |
 | `check` | Validate scripts and scene exports without network calls. |
 | `build` | Compile narration and tracks into `build/<lang>/`. |
 | `preview` | Rebuild on changes and serve a local preview. |

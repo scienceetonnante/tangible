@@ -4,8 +4,8 @@ Narrable is a framework for building narrated interactive lessons. A recorded
 voiceover drives a live 2D or 3D scene, while learners remain free to manipulate
 the model and see its connected representations recompute.
 
-Lessons are authored from text: a pedagogical brief, narration with timed scene
-cues, a declarative scene schema, and TypeScript rendering code.
+Lessons combine narration with timed scene cues, a declarative scene schema, and
+TypeScript rendering code.
 
 ## Choose your path
 

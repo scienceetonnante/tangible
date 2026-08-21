@@ -1,7 +1,7 @@
 # Build a scene
 
-This is the advanced lane for implementing agents and technical authors. Human
-lesson directors can stay in the [brief-first workflow](./0-getting-started.md).
+This guide is for implementing agents and technical authors. Start here once the
+author knows what interactive relationship the scene should express.
 
 ## Scene contract
 
@@ -51,7 +51,7 @@ preview for interaction and responsive layout.
 
 ## Design rules
 
-- Implement the smallest scene that proves the relationship in the brief.
+- Implement the smallest scene that proves the intended relationship.
 - Prefer one clear learner handle and a few supporting controls.
 - Make off-path states scientifically meaningful.
 - Update connected representations from the same state rather than synchronizing

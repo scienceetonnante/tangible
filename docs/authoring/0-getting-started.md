@@ -1,31 +1,26 @@
 # Create a lesson
 
-Narrable's default production model separates pedagogical authorship from scene
-implementation:
+Narrable's production model starts after the author has decided what to teach.
+There is no required planning document. The work begins with an interactive scene:
 
-- the human owns the brief, narration, scene intent, and final judgment;
+- the human owns the narration, scene intent, and final judgment;
 - the agent implements the scene, translates scene hints into formal cues, runs
   technical checks, and prepares deployment.
 
 You do not need to understand the compiler or player to begin.
 
-## 1. Write the brief
+## 1. Create and test the scene
 
-Create `brief.md` using the scaffold and the prompts in
-[designing-a-lesson.md](./1-designing-a-lesson.md):
+Create the lesson files:
 
 ```bash
 pnpm build
 pnpm lesson new my-lesson --lesson lessons/my-lesson --lang en
 ```
 
-Define the learner, conceptual obstacle, relationship to explore, primary action,
-narrative arc, and evidence that the lesson worked. Keep the brief about teaching,
-not implementation.
-
-## 2. Let the agent design the scene
-
-Ask the agent to implement the smallest scene that realizes the brief. It should:
+Build `scene.ts` as an ordinary interactive website. You can write it yourself or
+ask an agent to implement the smallest scene that expresses your idea. The scene
+work should:
 
 1. choose a small set of meaningful parameters;
 2. implement a pure rendering function and direct manipulation;
@@ -36,11 +31,11 @@ Ask the agent to implement the smallest scene that realizes the brief. It should
 pnpm lesson scene --lesson lessons/my-lesson
 ```
 
-Test the scene before writing final narration. Try off-path values, resizing, and
+Test the scene before writing the narration. Try unusual values, resizing, and
 touch interaction where relevant. Ask for changes in conceptual terms: what must
 be manipulable, connected, visible, or easier to notice.
 
-## 3. Write narration with scene hints
+## 2. Write narration with scene hints
 
 Write `script.<lang>.md` as spoken prose. Add natural-language instructions inside
 double brackets wherever the scene should change:
@@ -55,7 +50,7 @@ Scene hints are removed from narration and captions. They are instructions for
 the implementing agent, not formal Narrable syntax. See
 [writing-narration.md](./3-writing-narration.md) for guidance.
 
-## 4. Let the agent encode choreography
+## 3. Let the agent encode choreography
 
 The agent reads the scene reference with `pnpm lesson ref`, then translates each
 scene hint into validated directives such as `@cue`, `@camera`, `@show`, and
@@ -77,7 +72,7 @@ If the lesson should answer questions while paused, follow
 optional framework feature that requires lesson-specific context and a deliberate
 choice of any scene parameters it may change.
 
-## 5. Review and iterate
+## 4. Review and iterate
 
 Use a fake-voice preview for structural iteration:
 
@@ -89,7 +84,7 @@ Review the pedagogy, interaction, visual composition, cue order, and pause
 prompts. Once the prose is stable, build with the real voice and tune timing
 against its prosody. Use the [review checklist](./4-reviewing.md).
 
-## 6. Deploy
+## 5. Deploy
 
 Ask the agent to follow the
 [Hugging Face Space deployment guide](../deployment/hugging-face-spaces.md). Review
@@ -101,7 +96,6 @@ assistant or server-side credentials.
 The core authored files are:
 
 ```text
-brief.md             human-owned pedagogical intent
 lesson.yaml          build and provider configuration
 scene.ts             scene schema, rendering, and interaction
 script.<lang>.md      spoken narration, scene hints, and formal cues

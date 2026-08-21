@@ -1,6 +1,6 @@
 ---
 name: create-narrable-lesson
-description: Create, continue, review, or deploy a Narrable interactive lesson from a human-authored pedagogical brief and narration. Use for work in lessons/, including scene design, natural-language scene hints, formal narration cues, fake or real builds, visual and interaction review, assistant context, and Hugging Face Space releases.
+description: Create, continue, review, or deploy a Narrable interactive lesson from a human-built scene and narration. Use for work in lessons/, including scene design, natural-language scene hints, formal narration cues, fake or real builds, visual and interaction review, assistant context, and Hugging Face Space releases.
 ---
 
 # Create a Narrable lesson
@@ -15,7 +15,7 @@ Always read:
 
 - `lessons/AGENTS.md`;
 - `docs/authoring/0-getting-started.md`;
-- the target lesson's `brief.md`, manifest, scene, and relevant narration.
+- the target lesson's manifest, scene, and relevant narration.
 
 Read additional docs when the stage requires them:
 
@@ -36,17 +36,16 @@ Use existing lessons as examples, not as normative documentation.
 Inspect the lesson before editing. Continue from the earliest incomplete stage;
 do not redo approved work.
 
-1. Brief approved.
-2. Scene implemented and human-tested.
-3. Narration written with natural-language scene hints.
-4. Hints translated into formal cues.
-5. Lesson reviewed with real narration.
-6. Release authorized and deployed.
+1. Scene implemented and human-tested.
+2. Narration written with natural-language scene hints.
+3. Hints translated into formal cues.
+4. Lesson reviewed with real narration.
+5. Release authorized and deployed.
 
 If a missing human decision would materially alter the scene or teaching strategy,
 ask a concise question. Do not fill pedagogical gaps with silent assumptions.
 
-## 1. Establish the brief
+## 1. Implement and test the scene
 
 For a new lesson, scaffold it:
 
@@ -55,16 +54,11 @@ pnpm build
 pnpm lesson new <id> --lesson lessons/<id> --lang <code>
 ```
 
-Invite the human to complete `brief.md`. Help sharpen the conceptual obstacle,
-explorable relationship, primary action, narrative arc, and review criteria, but
-do not turn the brief into a technical design document. Obtain approval before
-committing to a substantial scene.
-
-## 2. Implement and test the scene
-
-Design the smallest scene that makes the brief's relationship visible. Choose a
-small conceptual schema and deliberate ownership modes. Keep authored state a pure
-function of current state and lesson time.
+The author may already know the intended lesson and may begin by coding the scene
+as an ordinary interactive website. Help implement the smallest scene that makes
+the intended relationship visible. Choose a small conceptual schema and
+deliberate ownership modes. Keep authored state a pure function of current state
+and lesson time.
 
 Verify with:
 
@@ -74,11 +68,11 @@ pnpm lesson scene --lesson lessons/<id>
 ```
 
 Test scientific or mathematical logic where mistakes would undermine the lesson.
-Ask the human to manipulate the scene before encoding final choreography. Capture
-their feedback in the scene or brief; do not proceed as though an unreviewed scene
-were approved.
+Ask the human to manipulate the scene before encoding final choreography. Apply
+their feedback to the scene; do not proceed as though an unreviewed scene were
+approved.
 
-## 3. Preserve narration and interpret hints
+## 2. Preserve narration and interpret hints
 
 Treat prose outside hints and formal directives in `script.<lang>.md` as
 human-owned and spoken verbatim. Write natural-language hints in double brackets:
@@ -91,7 +85,7 @@ Interpret each hint against the implemented schema and the surrounding argument.
 If it is ambiguous or impossible, explain the mismatch and ask whether to change
 the scene or the intent. Never rewrite prose merely to make a cue easier.
 
-## 4. Encode formal choreography
+## 3. Encode formal choreography
 
 Run `lesson ref` immediately before authoring cues. Translate hints into absolute,
 schema-valid `@cue`, `@camera`, visibility, board, bake, chapter, or pause
@@ -102,7 +96,7 @@ Keep hints until their cues have been reviewed; then remove them or keep them
 synchronized as intent hints. Run `lesson check` after every meaningful cue
 pass. Use fake TTS during structural iteration.
 
-## 5. Review in layers
+## 4. Review in layers
 
 Build a bundle and inspect representative `state` and `frame` outputs across every
 chapter. Then review the live preview for interaction, resizing, pause/resume,
@@ -115,7 +109,7 @@ timing to its prosody without changing the teaching argument.
 Before release, follow every item in `docs/authoring/4-reviewing.md` and run the
 lesson-specific tests plus `pnpm lesson check`.
 
-## 6. Deploy only with authorization
+## 5. Deploy only with authorization
 
 Deployment changes external state. Require an explicit request naming or clearly
 identifying the target Space. Use the current `hf` CLI, never the deprecated
