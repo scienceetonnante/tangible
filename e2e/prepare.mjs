@@ -28,7 +28,16 @@ export default async function prepare() {
   const { answerQuestion } = await import(join(root, "packages/cli/dist/assistant-service.js"));
   const { FakeTtsAdapter } = await import(join(root, "packages/tts/dist/index.js"));
   const answer = await answerQuestion(
-    { lessonId: assistant.lessonId, language: assistant.language, question: "Why?", t: 0, state: { theta: 0 }, history: [] },
+    {
+      lessonId: assistant.lessonId,
+      language: assistant.language,
+      question: "Why?",
+      t: 0,
+      state: { theta: 0 },
+      position: { chapter: null, narrationJustHeard: null, pausePrompt: null },
+      temporaryAssistantState: {},
+      history: [],
+    },
     assistant,
     { fake: true, tts: new FakeTtsAdapter() },
   );

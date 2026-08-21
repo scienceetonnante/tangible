@@ -44,6 +44,8 @@ export interface AssistantEvalOptions {
 interface EvalTurnResult {
   question: string;
   providerRequest?: Record<string, unknown>;
+  simulatedAnswer?: string;
+  simulatedBeats?: AnswerBeat[];
   answer?: string;
   beats?: AnswerBeat[];
   latencyMs?: number;
@@ -113,7 +115,16 @@ export async function runAssistantEval(opts: AssistantEvalOptions): Promise<void
             history: history.slice(-8),
           };
           if (!opts.real) {
-            turns.push({ question, providerRequest: buildAssistantProviderRequest(request, job.context, variant) });
+            const response = await answerQuestion(request, job.context, { fake: true });
+            turns.push({
+              question,
+              providerRequest: buildAssistantProviderRequest(request, job.context, variant),
+              simulatedAnswer: response.answer,
+              simulatedBeats: response.beats,
+            });
+            history.push({ question, answer: response.answer, beats: response.beats });
+            applyAnswerState(state, response.beats);
+            temporaryAssistantState = finalAnswerState(response.beats);
             continue;
           }
           const started = Date.now();
