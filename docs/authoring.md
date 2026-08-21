@@ -29,27 +29,36 @@ The authored files are:
 
 ```text
 lesson.yaml          build and provider configuration
-scene.ts             scene schema, rendering, and interaction
 script.md            spoken narration, scene hints, and formal cues
 assistant.md         optional lesson-assistant guidance
 assistant.eval.yaml  optional tracked assistant question cases
-assets/               optional authored assets
+scenes/
+  scene.ts           scene schema, rendering, and interaction
+  ...                optional scene helpers, tests, and visual assets
+assets/              optional authored assets
 ```
 
 The generated `build/` and `.cache/` directories must not be edited or
 committed. Narrable currently assumes that every lesson is in English.
 
+Each lesson has one scene entry module, selected by the `scene` field in
+`lesson.yaml`. Narration chapters are sections on the lesson timeline; they do
+not select different scene files. The `scenes/` directory is plural because a
+complex scene can have supporting modules, tests, and visual assets alongside
+the entry module. If the scene contains several named visual modes, the entry
+module composes them and the script can select a mode with `@scene`.
+
 ## Build and test the scene
 
-Build `scene.ts` as an ordinary interactive website before writing final
+Build `scenes/scene.ts` as an ordinary interactive website before writing final
 narration. You can write it yourself or ask an agent to implement the smallest
 scene that expresses the intended relationship.
 
 ### Scene contract
 
-`scene.ts` exports a parameter `schema` and, when rendered, a scene module. It
-may also export presets, named constants, parameter groups, and build-time
-bakers.
+`scenes/scene.ts` exports a parameter `schema` and, when rendered, a scene
+module. It may also export presets, named constants, parameter groups, and
+build-time bakers.
 
 Parameters are the shared vocabulary between the scene, narration, learner
 interaction, and optional lesson assistant. Keep the schema small and

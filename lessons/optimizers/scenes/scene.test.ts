@@ -1,6 +1,6 @@
-import { buildIndex, type PlainState } from "../../packages/core/src/index.js";
-import { Reconciler } from "../../packages/player/src/reconciler.js";
-import { StateStore } from "../../packages/player/src/store.js";
+import { buildIndex, type PlainState } from "../../../packages/core/src/index.js";
+import { Reconciler } from "../../../packages/player/src/reconciler.js";
+import { StateStore } from "../../../packages/player/src/store.js";
 import { describe, expect, it } from "vitest";
 import { presets, scene, schema } from "./scene.js";
 import { landscapeBox, sliderBox, SLIDERS } from "./view.js";

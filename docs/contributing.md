@@ -32,10 +32,10 @@ e2e/         browser integration tests
 Narrable has three layers:
 
 ```text
-script.md ─┐
-           ├─ compiler ─► audio + tracks.json + captions.vtt
-scene.ts ──┘                         │
-                                    ▼
+script.md ─────────┐
+                   ├─ compiler ─► audio + tracks.json + captions.vtt
+scenes/scene.ts ───┘                         │
+                                            ▼
                     player: audio clock ► state ◄ learner interaction
                                                     │
                                                     ▼
@@ -47,10 +47,10 @@ them, resolves narration-relative cues, and emits static tracks. The browser
 player consumes the built artifacts and scene bundle. It does not parse scripts
 or call speech providers.
 
-During scene development, the CLI bundles `scene.ts` directly into a browser
-preview. This path initializes state from schema defaults and uses the player
-package's scene host and interaction code. It does not construct a lesson player
-or involve scripts, tracks, audio, or providers.
+During scene development, the CLI bundles `scenes/scene.ts` directly into a
+browser preview. This path initializes state from schema defaults and uses the
+player package's scene host and interaction code. It does not construct a lesson
+player or involve scripts, tracks, audio, or providers.
 
 ## Package boundaries
 

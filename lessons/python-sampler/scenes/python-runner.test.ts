@@ -51,4 +51,3 @@ describe("PythonRunner", () => {
     expect(worker.terminated).toBe(true);
   });
 });
-

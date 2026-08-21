@@ -8,7 +8,7 @@ import type { Manifest } from "./manifest.js";
 const manifest: Manifest = {
   id: "circle",
   title: "Circle",
-  scene: "scene.ts",
+  scene: "scenes/scene.ts",
   voice: "elevenlabs:voice",
   defaults: { anticipation: -0.2, ease: "linear", transition: 1 },
   tts: { speed: 0.9 },

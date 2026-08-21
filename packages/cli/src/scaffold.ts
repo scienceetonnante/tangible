@@ -10,16 +10,17 @@ export interface ScaffoldOptions {
 export async function scaffold(id: string, opts: ScaffoldOptions = {}): Promise<void> {
   const dir = opts.dir ?? join(process.cwd(), id);
   await mkdir(join(dir, "assets"), { recursive: true });
+  await mkdir(join(dir, "scenes"), { recursive: true });
 
   await writeFile(join(dir, "lesson.yaml"), MANIFEST(id));
-  await writeFile(join(dir, "scene.ts"), SCENE);
+  await writeFile(join(dir, "scenes", "scene.ts"), SCENE);
   await writeFile(join(dir, "script.md"), SCRIPT);
-  console.error(`scaffolded ${dir}/ (lesson.yaml, scene.ts, script.md)`);
+  console.error(`scaffolded ${dir}/ (lesson.yaml, scenes/scene.ts, script.md)`);
 }
 
 const MANIFEST = (id: string) => `id: ${id}
 title: ${id}
-scene: ./scene.ts
+scene: ./scenes/scene.ts
 voice: elevenlabs:VOICE_ID
 defaults:
   anticipation: -0.2

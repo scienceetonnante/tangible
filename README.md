@@ -6,7 +6,7 @@ and watch its connected representations update.
 
 The authoring process starts with the scene, not a planning document:
 
-1. Build and test `scene.ts` as an interactive website.
+1. Build and test `scenes/scene.ts` as an interactive website.
 2. Write the spoken narration in `script.md`.
 3. Add optional `[[scene hints]]` near the sentences they support.
 4. Ask an agent to translate those hints into timed animation cues.

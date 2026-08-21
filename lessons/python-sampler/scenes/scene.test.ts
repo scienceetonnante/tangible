@@ -47,4 +47,3 @@ describe("Python sampler scene", () => {
     expect(html).toContain('class="python-comment"># note</span>');
   });
 });
-

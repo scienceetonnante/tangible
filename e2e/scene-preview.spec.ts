@@ -1,7 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import { spawn, type ChildProcessWithoutNullStreams } from "node:child_process";
 import { createServer } from "node:net";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -9,11 +9,13 @@ const CLI = "packages/cli/dist/index.js";
 
 test("scene preview runs and reloads without narration files", async ({ page }) => {
   const lessonDir = mkdtempSync(join(tmpdir(), "narrable-scene-e2e-"));
-  const helper = join(lessonDir, "value.ts");
-  writeFileSync(join(lessonDir, "lesson.yaml"), "id: scene-only\nscene: ./scene.ts\n");
+  const scenesDir = join(lessonDir, "scenes");
+  const helper = join(scenesDir, "value.ts");
+  mkdirSync(scenesDir);
+  writeFileSync(join(lessonDir, "lesson.yaml"), "id: scene-only\nscene: ./scenes/scene.ts\n");
   writeFileSync(helper, "export const INITIAL = 1;\n");
   writeFileSync(
-    join(lessonDir, "scene.ts"),
+    join(scenesDir, "scene.ts"),
     `import { INITIAL } from "./value.js";
 export const schema = {
   theta: { type: { kind: "scalar", range: [0, 10] }, default: INITIAL, interpolate: "lerp", ownership: "script" },

@@ -4,7 +4,7 @@
 
 import { Player, PLAYER_CSS } from "@narrable/player";
 import type { AssistantContext, LessonTracks } from "@narrable/core";
-import { scene } from "../../lessons/unit-circle/scene";
+import { scene } from "../../lessons/unit-circle/scenes/scene";
 
 declare global {
   interface Window {

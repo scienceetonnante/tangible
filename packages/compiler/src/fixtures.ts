@@ -4,7 +4,7 @@ import type { SceneInfo } from "./check.js";
 
 export const SCRIPT = `---
 title: The unit circle
-scene: ./scene.ts
+scene: ./scenes/scene.ts
 voice: elevenlabs:voice
 ---
 

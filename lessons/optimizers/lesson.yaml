@@ -1,6 +1,6 @@
 id: optimizers
 title: Why adaptive optimizers exist
-scene: ./scene.ts
+scene: ./scenes/scene.ts
 voice: hf-endpoint:david_v1
 defaults:
   anticipation: -0.2

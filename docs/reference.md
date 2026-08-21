@@ -30,7 +30,7 @@ Create a lesson directory:
 pnpm lesson new my-lesson --lesson lessons/my-lesson
 ```
 
-Run `scene.ts` by itself while building the interaction:
+Run the `scenes/scene.ts` entry module by itself while building the interaction:
 
 ```bash
 pnpm lesson scene --lesson lessons/my-lesson
@@ -71,7 +71,7 @@ Compiled lesson files go to `build/lesson/`. The deployable site goes to
 
 | Command | Purpose |
 |---|---|
-| `new <id>` | Create `lesson.yaml`, `scene.ts`, `script.md`, and an assets directory. |
+| `new <id>` | Create `lesson.yaml`, `script.md`, `scenes/scene.ts`, and an assets directory. |
 | `scene` | Run the interactive scene alone while it is being built. |
 | `ref` | Print scene parameters, ranges, presets, groups, constants, and bakers. |
 | `check` | Validate `script.md`, scene cues, and assistant configuration without network calls. |
@@ -127,16 +127,24 @@ stored in `build/scene-preview/`.
 
 ```text
 lesson.yaml             identity, defaults, voice provider, assistant
-scene.ts                schema, scene implementation, optional helpers
 script.md               narration, natural-language hints, and formal directives
 assistant.md            optional semantic assistant context
 assistant.eval.yaml     optional tracked assistant question cases
-assets/                  optional authored assets
+scenes/
+  scene.ts              scene entry module
+  ...                   optional scene helpers, tests, and visual assets
+assets/                 optional authored assets
 ```
 
 `build/` and `.cache/` are generated and gitignored. Narrable currently assumes
 that every lesson is in English. A lesson has one script, one voice, one set of
-captions, and one assistant guide.
+captions, one assistant guide, and one scene entry module.
+
+Chapters are markers on the narration timeline. They do not correspond to scene
+files. The plural `scenes/` directory groups the entry module with any supporting
+scene code and assets. A scene can expose several named visual modes through its
+`scene` schema parameter; `@scene(name)` changes that parameter within the same
+entry module.
 
 ### Manifest
 
@@ -145,7 +153,7 @@ A minimal `lesson.yaml` is:
 ```yaml
 id: unit-circle
 title: The unit circle
-scene: ./scene.ts
+scene: ./scenes/scene.ts
 voice: elevenlabs:VOICE_ID
 defaults:
   anticipation: -0.2

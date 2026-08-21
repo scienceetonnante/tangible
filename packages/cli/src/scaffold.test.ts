@@ -12,6 +12,8 @@ describe("scaffold", () => {
       await scaffold("my-lesson", { dir });
 
       expect(await readFile(join(dir, "lesson.yaml"), "utf8")).toContain("title: my-lesson");
+      expect(await readFile(join(dir, "lesson.yaml"), "utf8")).toContain("scene: ./scenes/scene.ts");
+      expect(await readFile(join(dir, "scenes", "scene.ts"), "utf8")).toContain("export const schema");
       expect(await readFile(join(dir, "script.md"), "utf8")).toContain("[[Describe the visual change");
       expect((await stat(join(dir, "assets"))).isDirectory()).toBe(true);
     } finally {

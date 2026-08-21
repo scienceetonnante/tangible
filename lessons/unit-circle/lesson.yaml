@@ -1,6 +1,6 @@
 id: unit-circle
 title: The unit circle
-scene: ./scene.ts
+scene: ./scenes/scene.ts
 voice: elevenlabs:s3TPKV1kjDlVtZbl4Ksh
 defaults:
   anticipation: -0.2

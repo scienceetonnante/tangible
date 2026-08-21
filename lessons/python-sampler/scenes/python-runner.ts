@@ -127,4 +127,3 @@ _buffer.getvalue()
 };
 `;
 }
-
