@@ -34,7 +34,7 @@ async function main() {
 
   switch (cmd) {
     case "new":
-      await scaffold(argv[1] ?? die("usage: lesson new <id> [--lesson dir] [--lang code]"), { dir: flags.lesson, lang: flags.lang });
+      await scaffold(argv[1] ?? die("usage: lesson new <id> [--lesson dir]"), { dir: flags.lesson });
       return;
     case "check":
       process.exit(await cmdCheck(flags));
@@ -57,7 +57,6 @@ async function main() {
     case "assistant-eval":
       await runAssistantEval({
         lessonDir: flags.lesson ?? process.cwd(),
-        language: flags.lang,
         variant: flags.variant ?? "structured",
         real: flags.real ?? false,
         out: flags.out,
@@ -70,7 +69,7 @@ async function main() {
       await cmdRef(flags);
       return;
     default:
-      die(`unknown command "${cmd ?? ""}"\nusage: lesson <new|check|build|frame|preview|scene|serve|assistant-eval|state|ref> [--lang fr] [--lesson dir] [--at t] [--drag p=v] [--bundle] [-o file] [--size WxH] [--port n] [--host address] [--fake] [--real] [--variant legacy|structured|both]`);
+      die(`unknown command "${cmd ?? ""}"\nusage: lesson <new|check|build|frame|preview|scene|serve|assistant-eval|state|ref> [--lesson dir] [--at t] [--drag p=v] [--bundle] [-o file] [--size WxH] [--port n] [--host address] [--offline] [--real] [--variant legacy|structured|both]`);
   }
 }
 
@@ -81,20 +80,18 @@ async function cmdCheck(flags: Flags): Promise<number> {
   const manifest = await loadManifest(lessonDir);
   const scene = await loadScene(join(lessonDir, manifest.scene));
   let errors = 0;
-  for (const lang of languagesFor(flags, manifest)) {
-    const file = `script.${lang}.md`;
-    const script = await readFile(join(lessonDir, file), "utf8");
-    const diags = check(parseScript(script, file), scene);
-    for (const d of diags) {
-      console.error(formatDiagnostic(d));
-      if (d.severity === "error") errors++;
-    }
-    try {
-      await buildAssistantContext(lessonDir, manifest, scene, lang, script);
-    } catch (error) {
-      console.error(`${file}: assistant: ${error instanceof Error ? error.message : String(error)}`);
-      errors++;
-    }
+  const file = "script.md";
+  const script = await readFile(join(lessonDir, file), "utf8");
+  const diags = check(parseScript(script, file), scene);
+  for (const d of diags) {
+    console.error(formatDiagnostic(d));
+    if (d.severity === "error") errors++;
+  }
+  try {
+    await buildAssistantContext(lessonDir, manifest, scene, script);
+  } catch (error) {
+    console.error(`${file}: assistant: ${error instanceof Error ? error.message : String(error)}`);
+    errors++;
   }
   console.error(errors === 0 ? "check: no errors" : `check: ${errors} error(s)`);
   return errors === 0 ? 0 : 1;
@@ -104,26 +101,21 @@ async function cmdBuild(flags: Flags): Promise<void> {
   const lessonDir = flags.lesson ?? process.cwd();
   const manifest = await loadManifest(lessonDir);
   const scene = await loadScene(join(lessonDir, manifest.scene));
-  const langs = languagesFor(flags, manifest);
-  for (const lang of langs) {
-    await buildLanguage(lessonDir, manifest, scene, lang, flags.fake ?? false);
-    console.error(`built ${manifest.id} [${lang}] → build/${lang}/`);
-  }
+  await buildLesson(lessonDir, manifest, scene, flags.offline ?? false);
+  console.error(`built ${manifest.id} → build/lesson/`);
   if (flags.bundle) {
-    const out = await bundleSite(lessonDir, manifest, join(lessonDir, manifest.scene), langs);
+    const out = await bundleSite(lessonDir, manifest, join(lessonDir, manifest.scene));
     console.error(`bundled static site → ${out}`);
   }
 }
 
 async function cmdFrame(flags: Flags): Promise<void> {
   const lessonDir = flags.lesson ?? process.cwd();
-  const manifest = await loadManifest(lessonDir);
-  const lang = flags.lang ?? manifest.languages[0]!;
   const t = flags.at !== undefined ? Number(flags.at) : die("usage: lesson frame --at <t> -o <file.png>");
   const out = flags.out ?? die("usage: lesson frame --at <t> -o <file.png>");
   const siteDir = join(lessonDir, "build", "site");
   if (!existsSync(join(siteDir, "index.html"))) die('no static bundle — run "lesson build --bundle" first');
-  await renderFrame(siteDir, { t, out, size: flags.size, lang });
+  await renderFrame(siteDir, { t, out, size: flags.size });
   console.error(`rendered frame at t=${t} → ${out}`);
 }
 
@@ -136,12 +128,12 @@ function selectTts(voiceSpec: string, fake: boolean): { adapter: TtsAdapter; voi
   if (!fake && provider === "elevenlabs" && process.env.ELEVENLABS_API_KEY) {
     return { adapter: new ElevenLabsAdapter(), voice: id ?? "" };
   }
-  if (!fake && provider === "elevenlabs") console.error("note: ELEVENLABS_API_KEY not set — using fake TTS");
+  if (!fake && provider === "elevenlabs") console.error("note: ELEVENLABS_API_KEY not set — using silent placeholder audio");
   return { adapter: new FakeTtsAdapter(), voice: voiceSpec };
 }
 
-async function buildLanguage(lessonDir: string, manifest: Manifest, scene: SceneInfo, lang: string, fake: boolean) {
-  const file = `script.${lang}.md`;
+async function buildLesson(lessonDir: string, manifest: Manifest, scene: SceneInfo, fake: boolean) {
+  const file = "script.md";
   const script = await readFile(join(lessonDir, file), "utf8");
   const parsed = parseScript(script, file);
 
@@ -151,10 +143,9 @@ async function buildLanguage(lessonDir: string, manifest: Manifest, scene: Scene
     die(`build aborted: ${errs.length} error(s) in ${file}`);
   }
 
-  const { adapter, voice } = selectTts(manifest.voice[lang] ?? "", fake);
+  const { adapter, voice } = selectTts(manifest.voice, fake);
   const result = await synthesize(adapter, parsed.narration, {
     voice,
-    language: lang,
     cacheDir: join(lessonDir, ".cache", "tts"),
     speed: manifest.tts?.speed,
     segmentOffsets: narrationSegmentOffsets(parsed.narration, parsed.directives.map((directive) => directive.anchorOffset)),
@@ -172,33 +163,31 @@ async function buildLanguage(lessonDir: string, manifest: Manifest, scene: Scene
   const audioHash = createHash("sha256").update(audio).digest("hex").slice(0, 16);
   const compiled = compile(script, result, scene, {
     lessonId: manifest.id,
-    language: lang,
     file,
     defaults: manifest.defaults,
     audioSrc: [`audio.${format}`],
     audioHash,
   });
   for (const w of compiled.warnings) console.error(formatDiagnostic(w));
-  await emit(join(lessonDir, "build", lang), compiled, audio);
-  await emitAssistantContext(lessonDir, manifest, scene, lang, script);
+  await emit(join(lessonDir, "build", "lesson"), compiled, audio);
+  await emitAssistantContext(lessonDir, manifest, scene, script);
 }
 
 async function cmdPreview(flags: Flags): Promise<void> {
   const lessonDir = flags.lesson ?? process.cwd();
   const manifest = await loadManifest(lessonDir);
-  const langs = languagesFor(flags, manifest);
   const rebuild = async () => {
     const scene = await loadScene(join(lessonDir, manifest.scene));
     // Same TTS selection as build; cached, so it only re-synthesizes on prose edits.
-    // Pass --fake for a zero-cost loop while editing narration.
-    for (const lang of langs) await buildLanguage(lessonDir, manifest, scene, lang, flags.fake ?? false);
-    await bundleSite(lessonDir, manifest, join(lessonDir, manifest.scene), langs);
+    // Pass --offline for a zero-cost loop while editing narration.
+    await buildLesson(lessonDir, manifest, scene, flags.offline ?? false);
+    await bundleSite(lessonDir, manifest, join(lessonDir, manifest.scene));
   };
   await rebuild();
   const watchPaths = [
     join(lessonDir, manifest.scene),
-    ...langs.map((l) => join(lessonDir, `script.${l}.md`)),
-    ...langs.flatMap((l) => manifest.assistant?.context[l] ? [join(lessonDir, manifest.assistant.context[l]!)] : []),
+    join(lessonDir, "script.md"),
+    ...(manifest.assistant ? [join(lessonDir, manifest.assistant.context)] : []),
   ];
   const siteDir = join(lessonDir, "build", "site");
   preview({
@@ -207,7 +196,7 @@ async function cmdPreview(flags: Flags): Promise<void> {
     rebuild,
     port: flags.port,
     host: flags.host,
-    assistantApi: manifest.assistant ? createAssistantApi({ siteDir, fake: flags.fake }) : undefined,
+    assistantApi: manifest.assistant ? createAssistantApi({ siteDir, fake: flags.offline }) : undefined,
   });
 }
 
@@ -236,17 +225,16 @@ async function cmdServe(flags: Flags): Promise<void> {
   const lessonDir = flags.lesson ?? process.cwd();
   const siteDir = join(lessonDir, "build", "site");
   if (!existsSync(join(siteDir, "index.html"))) die('no static bundle — run "lesson build --bundle" first');
-  serveLesson({ siteDir, port: flags.port, host: flags.host, fake: flags.fake });
+  serveLesson({ siteDir, port: flags.port, host: flags.host, fake: flags.offline });
 }
 
 async function cmdState(flags: Flags): Promise<void> {
   const lessonDir = flags.lesson ?? process.cwd();
   const manifest = await loadManifest(lessonDir);
-  const lang = flags.lang ?? manifest.languages[0]!;
   const t = flags.at ?? die("usage: lesson state --at <seconds>");
   const scene = await loadScene(join(lessonDir, manifest.scene));
-  const tracksPath = join(lessonDir, "build", lang, "tracks.json");
-  if (!existsSync(tracksPath)) die(`no build for [${lang}] — run "lesson build --lang ${lang}" first`);
+  const tracksPath = join(lessonDir, "build", "lesson", "tracks.json");
+  if (!existsSync(tracksPath)) die('no lesson build — run "lesson build" first');
   const data = JSON.parse(await readFile(tracksPath, "utf8")) as { tracks: Record<string, Keyframe[]>; duration: number };
   const schema = { ...scene.schema, ...boardSpecs(data.tracks) };
   const idx = buildIndex(data.tracks, schema);
@@ -315,11 +303,6 @@ async function cmdRef(flags: Flags): Promise<void> {
 
 // --- helpers ---
 
-function languagesFor(flags: Flags, manifest: Manifest): string[] {
-  const langs = flags.lang ? [flags.lang] : manifest.languages;
-  return langs.filter((l) => existsSync(join(flags.lesson ?? process.cwd(), `script.${l}.md`)));
-}
-
 /** Derive interpolation specs for board.* tracks (not in the scene schema). */
 function boardSpecs(tracks: Record<string, Keyframe[]>): Schema {
   const s: Schema = {};
@@ -333,10 +316,9 @@ function boardSpecs(tracks: Record<string, Keyframe[]>): Schema {
 }
 
 interface Flags {
-  lang?: string;
   lesson?: string;
   at?: string;
-  fake?: boolean;
+  offline?: boolean;
   bundle?: boolean;
   out?: string;
   size?: string;
@@ -350,10 +332,9 @@ interface Flags {
 function parseFlags(args: string[]): Flags {
   const f: Flags = {};
   for (let i = 0; i < args.length; i++) {
-    if (args[i] === "--lang") f.lang = args[++i];
-    else if (args[i] === "--at") f.at = args[++i];
+    if (args[i] === "--at") f.at = args[++i];
     else if (args[i] === "--lesson") f.lesson = resolvePath(args[++i]!);
-    else if (args[i] === "--fake") f.fake = true;
+    else if (args[i] === "--offline") f.offline = true;
     else if (args[i] === "--bundle") f.bundle = true;
     else if (args[i] === "-o" || args[i] === "--out") f.out = args[++i];
     else if (args[i] === "--size") f.size = args[++i];
@@ -361,11 +342,13 @@ function parseFlags(args: string[]): Flags {
     else if (args[i] === "--port") f.port = Number(args[++i]);
     else if (args[i] === "--host") f.host = args[++i];
     else if (args[i] === "--real") f.real = true;
+    else if (args[i] === "--fake") die('the --fake option was renamed to --offline');
     else if (args[i] === "--variant") {
       const variant = args[++i];
       if (variant !== "legacy" && variant !== "structured" && variant !== "both") die("--variant must be legacy, structured, or both");
       f.variant = variant;
     }
+    else if (args[i]?.startsWith("--")) die(`unknown option "${args[i]}"`);
   }
   return f;
 }

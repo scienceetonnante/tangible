@@ -3,7 +3,7 @@ import { parseScript } from "./parse.js";
 import { resolve } from "./resolve.js";
 import { expand } from "./expand.js";
 import { buildIndex, evaluate, type ParamValue } from "@narrable/core";
-import { SCRIPT_FR, SCENE } from "./fixtures.js";
+import { SCRIPT, SCENE } from "./fixtures.js";
 import { evaluateAuthoredState } from "./authored-state.js";
 
 const DEFAULTS = { ease: "inOutCubic", transition: 1.0 };
@@ -21,10 +21,10 @@ function fakeTiming(text: string) {
 }
 
 async function compileFixture() {
-  const parsed = parseScript(SCRIPT_FR);
+  const parsed = parseScript(SCRIPT);
   const timing = fakeTiming(parsed.narration);
   const cues = resolve(parsed.directives, parsed.narration, timing, { anticipation: -0.2 });
-  const result = expand(cues, SCENE, { language: "fr", defaults: DEFAULTS });
+  const result = expand(cues, SCENE, { defaults: DEFAULTS });
   return { parsed, timing, cues, result };
 }
 
@@ -55,16 +55,16 @@ describe("expand — worked example", () => {
 
   it("board item is defined and shown", async () => {
     const { result } = await compileFixture();
-    expect(result.boardItems.cosdef).toEqual({ kind: "katex", source: { fr: "x = \\cos\\theta" } });
+    expect(result.boardItems.cosdef).toEqual({ kind: "katex", source: "x = \\cos\\theta" });
     expect(result.tracks["board.cosdef"]![0]!.v).toBe("shown");
   });
 
   it("emits the chapter and the pause", async () => {
     const { result } = await compileFixture();
     expect(result.chapters).toHaveLength(1);
-    expect(result.chapters[0]!.title).toBe("Le cercle et l'angle");
+    expect(result.chapters[0]!.title).toBe("The circle and the angle");
     expect(result.pauses).toHaveLength(1);
-    expect(result.pauses[0]!.prompt).toContain("Déplacez le point rouge");
+    expect(result.pauses[0]!.prompt).toContain("Drag the red point");
     expect(result.pauses[0]!.tail).toBe(0);
   });
 
@@ -74,7 +74,7 @@ describe("expand — worked example", () => {
     const cues = resolve(parsed.directives, parsed.narration, timing, { anticipation: -0.2 });
     const pause = cues.find((cue) => cue.directive.kind === "pause")!;
     const next = cues.find((cue) => cue.directive.kind === "cue")!;
-    const result = expand(cues, SCENE, { language: "en", defaults: DEFAULTS });
+    const result = expand(cues, SCENE, { defaults: DEFAULTS });
 
     expect(next.t).toBe(pause.t);
     expect(result.pauses[0]!.tail).toBe(0);
@@ -84,7 +84,7 @@ describe("expand — worked example", () => {
     const parsed = parseScript('Before. @pause(prompt: "Try it", speak: false) After.');
     const timing = fakeTiming(parsed.narration);
     const cues = resolve(parsed.directives, parsed.narration, timing, { anticipation: 0 });
-    const result = expand(cues, SCENE, { language: "en", defaults: DEFAULTS });
+    const result = expand(cues, SCENE, { defaults: DEFAULTS });
 
     expect(result.pauses[0]!.tail).toBe(0);
   });
@@ -109,7 +109,7 @@ describe("expand — conflict rule", () => {
       { t: 0, directive: mkCue("x", "animate", "10", { over: 10, ease: "linear" }) },
       { t: 5, directive: mkCue("x", "set", "3", {}) },
     ];
-    const result = expand(cues, scene, { language: "fr", defaults: DEFAULTS });
+    const result = expand(cues, scene, { defaults: DEFAULTS });
     expect(result.warnings.some((w) => w.message.includes("truncated"))).toBe(true);
     const x = result.tracks.x!;
     // The first transition's destination was cut to t=5 with its interpolated value (~5).
@@ -128,7 +128,7 @@ describe("expand — parameter groups", () => {
       groups: { pair: ["a", "b"] },
     };
     const cues = [{ t: 1, directive: mkCue("pair", "set", "[0.5, -0.5]", {}) }];
-    const result = expand(cues, scene, { language: "fr", defaults: DEFAULTS });
+    const result = expand(cues, scene, { defaults: DEFAULTS });
     expect(result.warnings).toEqual([]);
     expect(result.tracks.a![0]!.v).toBe(0.5);
     expect(result.tracks.b![0]!.v).toBe(-0.5);
@@ -157,7 +157,7 @@ describe("expand — baked steps", () => {
     const authored = evaluateAuthoredState(parsed, scene);
     const timing = fakeTiming(parsed.narration);
     const cues = resolve(parsed.directives, parsed.narration, timing, { anticipation: -0.2 });
-    const result = expand(cues, scene, { language: "en", defaults: DEFAULTS, bakes: authored.bakes });
+    const result = expand(cues, scene, { defaults: DEFAULTS, bakes: authored.bakes });
     const start = cues[0]!.t;
     const endpoints = result.tracks.x!.filter((keyframe) => keyframe.ease);
 
@@ -174,7 +174,6 @@ describe("expand — baked steps", () => {
     const timing = fakeTiming(parsed.narration);
     const cues = resolve(parsed.directives, parsed.narration, timing, { anticipation: 0 });
     const result = expand(cues, scene, {
-      language: "en",
       defaults: { ...DEFAULTS, transition: 1.5 },
       bakes: authored.bakes,
     });
@@ -193,7 +192,6 @@ describe("expand — baked steps", () => {
       { t: 5, directive: bake },
     ];
     const result = expand(cues, scene, {
-      language: "en",
       defaults: DEFAULTS,
       bakes: new Map([[bake, [{ x: 6 }]]]),
     });

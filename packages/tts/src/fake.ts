@@ -1,5 +1,5 @@
-// Deterministic fake TTS adapter: 60 ms per character, silent audio. Makes the
-// whole compiler pipeline run hermetically in CI (no network, no API key).
+// Deterministic placeholder speech: 60 ms per character and silent audio. This
+// keeps the compiler pipeline offline in CI and during structural review.
 
 import type { TtsAdapter, TtsRequest, TtsResult, WordTime } from "@narrable/core";
 

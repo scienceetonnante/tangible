@@ -101,7 +101,7 @@ export class Player {
     }
     this.clock = new AudioClock(this.audio);
 
-    this.board = new Board(this.displayStore, opts.tracks.boardItems, opts.tracks.language);
+    this.board = new Board(this.displayStore, opts.tracks.boardItems);
     boardPanel.append(this.board.el);
     this.captions = new Captions(opts.captionsVtt ?? "");
     this.pauseGate = new PauseGate(this.clock, opts.tracks.pauses);
@@ -216,7 +216,6 @@ export class Player {
     this.assistant!.setBusy(true, "Thinking…");
     const body: AssistantRequest = {
       lessonId: context.lessonId,
-      language: context.language,
       question,
       t: this.clock.t,
       state: visibleState,

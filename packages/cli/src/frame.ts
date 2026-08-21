@@ -10,7 +10,6 @@ export interface FrameOptions {
   t: number;
   out: string;
   size?: string; // "1280x720"
-  lang?: string;
 }
 
 export async function renderFrame(siteDir: string, opts: FrameOptions): Promise<void> {
@@ -21,8 +20,7 @@ export async function renderFrame(siteDir: string, opts: FrameOptions): Promise<
   const browser = await chromium.launch({ args: ["--autoplay-policy=no-user-gesture-required"] });
   try {
     const page = await browser.newPage({ viewport: { width: w!, height: h! } });
-    const langQ = opts.lang ? `&lang=${opts.lang}` : "";
-    await page.goto(`http://localhost:${port}/?t=${opts.t}&nochrome${langQ}`);
+    await page.goto(`http://localhost:${port}/?t=${opts.t}&nochrome`);
     await page.waitForFunction(() => (globalThis as unknown as { __player?: { clock: unknown } }).__player?.clock !== undefined);
     await page.waitForTimeout(500); // let the seek and WebGL compositor settle
     await page.screenshot({ path: opts.out });

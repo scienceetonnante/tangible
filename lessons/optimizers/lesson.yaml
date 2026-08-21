@@ -1,17 +1,13 @@
 id: optimizers
-title:
-  en: Why adaptive optimizers exist
+title: Why adaptive optimizers exist
 scene: ./scene.ts
-languages: [en]
-voice:
-  en: hf-endpoint:david_v1
+voice: hf-endpoint:david_v1
 defaults:
   anticipation: -0.2
   ease: inOutCubic
   transition: 1.0
 assistant:
-  context:
-    en: assistant.en.md
+  context: assistant.md
   commandable:
     - kappa
     - roughness

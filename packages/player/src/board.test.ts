@@ -11,16 +11,16 @@ const schema: Schema = {
 };
 
 const items: Record<string, BoardItem> = {
-  note: { kind: "text", source: { fr: "La projection." } },
-  eq: { kind: "katex", source: { fr: "\\htmlClass{cos}{\\cos\\theta}" } },
+  note: { kind: "text", source: "The projection." },
+  eq: { kind: "katex", source: "\\htmlClass{cos}{\\cos\\theta}" },
 };
 
 describe("Board", () => {
   it("renders text and KaTeX items and reflects display state", () => {
     const store = new StateStore(schema);
-    const board = new Board(store, items, "fr");
+    const board = new Board(store, items);
     const noteEl = board.el.querySelector('[data-id="note"]')!;
-    expect(noteEl.textContent).toBe("La projection.");
+    expect(noteEl.textContent).toBe("The projection.");
     expect(noteEl.className).toContain("xv-hidden");
 
     store.set("board.note", "shown");
@@ -31,7 +31,7 @@ describe("Board", () => {
 
   it("renders KaTeX and toggles highlight on the tagged span", () => {
     const store = new StateStore(schema);
-    const board = new Board(store, items, "fr");
+    const board = new Board(store, items);
     const eqEl = board.el.querySelector('[data-id="eq"]')!;
     const tagged = eqEl.querySelector(".cos")!;
     expect(tagged).toBeTruthy(); // \htmlClass{cos}{...} produced a span

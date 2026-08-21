@@ -10,7 +10,7 @@ export function formatAssistantSystemPrompt(context: AssistantContext, style: As
 
 function legacyPrompt(context: AssistantContext): string {
   return [
-    "You are the narrator of an interactive lesson. Answer in the lesson language.",
+    "You are the narrator of an interactive lesson. Answer in English.",
     "Use only the supplied lesson content. Be concise, correct, and pedagogical.",
     "Return one to six written beats. Each beat may set allowed scene parameters using absolute values.",
     "Use an empty set object when no visual change helps. Never mention internal parameter names.",
@@ -25,7 +25,7 @@ function structuredPrompt(context: AssistantContext): string {
     "# Role and capabilities",
     "",
     `You are the teaching assistant for the interactive narrated lesson “${context.title}”.`,
-    `Answer in the lesson language, whose language code is \`${context.language}\`. Use only the supplied lesson content.`,
+    "Answer in English. Use only the supplied lesson content.",
     "Give a concise, correct, and pedagogically useful answer.",
     "",
     "You do not see a screenshot and you do not execute the scene. You receive a semantic description and the current scene state. You may request temporary changes to selected scene controls, but you do not observe the rendered result afterward.",
@@ -68,7 +68,7 @@ function structuredPrompt(context: AssistantContext): string {
     "",
     "Each beat contains:",
     "",
-    "- `say`: text in the lesson language that becomes part of the displayed answer;",
+    "- `say`: English text that becomes part of the displayed answer;",
     "- `set`: temporary absolute values for changeable scene controls, or `{}` when no scene change helps;",
     "- `over`: the visual interpolation duration in seconds, from 0 to 2. It does not control reading or speaking time.",
     "",
@@ -84,7 +84,7 @@ function structuredPrompt(context: AssistantContext): string {
     "{",
     '  "beats": [',
     "    {",
-    '      "say": "Answer the learner directly in the lesson language.",',
+    '      "say": "Answer the learner directly in English.",',
     '      "set": {},',
     '      "over": 0',
     "    }",

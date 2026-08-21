@@ -5,7 +5,6 @@ import { ASSISTANT_MODEL, AssistantProviderError, answerQuestion, validateAnswer
 const context: AssistantContext = {
   version: 1,
   lessonId: "circle",
-  language: "en",
   title: "Circle",
   guide: "A circle.",
   script: "A lesson.",
@@ -19,7 +18,6 @@ const context: AssistantContext = {
 
 const request: AssistantRequest = {
   lessonId: "circle",
-  language: "en",
   question: "Why?",
   t: 3,
   state: { theta: 0 },

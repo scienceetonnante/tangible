@@ -16,7 +16,7 @@ interface ElevenResponse {
 
 export interface ElevenLabsOptions {
   apiKey?: string; // defaults to process.env.ELEVENLABS_API_KEY
-  modelId?: string; // default eleven_multilingual_v2 (strong in French)
+  modelId?: string; // default ElevenLabs model
   baseUrl?: string; // default https://api.elevenlabs.io
   fetchImpl?: typeof fetch; // injectable for tests
 }
@@ -49,7 +49,7 @@ export class ElevenLabsAdapter implements TtsAdapter {
         for (let i = 0; i < part.text.length; i++) charTimes.push({ start: timeOffset, end: timeOffset });
         continue;
       }
-      const resp = await this.post(part.text, req.voice, req.language, req.speed);
+      const resp = await this.post(part.text, req.voice, req.speed);
       const a = resp.alignment;
       for (let i = 0; i < a.characters.length; i++) {
         charTimes.push({ start: timeOffset + a.character_start_times_seconds[i]!, end: timeOffset + a.character_end_times_seconds[i]! });
@@ -67,9 +67,9 @@ export class ElevenLabsAdapter implements TtsAdapter {
     };
   }
 
-  private async post(text: string, voice: string, language: string, speed?: number): Promise<ElevenResponse> {
+  private async post(text: string, voice: string, speed?: number): Promise<ElevenResponse> {
     const url = `${this.baseUrl}/v1/text-to-speech/${voice}/with-timestamps`;
-    const body: Record<string, unknown> = { text, model_id: this.modelId, language_code: language };
+    const body: Record<string, unknown> = { text, model_id: this.modelId, language_code: "en" };
     if (speed !== undefined) body.voice_settings = { speed };
     const res = await this.fetchImpl(url, {
       method: "POST",

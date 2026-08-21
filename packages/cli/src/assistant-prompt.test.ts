@@ -5,7 +5,6 @@ import { formatAssistantSystemPrompt } from "./assistant-prompt.js";
 const context: AssistantContext = {
   version: 1,
   lessonId: "circle",
-  language: "en",
   title: "A circle",
   guide: "The learner drags a point.",
   script: "@cue(theta -> HALF_PI, over: 1s) The cosine becomes zero.",

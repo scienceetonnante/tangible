@@ -16,7 +16,7 @@ pnpm test:e2e
 ```
 
 `pnpm check` runs TypeScript compilation, ESLint, package-boundary checks, and
-unit tests. The end-to-end suite uses fake providers and requires no credentials.
+unit tests. The end-to-end suite uses local substitutes and requires no credentials.
 
 ## Working conventions
 

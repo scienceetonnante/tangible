@@ -40,7 +40,7 @@ frames:
 ```bash
 pnpm lesson ref --lesson lessons/<id>
 pnpm lesson check --lesson lessons/<id>
-pnpm lesson build --fake --bundle --lesson lessons/<id>
+pnpm lesson build --offline --bundle --lesson lessons/<id>
 pnpm lesson state --lesson lessons/<id> --at 10
 pnpm lesson frame --lesson lessons/<id> --at 10 -o /tmp/frame.png
 ```

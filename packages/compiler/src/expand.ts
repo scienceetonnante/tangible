@@ -13,7 +13,6 @@ import type { Diagnostic } from "./diagnostics.js";
 import type { BakeDirective, BakeStep } from "./authored-state.js";
 
 export interface ExpandOptions {
-  language: string;
   defaults: { ease: string; transition: number };
   recorded?: Record<string, Keyframe[]>; // param → recorded keyframes (from @track assets)
   recordedPaths?: Record<string, string>; // param → asset path
@@ -159,7 +158,7 @@ export function expand(cues: ResolvedCue[], scene: SceneInfo, opts: ExpandOption
         break;
       }
       case "board": {
-        boardItems[d.id] = { kind: d.itemKind, source: { [opts.language]: d.source } };
+        boardItems[d.id] = { kind: d.itemKind, source: d.source };
         setInstant(`board.${d.id}`, boardSpec(), t, "shown", loc);
         break;
       }

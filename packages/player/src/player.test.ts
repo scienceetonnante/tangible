@@ -8,7 +8,6 @@ import { AnswerTimeline } from "./answer-timeline.js";
 const tracks: LessonTracks = {
   version: 1,
   lessonId: "t",
-  language: "fr",
   duration: 20,
   audio: { src: [], hash: "" },
   schemaHash: "",
@@ -19,14 +18,13 @@ const tracks: LessonTracks = {
   chapters: [{ t: 0, title: "Intro" }],
   pauses: [],
   captions: { src: "captions.vtt" },
-  boardItems: { note: { kind: "text", source: { fr: "x" } } },
+  boardItems: { note: { kind: "text", source: "x" } },
   recorded: {},
 };
 
 const assistantContext: AssistantContext = {
   version: 1,
   lessonId: "t",
-  language: "fr",
   title: "Test",
   guide: "A test scene.",
   script: "Test.",

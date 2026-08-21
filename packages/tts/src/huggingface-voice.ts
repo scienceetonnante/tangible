@@ -4,20 +4,6 @@
 
 import type { SegmentedTtsRequest, SegmentedTtsResult, TtsAdapter, TtsRequest, TtsResult } from "@narrable/core";
 
-const LANGUAGE_NAMES: Record<string, string> = {
-  auto: "Auto",
-  zh: "Chinese",
-  en: "English",
-  fr: "French",
-  de: "German",
-  it: "Italian",
-  ja: "Japanese",
-  ko: "Korean",
-  pt: "Portuguese",
-  ru: "Russian",
-  es: "Spanish",
-};
-
 export interface HuggingFaceVoiceOptions {
   endpointUrl?: string; // defaults to process.env.TTS_ENDPOINT_URL
   token?: string; // defaults to process.env.HF_TTS_TOKEN, then HF_TOKEN
@@ -45,7 +31,7 @@ export class HuggingFaceVoiceAdapter implements TtsAdapter {
   }
 
   async synthesize(req: TtsRequest): Promise<TtsResult> {
-    const audio = await this.generate(req.text, req.voice || this.speaker, req.language, this.seed);
+    const audio = await this.generate(req.text, req.voice || this.speaker, this.seed);
     const wav = parsePcmWav(audio);
     return { audio, format: "wav", wordTimes: [], duration: wav.duration };
   }
@@ -58,7 +44,7 @@ export class HuggingFaceVoiceAdapter implements TtsAdapter {
 
     for (const [i, text] of req.segments.entries()) {
       segmentStarts.push(duration);
-      const audio = await this.generate(text, req.voice || this.speaker, req.language, this.seed + i);
+      const audio = await this.generate(text, req.voice || this.speaker, this.seed + i);
       const clip = parsePcmWav(audio);
       clips.push(clip);
       duration += clip.duration;
@@ -73,11 +59,9 @@ export class HuggingFaceVoiceAdapter implements TtsAdapter {
     };
   }
 
-  private async generate(text: string, speaker: string, language: string, seed: number): Promise<Uint8Array> {
+  private async generate(text: string, speaker: string, seed: number): Promise<Uint8Array> {
     if (!this.endpointUrl) throw new Error("TTS_ENDPOINT_URL is not set");
     if (!this.token) throw new Error("HF_TTS_TOKEN or HF_TOKEN is not set");
-    const languageName = LANGUAGE_NAMES[language.toLowerCase()];
-    if (!languageName) throw new Error(`unsupported cloned-voice language "${language}"`);
 
     const response = await this.fetchImpl(`${this.endpointUrl}/generate`, {
       method: "POST",
@@ -86,7 +70,7 @@ export class HuggingFaceVoiceAdapter implements TtsAdapter {
         accept: "audio/wav",
         "content-type": "application/json",
       },
-      body: JSON.stringify({ text, language: languageName, speaker, seed, temperature: 0.9, top_p: 0.95 }),
+      body: JSON.stringify({ text, language: "English", speaker, seed, temperature: 0.9, top_p: 0.95 }),
     });
     if (!response.ok) throw new Error(`Hugging Face voice endpoint ${response.status}: ${await response.text()}`);
     return new Uint8Array(await response.arrayBuffer());

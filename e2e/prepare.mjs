@@ -1,4 +1,4 @@
-// Playwright globalSetup: build the packages + the unit-circle lesson (fake TTS),
+// Playwright globalSetup: build the packages + the unit-circle lesson (placeholder audio),
 // then bundle the harness into a self-contained e2e/dist/ (tracks/captions/audio
 // inlined) that the static server serves.
 
@@ -15,10 +15,10 @@ const run = (cmd, args) => {
 
 export default async function prepare() {
   run("node", ["node_modules/typescript/bin/tsc", "--build"]);
-  // --fake keeps e2e hermetic: deterministic timing, no API key, no credits, WAV.
-  run("node", ["packages/cli/dist/index.js", "build", "--fake", "--lesson", "lessons/unit-circle", "--lang", "fr"]);
+  // --offline keeps e2e hermetic: deterministic timing, no API key, no credits, WAV.
+  run("node", ["packages/cli/dist/index.js", "build", "--offline", "--lesson", "lessons/unit-circle"]);
 
-  const buildDir = join(root, "lessons/unit-circle/build/fr");
+  const buildDir = join(root, "lessons/unit-circle/build/lesson");
   const tracks = await readFile(join(buildDir, "tracks.json"), "utf8");
   const vtt = await readFile(join(buildDir, "captions.vtt"), "utf8");
   const assistant = JSON.parse(await readFile(join(buildDir, "assistant.json"), "utf8"));
@@ -30,7 +30,6 @@ export default async function prepare() {
   const answer = await answerQuestion(
     {
       lessonId: assistant.lessonId,
-      language: assistant.language,
       question: "Why?",
       t: 0,
       state: { theta: 0 },

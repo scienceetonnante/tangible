@@ -1,6 +1,5 @@
 ---
 title: Why adaptive optimizers exist
-language: en
 ---
 
 @scene(landscape)

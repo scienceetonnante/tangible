@@ -33,7 +33,7 @@ Review in layers. A technically valid build can still be a weak explanation.
 
 - Run `pnpm lesson check` and a complete bundle build.
 - Review the deployed lesson privately on its target browsers.
-- Verify captions and every language offered in the manifest.
+- Verify the captions against the narration.
 - For assistant-enabled lessons, test one real answer, rate limits, logs, and the
   absence of credentials from browser assets. Run tracked assistant cases in dry
   mode before choosing to run them against the real provider. Follow the

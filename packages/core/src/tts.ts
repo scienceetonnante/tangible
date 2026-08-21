@@ -5,7 +5,6 @@
 export interface TtsRequest {
   text: string; // stripped narration, verbatim
   voice: string;
-  language: string;
   speed?: number; // speaking rate (provider-specific range); undefined = provider default
 }
 

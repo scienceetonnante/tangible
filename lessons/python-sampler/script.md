@@ -1,6 +1,5 @@
 ---
 title: Sampling temperature in Python
-language: en
 ---
 
 @scene(editor)

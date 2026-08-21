@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { Readable } from "node:stream";
 import type { IncomingMessage, ServerResponse } from "node:http";
-import { mkdtemp, mkdir, writeFile } from "node:fs/promises";
+import { mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { AssistantContext, AssistantRequest, AssistantResponse } from "@narrable/core";
@@ -11,7 +11,6 @@ import { createAssistantApi, type AssistantApiHandler, type AssistantLimits } fr
 const CONTEXT: AssistantContext = {
   version: 1,
   lessonId: "circle",
-  language: "en",
   title: "Circle",
   guide: "Circle.",
   script: "Circle.",
@@ -25,7 +24,6 @@ const CONTEXT: AssistantContext = {
 
 const REQUEST: AssistantRequest = {
   lessonId: "circle",
-  language: "en",
   question: "Why?",
   t: 0,
   state: { theta: 0 },
@@ -40,9 +38,8 @@ const quiet = () => {};
 
 async function siteDir(): Promise<string> {
   const dir = await mkdtemp(join(tmpdir(), "narrable-site-"));
-  await mkdir(join(dir, "en"));
   await writeFile(join(dir, "index.html"), "<h1>Lesson</h1>");
-  await writeFile(join(dir, "en/assistant.json"), JSON.stringify(CONTEXT));
+  await writeFile(join(dir, "assistant.json"), JSON.stringify(CONTEXT));
   return dir;
 }
 

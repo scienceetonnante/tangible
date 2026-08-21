@@ -16,8 +16,7 @@ the red point and scrub the angle yourself at any time and watch the cosine
 recompute, then glide back to whatever the narration has reached.
 
 Built with [narrable](https://github.com/) — narrated explorables authored from
-a single text script. Available in **English** (default) and **French**
-(append `?lang=fr` to the URL).
+a single text script.
 
 The lesson assets remain a self-contained static bundle. A small same-origin Node
 server protects the Hugging Face Inference Providers credential used by the

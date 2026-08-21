@@ -43,9 +43,9 @@ beforeEach(async () => {
 describe("synthesize caching", () => {
   it("calls the adapter once, then serves from cache", async () => {
     const a = new CountingAdapter();
-    const params = { voice: "v", language: "fr", cacheDir };
-    const r1 = await synthesize(a, "bonjour le monde", params);
-    const r2 = await synthesize(a, "bonjour le monde", params);
+    const params = { voice: "v", cacheDir };
+    const r1 = await synthesize(a, "hello world", params);
+    const r2 = await synthesize(a, "hello world", params);
     expect(a.calls).toBe(1);
     expect(r2.duration).toBe(r1.duration);
     expect(r2.wordTimes).toEqual(r1.wordTimes);
@@ -54,9 +54,9 @@ describe("synthesize caching", () => {
 
   it("re-synthesizes when the text changes", async () => {
     const a = new CountingAdapter();
-    const params = { voice: "v", language: "fr", cacheDir };
-    await synthesize(a, "texte un", params);
-    await synthesize(a, "texte deux", params);
+    const params = { voice: "v", cacheDir };
+    await synthesize(a, "text one", params);
+    await synthesize(a, "text two", params);
     expect(a.calls).toBe(2);
   });
 
@@ -64,7 +64,6 @@ describe("synthesize caching", () => {
     const a = new SegmentedAdapter();
     const result = await synthesize(a, "one. two", {
       voice: "david_v1",
-      language: "en",
       cacheDir,
       segmentOffsets: [5],
     });

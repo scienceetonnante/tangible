@@ -3,15 +3,19 @@
 ## Authored files
 
 ```text
-lesson.yaml             identity, languages, defaults, providers, assistant
+lesson.yaml             identity, defaults, voice provider, assistant
 scene.ts                schema, scene implementation, optional helpers
-script.<lang>.md         narration, natural-language hints, and formal directives
-assistant.<lang>.md      optional semantic assistant context
-assistant.eval.<lang>.yaml optional tracked assistant question cases
+script.md               narration, natural-language hints, and formal directives
+assistant.md            optional semantic assistant context
+assistant.eval.yaml     optional tracked assistant question cases
 assets/                  optional authored assets
 ```
 
 `build/` and `.cache/` are generated and gitignored.
+
+Narrable currently assumes that every lesson is in English. A lesson has one
+script, one voice, one set of captions, and one assistant guide. The manifest
+therefore has no language list or language-specific maps.
 
 ## Manifest
 
@@ -19,12 +23,9 @@ Minimal example:
 
 ```yaml
 id: unit-circle
-title:
-  en: The unit circle
+title: The unit circle
 scene: ./scene.ts
-languages: [en]
-voice:
-  en: elevenlabs:VOICE_ID
+voice: elevenlabs:VOICE_ID
 defaults:
   anticipation: -0.2
   ease: inOutCubic
@@ -34,7 +35,8 @@ tts:
 ```
 
 Voice specifications currently support `elevenlabs:<voice-id>` and
-`hf-endpoint:<voice-id>`. `--fake` overrides real synthesis for local iteration.
+`hf-endpoint:<voice-id>`. `--offline` replaces provider speech with deterministic
+silent audio for local iteration.
 The CLI loads gitignored `.env` files from both the invocation directory and the
 lesson directory.
 
@@ -53,8 +55,7 @@ Run `pnpm lesson ref --lesson <dir>` for the exact lesson-specific contract.
 
 ```yaml
 assistant:
-  context:
-    en: assistant.en.md
+  context: assistant.md
   commandable: [theta, show.projection]
 ```
 
@@ -64,6 +65,6 @@ include a same-origin server; other lessons remain static. Follow
 [the assistant authoring guide](../authoring/5-adding-an-assistant.md) to choose the
 allowlist, write the context, and test fake and real answers.
 
-An optional `assistant.eval.<lang>.yaml` file records representative question
+An optional `assistant.eval.yaml` file records representative question
 sequences, lesson times, and state overrides for `lesson assistant-eval`. It is a
 review artifact rather than part of the deployed lesson bundle.

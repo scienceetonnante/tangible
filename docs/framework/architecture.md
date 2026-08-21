@@ -8,10 +8,10 @@ For the historical investigation and original proposal, see archives.
 Narrable has three layers:
 
 ```text
-script.<lang>.md ─┐
-                  ├─ compiler ─► audio + tracks.json + captions.vtt
-scene.ts ─────────┘                         │
-                                           ▼
+script.md ─┐
+           ├─ compiler ─► audio + tracks.json + captions.vtt
+scene.ts ──┘                         │
+                                    ▼
                     player: audio clock ► state ◄ learner interaction
                                                     │
                                                     ▼

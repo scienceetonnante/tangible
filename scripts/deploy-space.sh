@@ -34,6 +34,6 @@ git lfs install --local
 # Stage .gitattributes first so the LFS filter applies when the mp3s are added.
 git add .gitattributes
 git add -A
-git commit -m "Deploy unit-circle explorable (both languages, real voice)"
+git commit -m "Deploy unit-circle explorable (real voice)"
 git push
 echo "✓ pushed to $SPACE_URL"

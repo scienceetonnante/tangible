@@ -9,7 +9,6 @@ import type { TtsAdapter, TtsResult, AudioFormat } from "@narrable/core";
 
 export interface SynthesizeParams {
   voice: string;
-  language: string;
   cacheDir: string; // lessons/<id>/.cache/tts
   speed?: number;
   segmentOffsets?: number[]; // exact narration boundaries for providers without alignment
@@ -40,7 +39,7 @@ export async function synthesize(adapter: TtsAdapter, text: string, params: Synt
 
   const result = segmentOffsets
     ? await synthesizeAtBoundaries(adapter, text, params, segmentOffsets)
-    : await adapter.synthesize({ text, voice: params.voice, language: params.language, speed: params.speed });
+    : await adapter.synthesize({ text, voice: params.voice, speed: params.speed });
   await mkdir(params.cacheDir, { recursive: true });
   const timing: CachedTiming = { format: result.format, charTimes: result.charTimes, wordTimes: result.wordTimes, duration: result.duration };
   await writeFile(jsonPath, JSON.stringify(timing));
@@ -72,7 +71,6 @@ async function synthesizeAtBoundaries(
   const result = await adapter.synthesizeSegments!({
     segments,
     voice: params.voice,
-    language: params.language,
     speed: params.speed,
   });
   if (result.segmentStarts.length !== segments.length) throw new Error("TTS provider returned the wrong number of segment boundaries");

@@ -20,19 +20,21 @@ TypeScript rendering code.
 
 The complete documentation index is in [docs/README.md](./docs/README.md).
 
-## Current capabilities
+## What Narrable adds to a scene
 
-The end-to-end pipeline supports script validation, fake or real TTS, seekable
-value-at-time tracks, interactive reconciliation, equations, captions, narrated
-pause checkpoints, deterministic frame and state inspection, multilingual
-lessons, and optional written lesson assistants. Bundled lessons can be deployed
-as static sites or as Docker-based Hugging Face Spaces when a server-side
-assistant is enabled.
+You first build an interactive scene as an ordinary small website. Narrable then
+adds a narration clock, animation cues anchored to words in `script.md`, captions,
+pause checkpoints, and controls for seeking and playback. Learners can still
+manipulate the scene while the narration is running.
+
+The framework also provides script validation, deterministic frame and state
+inspection, equations, build-time computations, and an optional written lesson
+assistant. A lesson can be bundled as a static site, or as a small server-based
+site when it includes an assistant. Lessons currently use English only.
 
 Reference lessons live in `lessons/`:
 
-- `unit-circle`: bilingual 2D lesson and primary integration example;
-- `backprop`: agent-authored network with build-time computed steps;
+- `unit-circle`: 2D lesson and primary integration example;
 - `optimizers`: navigable 3D optimizer comparison;
 - `python-sampler`: editable, worker-isolated browser Python.
 
@@ -43,11 +45,13 @@ Prerequisites: Node 22 or newer and pnpm.
 ```bash
 pnpm install
 pnpm build
-pnpm lesson preview --fake --lesson lessons/unit-circle
+pnpm lesson preview --offline --lesson lessons/unit-circle
 ```
 
-Open <http://localhost:5179>. The `--fake` flag keeps the authoring loop local,
-deterministic, and free of provider calls.
+Open <http://localhost:5179>. The `--offline` option creates silent placeholder
+audio instead of calling a speech provider. It lets you test the complete player
+without an API key or paid request. The placeholder duration is predictable, but
+it cannot be used to judge pacing against a real voice.
 
 To develop an interactive scene before narration exists, run:
 
@@ -62,10 +66,13 @@ Common checks:
 
 ```bash
 pnpm lesson check --lesson lessons/unit-circle
-pnpm lesson build --fake --bundle --lesson lessons/unit-circle
+pnpm lesson build --offline --bundle --lesson lessons/unit-circle
 pnpm check
 pnpm test:e2e
 ```
+
+The [command-line guide](./docs/reference/cli.md) explains when to use each
+command and follows the workflow from scene development to deployment.
 
 ## Repository layout
 
@@ -79,3 +86,17 @@ e2e/         browser integration tests
 Framework dependencies follow one enforced rule: `core` depends on nothing;
 `compiler`, `tts`, `player`, and `ingredients` depend only on `core`; `cli` may
 compose all packages. The runtime player never imports the compiler or TTS.
+
+## Why this repository has continuous integration
+
+The GitHub Actions workflow runs the same type checks, lint rules, dependency
+checks, unit tests, and browser tests for every pull request and every push to the
+main branch. It does not deploy lessons or call paid speech providers. The browser
+tests use placeholder audio and run in Chromium and WebKit on Linux.
+
+This is useful even for a small project because Narrable joins several parts that
+can fail independently: compilation, generated artifacts, browser playback,
+seeking, interaction, and assistant requests. The workflow also tests in an
+environment different from the author's Mac. It can be removed if the repository
+will never accept changes from another machine, but keeping it makes refactoring
+safer and costs little beyond GitHub runner time.

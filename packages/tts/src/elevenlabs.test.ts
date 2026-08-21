@@ -38,12 +38,12 @@ describe("splitKeepingSeparators", () => {
 describe("ElevenLabsAdapter", () => {
   it("throws without an API key", async () => {
     const a = new ElevenLabsAdapter({ apiKey: "", fetchImpl: mockFetch([]) });
-    await expect(a.synthesize({ text: "hi", voice: "v", language: "fr" })).rejects.toThrow(/API_KEY/);
+    await expect(a.synthesize({ text: "hi", voice: "v" })).rejects.toThrow(/API_KEY/);
   });
 
   it("returns char and word times for a single request", async () => {
     const a = new ElevenLabsAdapter({ apiKey: "k", fetchImpl: mockFetch([]) });
-    const r = await a.synthesize({ text: "ab cd", voice: "v", language: "fr" });
+    const r = await a.synthesize({ text: "ab cd", voice: "v" });
     expect(r.charTimes).toHaveLength(5);
     expect(r.duration).toBeCloseTo(0.25, 9);
     expect(r.wordTimes.map((w) => w.word)).toEqual(["ab", "cd"]);
@@ -53,7 +53,7 @@ describe("ElevenLabsAdapter", () => {
   it("chunks at paragraph boundaries (never inside a word) and re-offsets times", async () => {
     const sent: string[] = [];
     const a = new ElevenLabsAdapter({ apiKey: "k", fetchImpl: mockFetch(sent) });
-    const r = await a.synthesize({ text: "aa\n\nbb", voice: "v", language: "fr" });
+    const r = await a.synthesize({ text: "aa\n\nbb", voice: "v" });
     expect(sent).toEqual(["aa", "bb"]); // separators are not sent; paragraphs intact
     expect(r.charTimes).toHaveLength(6); // aa(2) + \n\n(2) + bb(2)
     // "bb" starts after "aa"'s duration (0.1s), separators pinned to the boundary.

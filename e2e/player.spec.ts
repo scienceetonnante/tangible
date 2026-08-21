@@ -3,7 +3,7 @@ import { readFileSync } from "node:fs";
 import { buildIndex, evaluate } from "../packages/core/dist/index.js";
 
 // Compiled tracks (produced by prepare.mjs) — the ground truth for seek checks.
-const tracks = JSON.parse(readFileSync("lessons/unit-circle/build/fr/tracks.json", "utf8"));
+const tracks = JSON.parse(readFileSync("lessons/unit-circle/build/lesson/tracks.json", "utf8"));
 const idx = buildIndex(tracks.tracks, {
   theta: { type: { kind: "scalar" }, default: 0, interpolate: "lerp", ownership: "script" },
 });

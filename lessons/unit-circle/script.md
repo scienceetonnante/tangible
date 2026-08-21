@@ -1,6 +1,5 @@
 ---
 title: The unit circle
-language: en
 ---
 
 @scene(circle)

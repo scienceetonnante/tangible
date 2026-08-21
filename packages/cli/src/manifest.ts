@@ -6,14 +6,13 @@ import { parse as parseYaml } from "yaml";
 
 export interface Manifest {
   id: string;
-  title: Record<string, string>;
+  title: string;
   scene: string;
-  languages: string[];
-  voice: Record<string, string>;
+  voice: string;
   defaults: { anticipation: number; ease: string; transition: number };
   tts?: { speed?: number };
   assistant?: {
-    context: Record<string, string>;
+    context: string;
     commandable: string[];
   };
 }

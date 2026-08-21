@@ -24,7 +24,6 @@ describe("HuggingFaceVoiceAdapter", () => {
     const result = await adapter.synthesizeSegments!({
       segments: ["First.", "Second."],
       voice: "david_v1",
-      language: "fr",
     });
 
     expect(result.segmentStarts).toEqual([0, 0.25]);
@@ -36,7 +35,7 @@ describe("HuggingFaceVoiceAdapter", () => {
       "https://voice.example/generate",
     ]);
     expect(requests[0]!.authorization).toBe("Bearer secret");
-    expect(requests[0]!.body).toMatchObject({ text: "First.", language: "French", speaker: "david_v1", seed: 20260717 });
+    expect(requests[0]!.body).toMatchObject({ text: "First.", language: "English", speaker: "david_v1", seed: 20260717 });
     expect(requests[1]!.body.seed).toBe(20260718);
   });
 });

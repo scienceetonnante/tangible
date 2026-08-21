@@ -7,7 +7,7 @@ pnpm lesson check --lesson lessons/<id>
 pnpm lesson build --bundle --lesson lessons/<id>
 ```
 
-Use `--fake` only for structural review. A release bundle should contain the
+Use `--offline` only for structural review. A release bundle should contain the
 intended narration.
 
 ## Release artifact
@@ -46,7 +46,7 @@ limits. Override them only with positive integer Space variables:
 ## Safe release sequence
 
 1. Keep the Space private.
-2. Deploy the artifact and review playback, interaction, captions, and languages.
+2. Deploy the artifact and review playback, interaction, and captions.
 3. Test one real assistant question when enabled.
 4. Inspect structured request logs for safe success or error categories.
 5. Confirm browser assets contain no credentials.

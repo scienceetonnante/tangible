@@ -35,7 +35,6 @@ interface EvalCase {
 
 export interface AssistantEvalOptions {
   lessonDir: string;
-  language?: string;
   variant: AssistantPromptStyle | "both";
   real: boolean;
   out?: string;
@@ -53,7 +52,6 @@ interface EvalTurnResult {
 
 interface EvalResult {
   lessonId: string;
-  language: string;
   caseId: string;
   variant: AssistantPromptStyle;
   at: number;
@@ -63,79 +61,66 @@ interface EvalResult {
 export async function runAssistantEval(opts: AssistantEvalOptions): Promise<void> {
   const manifest = await loadManifest(opts.lessonDir);
   if (!manifest.assistant) throw new Error("assistant-eval requires an assistant-enabled lesson");
-  const languages = opts.language ? [opts.language] : manifest.languages;
   const variants: AssistantPromptStyle[] = opts.variant === "both" ? ["legacy", "structured"] : [opts.variant];
-  const jobs: Array<{ language: string; context: AssistantContext; tracks: LessonTracks; captions: string; cases: EvalCase[] }> = [];
-
-  for (const language of languages) {
-    const evalPath = join(opts.lessonDir, `assistant.eval.${language}.yaml`);
-    if (!existsSync(evalPath)) continue;
-    const buildDir = join(opts.lessonDir, "build", language);
-    const contextPath = join(buildDir, "assistant.json");
-    const tracksPath = join(buildDir, "tracks.json");
-    if (!existsSync(contextPath) || !existsSync(tracksPath)) {
-      throw new Error(`assistant-eval requires a build for [${language}]; run lesson build --fake first`);
-    }
-    const data = parseYaml(await readFile(evalPath, "utf8")) as EvalFile;
-    validateEvalFile(data, evalPath);
-    jobs.push({
-      language,
-      context: JSON.parse(await readFile(contextPath, "utf8")) as AssistantContext,
-      tracks: JSON.parse(await readFile(tracksPath, "utf8")) as LessonTracks,
-      captions: await readFile(join(buildDir, "captions.vtt"), "utf8"),
-      cases: data.cases,
-    });
+  const evalPath = join(opts.lessonDir, "assistant.eval.yaml");
+  if (!existsSync(evalPath)) throw new Error("assistant-eval found no assistant.eval.yaml file");
+  const buildDir = join(opts.lessonDir, "build", "lesson");
+  const contextPath = join(buildDir, "assistant.json");
+  const tracksPath = join(buildDir, "tracks.json");
+  if (!existsSync(contextPath) || !existsSync(tracksPath)) {
+    throw new Error("assistant-eval requires a lesson build; run lesson build --offline first");
   }
-  if (!jobs.length) throw new Error("assistant-eval found no assistant.eval.<lang>.yaml files");
+  const data = parseYaml(await readFile(evalPath, "utf8")) as EvalFile;
+  validateEvalFile(data, evalPath);
+  const context = JSON.parse(await readFile(contextPath, "utf8")) as AssistantContext;
+  const tracks = JSON.parse(await readFile(tracksPath, "utf8")) as LessonTracks;
+  const captions = await readFile(join(buildDir, "captions.vtt"), "utf8");
 
-  const requests = jobs.reduce((sum, job) => sum + job.cases.reduce((n, test) => n + test.turns.length, 0), 0) * variants.length;
+  const requests = data.cases.reduce((n, test) => n + test.turns.length, 0) * variants.length;
   console.error(`${opts.real ? "running" : "rendering"} ${requests} assistant evaluation request(s)`);
 
   const scene = await loadScene(join(opts.lessonDir, manifest.scene));
   const results: EvalResult[] = [];
-  for (const job of jobs) {
-    const sceneTracks = Object.fromEntries(Object.entries(job.tracks.tracks).filter(([param]) => param in scene.schema));
-    const index = buildIndex(sceneTracks, scene.schema);
-    const cues = parseVtt(job.captions);
-    for (const test of job.cases) {
-      for (const variant of variants) {
-        const state = { ...evaluate(index, test.at), ...test.state };
-        let temporaryAssistantState: PlainState = {};
-        const history: AssistantHistoryTurn[] = [];
-        const turns: EvalTurnResult[] = [];
-        for (const question of test.turns) {
-          const request: AssistantRequest = {
-            lessonId: manifest.id,
-            language: job.language,
+  const sceneTracks = Object.fromEntries(Object.entries(tracks.tracks).filter(([param]) => param in scene.schema));
+  const index = buildIndex(sceneTracks, scene.schema);
+  const cues = parseVtt(captions);
+  for (const test of data.cases) {
+    for (const variant of variants) {
+      const state = { ...evaluate(index, test.at), ...test.state };
+      let temporaryAssistantState: PlainState = {};
+      const history: AssistantHistoryTurn[] = [];
+      const turns: EvalTurnResult[] = [];
+      for (const question of test.turns) {
+        const request: AssistantRequest = {
+          lessonId: manifest.id,
+          question,
+          t: test.at,
+          state: { ...state },
+          position: lessonPositionAt(test.at, tracks.chapters, latestCue(cues, test.at)),
+          temporaryAssistantState: { ...temporaryAssistantState },
+          history: history.slice(-8),
+        };
+        if (!opts.real) {
+          const response = await answerQuestion(request, context, { fake: true });
+          turns.push({
             question,
-            t: test.at,
-            state: { ...state },
-            position: lessonPositionAt(test.at, job.tracks.chapters, latestCue(cues, test.at)),
-            temporaryAssistantState: { ...temporaryAssistantState },
-            history: history.slice(-8),
-          };
-          if (!opts.real) {
-            const response = await answerQuestion(request, job.context, { fake: true });
-            turns.push({
-              question,
-              providerRequest: buildAssistantProviderRequest(request, job.context, variant),
-              simulatedAnswer: response.answer,
-              simulatedBeats: response.beats,
-            });
-            history.push({ question, answer: response.answer, beats: response.beats });
-            applyAnswerState(state, response.beats);
-            temporaryAssistantState = finalAnswerState(response.beats);
-            continue;
-          }
-          const started = Date.now();
-          const response = await answerQuestion(request, job.context, { promptStyle: variant });
-          turns.push({ question, answer: response.answer, beats: response.beats, latencyMs: Date.now() - started });
+            providerRequest: buildAssistantProviderRequest(request, context, variant),
+            simulatedAnswer: response.answer,
+            simulatedBeats: response.beats,
+          });
           history.push({ question, answer: response.answer, beats: response.beats });
           applyAnswerState(state, response.beats);
           temporaryAssistantState = finalAnswerState(response.beats);
+          continue;
         }
-        results.push({ lessonId: manifest.id, language: job.language, caseId: test.id, variant, at: test.at, turns });
+        const started = Date.now();
+        const response = await answerQuestion(request, context, { promptStyle: variant });
+        turns.push({ question, answer: response.answer, beats: response.beats, latencyMs: Date.now() - started });
+        history.push({ question, answer: response.answer, beats: response.beats });
+        applyAnswerState(state, response.beats);
+        temporaryAssistantState = finalAnswerState(response.beats);
       }
+      results.push({ lessonId: manifest.id, caseId: test.id, variant, at: test.at, turns });
     }
   }
 

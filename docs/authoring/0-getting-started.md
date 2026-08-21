@@ -15,7 +15,7 @@ Create the lesson files:
 
 ```bash
 pnpm build
-pnpm lesson new my-lesson --lesson lessons/my-lesson --lang en
+pnpm lesson new my-lesson --lesson lessons/my-lesson
 ```
 
 Build `scene.ts` as an ordinary interactive website. You can write it yourself or
@@ -37,7 +37,7 @@ be manipulable, connected, visible, or easier to notice.
 
 ## 2. Write narration with scene hints
 
-Write `script.<lang>.md` as spoken prose. Add natural-language instructions inside
+Write `script.md` as spoken prose. Add natural-language instructions inside
 double brackets wherever the scene should change:
 
 ```markdown
@@ -62,7 +62,7 @@ The fast loop is:
 ```bash
 pnpm lesson ref --lesson lessons/my-lesson
 pnpm lesson check --lesson lessons/my-lesson
-pnpm lesson build --fake --bundle --lesson lessons/my-lesson
+pnpm lesson build --offline --bundle --lesson lessons/my-lesson
 ```
 
 ## Optional: Add a lesson assistant
@@ -74,11 +74,16 @@ choice of any scene parameters it may change.
 
 ## 4. Review and iterate
 
-Use a fake-voice preview for structural iteration:
+Use an offline preview for structural iteration:
 
 ```bash
-pnpm lesson preview --fake --lesson lessons/my-lesson
+pnpm lesson preview --offline --lesson lessons/my-lesson
 ```
+
+In offline mode, Narrable generates silence whose duration follows the length of
+the narration. This lets you test cue order, interaction, captions, and layout
+without an API key or a paid speech call. It does not let you judge pacing or how
+an animation aligns with the rhythm of a real voice.
 
 Review the pedagogy, interaction, visual composition, cue order, and pause
 prompts. Once the prose is stable, build with the real voice and tune timing
@@ -98,8 +103,8 @@ The core authored files are:
 ```text
 lesson.yaml          build and provider configuration
 scene.ts             scene schema, rendering, and interaction
-script.<lang>.md      spoken narration, scene hints, and formal cues
-assistant.<lang>.md  optional assistant context
+script.md            spoken narration, scene hints, and formal cues
+assistant.md         optional assistant context
 ```
 
 Generated `build/` and `.cache/` directories are never edited by hand.

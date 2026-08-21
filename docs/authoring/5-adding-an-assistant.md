@@ -22,17 +22,14 @@ Add an `assistant` section to `lesson.yaml`:
 
 ```yaml
 assistant:
-  context:
-    en: assistant.en.md
+  context: assistant.md
   commandable: []
 ```
 
-The `context` map must contain one file for every language in `languages`. An
-empty `commandable` list enables written answers without giving the assistant
+An empty `commandable` list enables written answers without giving the assistant
 control of the scene.
 
-Then create `assistant.<lang>.md` for each language. A useful context file has
-four short sections:
+Then create `assistant.md`. A useful context file has four short sections:
 
 ```markdown
 # Scene and purpose
@@ -70,9 +67,8 @@ The server turns the built artifact into a readable system message. It does not
 send the raw `assistant.json` object to the model. The system message contains,
 in this order:
 
-1. The assistant's teaching role, limitations, lesson language, and scene
-   capabilities.
-2. The complete authored `assistant.<lang>.md` guide, preserved as lesson-specific
+1. The assistant's teaching role, limitations, and scene capabilities.
+2. The complete authored `assistant.md` guide, preserved as lesson-specific
    instructions.
 3. A readable list of every scene value. Each entry gives its internal name,
    label when available, type, range, default, transition behavior, and whether
@@ -151,8 +147,7 @@ Add only parameters that have a clear explanatory purpose:
 
 ```yaml
 assistant:
-  context:
-    en: assistant.en.md
+  context: assistant.md
   commandable:
     - theta
     - show.projection
@@ -167,9 +162,9 @@ range.
 Describe how to use the allowed controls under `# Answer guidance`. For example,
 tell the assistant to establish a comparison before explaining it, to use matched
 conditions for a fair comparison, or to avoid changing more than one variable at
-a time. The [unit-circle assistant](../../lessons/unit-circle/assistant.en.md)
+a time. The [unit-circle assistant](../../lessons/unit-circle/assistant.md)
 shows a small visual assistant. The
-[optimizers assistant](../../lessons/optimizers/assistant.en.md) shows how to
+[optimizers assistant](../../lessons/optimizers/assistant.md) shows how to
 constrain a larger set of controls.
 
 Assistant scene changes are temporary. They appear over the paused lesson state
@@ -202,14 +197,13 @@ pnpm lesson ref --lesson lessons/my-lesson
 pnpm lesson check --lesson lessons/my-lesson
 ```
 
-`lesson check` confirms that every language has a context file and that every
-commandable parameter exists in the scene schema. It does not contact the answer
-provider.
+`lesson check` confirms that the context file exists and that every commandable
+parameter exists in the scene schema. It does not contact the answer provider.
 
-Build and preview with fake providers first:
+Build and preview offline first:
 
 ```bash
-pnpm lesson preview --fake --lesson lessons/my-lesson
+pnpm lesson preview --offline --lesson lessons/my-lesson
 ```
 
 Start playback, pause it, and submit a question. This verifies the question
@@ -217,7 +211,7 @@ interface and request path without credentials or provider costs. The fake answe
 is deterministic and generic, so it does not test the quality of the authored
 context.
 
-For repeatable prompt review, add `assistant.eval.<lang>.yaml` beside the lesson:
+For repeatable prompt review, add `assistant.eval.yaml` beside the lesson:
 
 ```yaml
 cases:
@@ -234,7 +228,7 @@ Create a fake build, then render the complete provider requests without making
 network calls:
 
 ```bash
-pnpm lesson build --fake --lesson lessons/my-lesson
+pnpm lesson build --offline --lesson lessons/my-lesson
 pnpm lesson assistant-eval --lesson lessons/my-lesson -o assistant-eval.json
 ```
 
@@ -257,10 +251,10 @@ pnpm lesson assistant-eval --lesson lessons/my-lesson --real -o assistant-result
 ```
 
 To test a real answer without rebuilding narration through a real provider,
-first create a fake bundle and then serve that existing bundle without `--fake`:
+first create an offline bundle and then serve that existing bundle:
 
 ```bash
-pnpm lesson build --fake --bundle --lesson lessons/my-lesson
+pnpm lesson build --offline --bundle --lesson lessons/my-lesson
 pnpm lesson serve --lesson lessons/my-lesson
 ```
 
@@ -283,7 +277,7 @@ assistant's pedagogy and scientific accuracy.
 
 Before release:
 
-1. Test representative questions in every lesson language.
+1. Test representative questions at several lesson positions.
 2. Test each commandable parameter, including the boundaries of scalar ranges.
 3. Confirm that resuming and asking another question remove temporary changes.
 4. Confirm that browser assets contain no credentials.

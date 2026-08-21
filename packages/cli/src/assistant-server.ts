@@ -48,9 +48,8 @@ export function createAssistantApi(opts: AssistantServerOptions): AssistantApiHa
     let stage: "request" | "server" | "provider" = "request";
     try {
       request = await readJson(req) as AssistantRequest;
-      if (typeof request?.language !== "string" || !/^[a-zA-Z0-9-]+$/.test(request.language)) throw new Error("invalid language");
       stage = "server";
-      const context = JSON.parse(await readFile(join(opts.siteDir, request.language, "assistant.json"), "utf8")) as AssistantContext;
+      const context = JSON.parse(await readFile(join(opts.siteDir, "assistant.json"), "utf8")) as AssistantContext;
       stage = "request";
       validateAssistantRequest(request, context);
 
@@ -72,7 +71,6 @@ export function createAssistantApi(opts: AssistantServerOptions): AssistantApiHa
         event: "assistant.request",
         requestId,
         lessonId: request.lessonId,
-        language: request.language,
         questionChars: request.question?.length,
         historyTurns: request.history?.length,
       });
@@ -100,7 +98,6 @@ export function createAssistantApi(opts: AssistantServerOptions): AssistantApiHa
         event: "assistant.error",
         requestId,
         lessonId: request?.lessonId,
-        language: request?.language,
         model: opts.fake ? "fake" : ASSISTANT_MODEL,
         category,
         ...(error instanceof AssistantProviderError ? { providerStatus: error.status } : {}),
@@ -180,7 +177,7 @@ function limited(
   limit: "client" | "global" | "concurrent",
   retryAfter: number,
 ): true {
-  log({ event: "assistant.limited", requestId, lessonId: request.lessonId, language: request.language, limit });
+  log({ event: "assistant.limited", requestId, lessonId: request.lessonId, limit });
   return json(res, 429, { error: "too many questions; try again shortly" }, { "retry-after": retryAfter });
 }
 

@@ -56,11 +56,10 @@ export interface Keyframe {
   ease?: string; // easing INTO this keyframe; absent = hold/snap
 }
 
-/** The single build artifact the player consumes, per language. */
+/** The single build artifact the player consumes. */
 export interface LessonTracks {
   version: 1;
   lessonId: string;
-  language: string;
   duration: number; // seconds, = audio duration
   audio: { src: string[]; hash: string };
   schemaHash: string;
@@ -72,10 +71,10 @@ export interface LessonTracks {
   recorded: Record<string, string>; // trackId → asset path
 }
 
-/** A board entry: KaTeX/text source per language, with tag ids for highlight targets. */
+/** A board entry with tag ids for highlight targets. */
 export interface BoardItem {
   kind: "katex" | "text";
-  source: Record<string, string>; // language → source
+  source: string;
 }
 
 /** Full evaluated scene state at a time t: param name → value. */
@@ -85,7 +84,6 @@ export type PlainState = Record<string, ParamValue>;
 export interface AssistantContext {
   version: 1;
   lessonId: string;
-  language: string;
   title: string;
   guide: string;
   script: string;
@@ -118,7 +116,6 @@ export interface LessonPosition {
 
 export interface AssistantRequest {
   lessonId: string;
-  language: string;
   question: string;
   t: number;
   state: PlainState;

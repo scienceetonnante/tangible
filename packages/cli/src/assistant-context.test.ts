@@ -7,13 +7,12 @@ import type { Manifest } from "./manifest.js";
 
 const manifest: Manifest = {
   id: "circle",
-  title: { en: "Circle" },
+  title: "Circle",
   scene: "scene.ts",
-  languages: ["en"],
-  voice: { en: "elevenlabs:voice" },
+  voice: "elevenlabs:voice",
   defaults: { anticipation: -0.2, ease: "linear", transition: 1 },
   tts: { speed: 0.9 },
-  assistant: { context: { en: "assistant.en.md" }, commandable: ["theta"] },
+  assistant: { context: "assistant.md", commandable: ["theta"] },
 };
 
 const scene = {
@@ -33,13 +32,13 @@ const scene = {
 describe("assistant context", () => {
   it("combines authored guidance with the full script and scene contract", async () => {
     const dir = await mkdtemp(join(tmpdir(), "narrable-assistant-"));
-    await mkdir(join(dir, "build/en"), { recursive: true });
-    await writeFile(join(dir, "assistant.en.md"), "The red point controls the angle.\n");
+    await mkdir(join(dir, "build/lesson"), { recursive: true });
+    await writeFile(join(dir, "assistant.md"), "The red point controls the angle.\n");
     const script = "The angle is @cue(theta = 3.14) half a turn.";
 
-    await emitAssistantContext(dir, manifest, scene, "en", script);
+    await emitAssistantContext(dir, manifest, scene, script);
 
-    const got = JSON.parse(await readFile(join(dir, "build/en/assistant.json"), "utf8"));
+    const got = JSON.parse(await readFile(join(dir, "build/lesson/assistant.json"), "utf8"));
     expect(got.guide).toContain("red point");
     expect(got.script).toBe(script);
     expect(got.narration).toBe("The angle is half a turn.");
@@ -49,9 +48,9 @@ describe("assistant context", () => {
 
   it("rejects an unknown commandable parameter", async () => {
     const dir = await mkdtemp(join(tmpdir(), "narrable-assistant-"));
-    await mkdir(join(dir, "build/en"), { recursive: true });
-    await writeFile(join(dir, "assistant.en.md"), "x");
+    await mkdir(join(dir, "build/lesson"), { recursive: true });
+    await writeFile(join(dir, "assistant.md"), "x");
     const bad = { ...manifest, assistant: { ...manifest.assistant!, commandable: ["missing"] } };
-    await expect(emitAssistantContext(dir, bad, scene, "en", "Hello.")).rejects.toThrow('unknown parameter "missing"');
+    await expect(emitAssistantContext(dir, bad, scene, "Hello.")).rejects.toThrow('unknown parameter "missing"');
   });
 });

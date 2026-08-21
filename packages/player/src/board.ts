@@ -11,14 +11,14 @@ export class Board {
   readonly el: HTMLElement;
   private disposers: (() => void)[] = [];
 
-  constructor(store: StateStore, items: Record<string, BoardItem>, language: string) {
+  constructor(store: StateStore, items: Record<string, BoardItem>) {
     this.el = document.createElement("div");
     this.el.className = "xv-board-inner";
 
     for (const [id, item] of Object.entries(items)) {
       const itemEl = document.createElement("div");
       itemEl.dataset.id = id;
-      const source = item.source[language] ?? "";
+      const source = item.source;
       if (item.kind === "katex") {
         itemEl.innerHTML = katex.renderToString(source, { trust: true, strict: false, throwOnError: false });
       } else {

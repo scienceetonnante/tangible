@@ -1,30 +1,28 @@
-// Shared fixtures for compiler tests: the original worked example and a
-// matching scene description.
+// Shared fixtures for compiler tests: a worked example and matching scene.
 
 import type { SceneInfo } from "./check.js";
 
-export const SCRIPT_FR = `---
-title: Le cercle unité
+export const SCRIPT = `---
+title: The unit circle
 scene: ./scene.ts
-language: fr
-voice: elevenlabs:antoine
+voice: elevenlabs:voice
 ---
 
 @scene(circle)
-@chapter(Le cercle et l'angle)
+@chapter(The circle and the angle)
 
-Voici un cercle de rayon un. Le point rouge est repéré par un angle,
-qu'on appelle @cue(show.thetaLabel = true) thêta. Regardez ce qui se
-passe quand on le fait @cue(theta -> 6.2832, over: 4s, ease: inOutCubic)
-varier : le point fait le tour complet du cercle.
+Here is a circle of radius one. The red point is located by an angle
+we call @cue(show.thetaLabel = true) theta. Watch what happens when we
+let it @cue(theta -> 6.2832, over: 4s, ease: inOutCubic) vary: the point
+goes all the way around the circle.
 
-@show(projection) Projetons maintenant ce point sur l'axe horizontal.
-La longueur obtenue, c'est @cue(show.cosLabel = true) le cosinus de
-thêta. @board(cosdef: $x = \\cos\\theta$)
+@show(projection) Now let's project this point onto the horizontal axis.
+The length we get is @cue(show.cosLabel = true) the cosine of theta.
+@board(cosdef: $x = \\cos\\theta$)
 
-@pause(prompt: "Déplacez le point rouge vous-même et observez le cosinus.")
+@pause(prompt: "Drag the red point yourself and watch the cosine.")
 
-@cue(theta -> 1.5708, over: 2s) Reprenons. À quatre-vingt-dix degrés…
+@cue(theta -> 1.5708, over: 2s) Let's continue. At ninety degrees…
 `;
 
 export const SCENE: SceneInfo = {

@@ -1,5 +1,5 @@
 // Stage 6: emit — assemble the LessonTracks artifact, generate sentence-level VTT
-// captions, and write build/<lang>/{tracks.json,captions.vtt,audio.*}. Output is a
+// captions, and write {tracks.json,captions.vtt,audio.*}. Output is a
 // pure function of (script, timing, scene, options) — verified by a repeatability test.
 
 import { writeFile, mkdir } from "node:fs/promises";
@@ -19,7 +19,6 @@ type Timing = Pick<TtsResult, "charTimes" | "wordTimes" | "duration">;
 
 export interface CompileOptions {
   lessonId: string;
-  language: string;
   file?: string; // source filename, so build-path warnings carry it (not "<script>")
   defaults: { anticipation: number; ease: string; transition: number };
   audioSrc: string[];
@@ -41,7 +40,6 @@ export function compile(script: string, timing: Timing, scene: SceneInfo, opts: 
   if (authored.diagnostics.length) throw new Error(formatDiagnostic(authored.diagnostics[0]!));
   const cues = resolve(parsed.directives, parsed.narration, timing, { anticipation: opts.defaults.anticipation });
   const ex = expand(cues, scene, {
-    language: opts.language,
     defaults: { ease: opts.defaults.ease, transition: opts.defaults.transition },
     recorded: opts.recorded,
     recordedPaths: opts.recordedPaths,
@@ -51,7 +49,6 @@ export function compile(script: string, timing: Timing, scene: SceneInfo, opts: 
   const tracks: LessonTracks = {
     version: 1,
     lessonId: opts.lessonId,
-    language: opts.language,
     duration: timing.duration,
     audio: { src: opts.audioSrc, hash: opts.audioHash },
     schemaHash: schemaHash(scene.schema),
@@ -126,7 +123,7 @@ function stamp(t: number): string {
   return `${p(h)}:${p(m)}:${p(s)}.${p(millis, 3)}`;
 }
 
-/** Write the compiled artifacts to build/<lang>/. */
+/** Write the compiled artifacts to a build directory. */
 export async function emit(outDir: string, compiled: Compiled, audio: Uint8Array): Promise<void> {
   await mkdir(outDir, { recursive: true });
   await writeFile(join(outDir, "tracks.json"), JSON.stringify(compiled.tracks, null, 2));

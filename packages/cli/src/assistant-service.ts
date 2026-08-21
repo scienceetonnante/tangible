@@ -130,7 +130,7 @@ export function validateAnswer(beats: unknown, context: AssistantContext): asser
 
 export function validateAssistantRequest(request: AssistantRequest, context: AssistantContext): void {
   if (!request || typeof request !== "object" || Array.isArray(request)) throw new Error("question request must be an object");
-  if (request.lessonId !== context.lessonId || request.language !== context.language) throw new Error("question does not match the lesson context");
+  if (request.lessonId !== context.lessonId) throw new Error("question does not match the lesson context");
   if (typeof request.question !== "string" || !request.question.trim() || request.question.length > 1000) {
     throw new Error("question must contain 1 to 1000 characters");
   }
@@ -259,11 +259,10 @@ function fakeAnswer(context: AssistantContext): AnswerBeat[] {
   if (context.commandable.includes("theta")) {
     const set: Record<string, ParamValue> = { theta: Math.PI / 2 };
     for (const key of ["show.thetaLabel", "show.projection", "show.cosLabel"]) if (context.commandable.includes(key)) set[key] = true;
-    const french = context.language === "fr";
     return [
-      { say: french ? "Regardons un quart de tour." : "Let’s look at a quarter turn.", set, over: 0.4 },
-      { say: french ? "La coordonnée horizontale du point, et donc son cosinus, vaut zéro." : "The point’s horizontal coordinate, and therefore its cosine, is zero.", set: {}, over: 0 },
+      { say: "Let’s look at a quarter turn.", set, over: 0.4 },
+      { say: "The point’s horizontal coordinate, and therefore its cosine, is zero.", set: {}, over: 0 },
     ];
   }
-  return [{ say: context.language === "fr" ? "Regardons cette situation dans la leçon." : "Let’s look at this situation in the lesson.", set: {}, over: 0 }];
+  return [{ say: "Let’s look at this situation in the lesson.", set: {}, over: 0 }];
 }

@@ -1,6 +1,6 @@
 ---
 name: create-narrable-lesson
-description: Create, continue, review, or deploy a Narrable interactive lesson from a human-built scene and narration. Use for work in lessons/, including scene design, natural-language scene hints, formal narration cues, fake or real builds, visual and interaction review, assistant context, and Hugging Face Space releases.
+description: Create, continue, review, or deploy a Narrable interactive lesson from a human-built scene and narration. Use for work in lessons/, including scene design, natural-language scene hints, formal narration cues, offline or real-voice builds, visual and interaction review, assistant context, and Hugging Face Space releases.
 ---
 
 # Create a Narrable lesson
@@ -19,7 +19,6 @@ Always read:
 
 Read additional docs when the stage requires them:
 
-- concept work: `docs/authoring/1-designing-a-lesson.md`;
 - narration or choreography: `docs/authoring/3-writing-narration.md` and
   `docs/reference/directives.md`;
 - scene work: `docs/authoring/2-building-a-scene.md` and
@@ -51,7 +50,7 @@ For a new lesson, scaffold it:
 
 ```bash
 pnpm build
-pnpm lesson new <id> --lesson lessons/<id> --lang <code>
+pnpm lesson new <id> --lesson lessons/<id>
 ```
 
 The author may already know the intended lesson and may begin by coding the scene
@@ -74,7 +73,7 @@ approved.
 
 ## 2. Preserve narration and interpret hints
 
-Treat prose outside hints and formal directives in `script.<lang>.md` as
+Treat prose outside hints and formal directives in `script.md` as
 human-owned and spoken verbatim. Write natural-language hints in double brackets:
 
 ```markdown
@@ -94,7 +93,7 @@ simultaneous motion.
 
 Keep hints until their cues have been reviewed; then remove them or keep them
 synchronized as intent hints. Run `lesson check` after every meaningful cue
-pass. Use fake TTS during structural iteration.
+pass. Use `--offline` during structural iteration so no speech provider is called.
 
 ## 4. Review in layers
 
@@ -102,9 +101,9 @@ Build a bundle and inspect representative `state` and `frame` outputs across eve
 chapter. Then review the live preview for interaction, resizing, pause/resume,
 seeking, and touch where relevant.
 
-Ask the human to review pedagogy and visual direction. Iterate with fake narration
-until prose and cue order are stable. Build with the real voice only then, and tune
-timing to its prosody without changing the teaching argument.
+Ask the human to review pedagogy and visual direction. Iterate with silent
+placeholder audio until prose and cue order are stable. Build with the real voice
+only then, and tune timing to its prosody without changing the teaching argument.
 
 Before release, follow every item in `docs/authoring/4-reviewing.md` and run the
 lesson-specific tests plus `pnpm lesson check`.

@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { compile, toVtt } from "./emit.js";
-import { SCRIPT_FR, SCENE } from "./fixtures.js";
+import { SCRIPT, SCENE } from "./fixtures.js";
 import { parseScript } from "./parse.js";
 import type { SceneInfo } from "./check.js";
 
@@ -17,7 +17,6 @@ function fakeTiming(text: string) {
 
 const OPTS = {
   lessonId: "unit-circle",
-  language: "fr",
   defaults: { anticipation: -0.2, ease: "inOutCubic", transition: 1.0 },
   audioSrc: ["audio.wav"],
   audioHash: "deadbeef",
@@ -25,11 +24,10 @@ const OPTS = {
 
 describe("compile — LessonTracks assembly", () => {
   it("assembles a version-1 artifact with schemaHash and all sections", () => {
-    const timing = fakeTiming(parseScript(SCRIPT_FR).narration);
-    const { tracks } = compile(SCRIPT_FR, timing, SCENE, OPTS);
+    const timing = fakeTiming(parseScript(SCRIPT).narration);
+    const { tracks } = compile(SCRIPT, timing, SCENE, OPTS);
     expect(tracks.version).toBe(1);
     expect(tracks.lessonId).toBe("unit-circle");
-    expect(tracks.language).toBe("fr");
     expect(tracks.duration).toBeCloseTo(timing.duration, 9);
     expect(tracks.schemaHash).toMatch(/^[0-9a-f]+$/);
     expect(tracks.captions.src).toBe("captions.vtt");
@@ -40,9 +38,9 @@ describe("compile — LessonTracks assembly", () => {
 
 describe("compile — determinism", () => {
   it("is byte-identical across runs for the same inputs", () => {
-    const timing = fakeTiming(parseScript(SCRIPT_FR).narration);
-    const a = compile(SCRIPT_FR, timing, SCENE, OPTS);
-    const b = compile(SCRIPT_FR, timing, SCENE, OPTS);
+    const timing = fakeTiming(parseScript(SCRIPT).narration);
+    const a = compile(SCRIPT, timing, SCENE, OPTS);
+    const b = compile(SCRIPT, timing, SCENE, OPTS);
     expect(JSON.stringify(a.tracks)).toBe(JSON.stringify(b.tracks));
     expect(a.vtt).toBe(b.vtt);
   });
@@ -73,11 +71,11 @@ describe("compile — determinism", () => {
 
 describe("toVtt", () => {
   it("emits WEBVTT with well-formed timestamps and sentence text", () => {
-    const text = "Bonjour le monde. Ceci est un test.";
+    const text = "Hello world. This is a test.";
     const vtt = toVtt(text, fakeTiming(text));
     expect(vtt.startsWith("WEBVTT")).toBe(true);
-    expect(vtt).toContain("Bonjour le monde.");
-    expect(vtt).toContain("Ceci est un test.");
+    expect(vtt).toContain("Hello world.");
+    expect(vtt).toContain("This is a test.");
     expect(vtt).toMatch(/\d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}:\d{2}:\d{2}\.\d{3}/);
   });
 });

@@ -22,7 +22,7 @@ For a new lesson or a substantial lesson-production task, use the repo-local
 2. Ask the human to test the scene before formal choreography.
 3. Preserve narration prose and translate `[[natural-language hint]]` into
    schema-valid directives.
-4. Iterate with fake providers, then tune against real narration.
+4. Iterate offline, then tune against real narration.
 5. Deploy only when the user has requested deployment and the private build has
    passed the release checklist.
 
@@ -50,8 +50,8 @@ After narration exists, use the complete lesson loop:
 ```bash
 pnpm lesson ref --lesson lessons/<id>
 pnpm lesson check --lesson lessons/<id>
-pnpm lesson build --fake --bundle --lesson lessons/<id>
-pnpm lesson preview --fake --lesson lessons/<id>
+pnpm lesson build --offline --bundle --lesson lessons/<id>
+pnpm lesson preview --offline --lesson lessons/<id>
 ```
 
 Inspect representative states and frames, then test live interaction, resizing,
