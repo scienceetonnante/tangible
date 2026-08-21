@@ -8,6 +8,7 @@ export * from "./reconciler.js";
 export * from "./interaction.js";
 export * from "./board.js";
 export * from "./captions.js";
+export * from "./lesson-position.js";
 export * from "./pause-gate.js";
 export * from "./chrome.js";
 export * from "./answer-timeline.js";

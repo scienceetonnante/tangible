@@ -115,13 +115,21 @@ describe("Player composition", () => {
   it("sends a persistent anonymous client id with assistant requests", async () => {
     localStorage.clear();
     let requestHeaders: Headers | undefined;
+    let requestBody: Record<string, unknown> | undefined;
     const fetchImpl: typeof fetch = async (_input, init) => {
       requestHeaders = new Headers(init?.headers);
+      requestBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
       return new Response(JSON.stringify({ answer: "At zero.", beats: [{ say: "At zero.", set: {}, over: 0 }] }));
     };
     const mount = document.createElement("div");
     document.body.append(mount);
-    const player = new Player({ mount, scene: stubScene([]), tracks, assistant: { context: assistantContext, fetchImpl } });
+    const player = new Player({
+      mount,
+      scene: stubScene([]),
+      tracks,
+      captionsVtt: "WEBVTT\n\n00:00:00.000 --> 00:00:10.000\nVisible caption.\n",
+      assistant: { context: assistantContext, fetchImpl },
+    });
     player.audio.dispatchEvent(new Event("play"));
     player.audio.dispatchEvent(new Event("pause"));
     const input = mount.querySelector(".xv-assistant-input") as HTMLInputElement;
@@ -131,8 +139,37 @@ describe("Player composition", () => {
 
     expect(requestHeaders!.get("x-narrable-client-id")).toMatch(/^[a-f0-9]{32}$/);
     expect(localStorage.getItem("narrable.assistantClientId")).toBe(requestHeaders!.get("x-narrable-client-id"));
+    expect(requestBody).toMatchObject({
+      position: { chapter: "Intro", narrationJustHeard: "Visible caption.", pausePrompt: null },
+      temporaryAssistantState: {},
+    });
     player.dispose();
     mount.remove();
+  });
+
+  it("identifies temporary values left by the preceding answer", async () => {
+    let requestBody: Record<string, unknown> | undefined;
+    const fetchImpl: typeof fetch = async (_input, init) => {
+      requestBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
+      return new Response(JSON.stringify({ answer: "It is eight.", beats: [{ say: "It is eight.", set: {}, over: 0 }] }));
+    };
+    const mount = document.createElement("div");
+    const player = new Player({ mount, scene: stubScene([]), tracks, assistant: { context: assistantContext, fetchImpl } });
+    player.audio.dispatchEvent(new Event("play"));
+    player.audio.dispatchEvent(new Event("pause"));
+    const active = {
+      timeline: new AnswerTimeline(assistantContext.schema, { theta: 0 }, [{ t: 0, set: { theta: 8 }, over: 0 }]),
+      claimed: new Set<string>(),
+      startedAt: performance.now() - 1000,
+    };
+    (player as unknown as { activeAnswer: typeof active }).activeAnswer = active;
+    const input = mount.querySelector(".xv-assistant-input") as HTMLInputElement;
+    input.value = "What value is this?";
+    mount.querySelector(".xv-assistant-form")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    await vi.waitFor(() => expect(requestBody).toBeDefined());
+
+    expect(requestBody).toMatchObject({ state: { theta: 8 }, temporaryAssistantState: { theta: 8 } });
+    player.dispose();
   });
 
   it("composes answer state over the lesson until the learner claims that parameter", () => {
@@ -141,7 +178,6 @@ describe("Player composition", () => {
     const player = new Player({ mount, scene: stubScene(seen), tracks, assistant: { context: assistantContext } });
     const active = {
       timeline: new AnswerTimeline(assistantContext.schema, { theta: 0 }, [{ t: 0, set: { theta: 8 }, over: 0 }]),
-      state: {},
       claimed: new Set<string>(),
       startedAt: performance.now() - 1000,
     };

@@ -16,6 +16,7 @@ import { Chrome } from "./chrome.js";
 import { parseDevParams } from "./url.js";
 import { AnswerTimeline, timeAnswerBeats } from "./answer-timeline.js";
 import { AssistantPanel } from "./assistant-panel.js";
+import { lessonPositionAt } from "./lesson-position.js";
 
 declare global {
   interface Window {
@@ -40,7 +41,6 @@ export interface PlayerOptions {
 
 interface ActiveAnswer {
   timeline: AnswerTimeline;
-  state: PlainState;
   claimed: Set<string>;
   startedAt: number;
 }
@@ -73,8 +73,10 @@ export class Player {
   private assistantFetch?: typeof fetch;
   private assistantEndpoint = "/api/answer";
   private assistantClientId?: string;
+  private tracks: LessonTracks;
 
   constructor(opts: PlayerOptions) {
+    this.tracks = opts.tracks;
     const schema: Schema = { ...opts.scene.schema, ...boardSchema(opts.tracks.tracks) };
     this.index = buildIndex(opts.tracks.tracks, schema);
     this.store = new StateStore(schema);
@@ -192,13 +194,7 @@ export class Player {
     const dt = Math.max(0, t - this.lastFrameT);
     this.lastFrameT = t;
     for (const key of this.store.keys()) this.displayStore.set(key, this.store.plain[key]!);
-    if (this.activeAnswer) {
-      const elapsed = (performance.now() - this.activeAnswer.startedAt) / 1000;
-      const answer = this.activeAnswer.timeline.evaluate(elapsed, this.activeAnswer.state);
-      for (const [param, value] of Object.entries(answer)) {
-        if (!this.activeAnswer.claimed.has(param)) this.displayStore.set(param, value);
-      }
-    }
+    for (const [param, value] of Object.entries(this.temporaryAnswerState())) this.displayStore.set(param, value);
     this.host.render(this.displayStore.plain, dt);
     this.captions.update(t);
     this.pauseGate.update(t);
@@ -213,6 +209,8 @@ export class Player {
   }
 
   private async ask(question: string, context: AssistantContext): Promise<void> {
+    const temporaryAssistantState = this.temporaryAnswerState();
+    const visibleState = { ...this.store.plain, ...temporaryAssistantState };
     this.clearActiveAnswer();
     this.answerAbort = new AbortController();
     this.assistant!.setBusy(true, "Thinking…");
@@ -221,7 +219,9 @@ export class Player {
       language: context.language,
       question,
       t: this.clock.t,
-      state: { ...this.displayStore.plain },
+      state: visibleState,
+      position: lessonPositionAt(this.clock.t, this.tracks.chapters, this.captions.latestText(this.clock.t), this.pauseGate.activePrompt),
+      temporaryAssistantState,
       history: this.assistant!.history.slice(-8),
     };
     try {
@@ -248,7 +248,6 @@ export class Player {
     for (const param of context.commandable) schema[param] = context.schema[param]!;
     this.activeAnswer = {
       timeline: new AnswerTimeline(schema, this.displayStore.plain, timeAnswerBeats(answer.beats)),
-      state: {},
       claimed: new Set(),
       startedAt: performance.now(),
     };
@@ -257,6 +256,14 @@ export class Player {
 
   private clearActiveAnswer(): void {
     this.activeAnswer = undefined;
+  }
+
+  private temporaryAnswerState(): PlainState {
+    if (!this.activeAnswer) return {};
+    const elapsed = (performance.now() - this.activeAnswer.startedAt) / 1000;
+    const answer = this.activeAnswer.timeline.evaluate(elapsed);
+    for (const param of this.activeAnswer.claimed) delete answer[param];
+    return answer;
   }
 
   private cancelAnswer(status = ""): void {

@@ -41,6 +41,24 @@ export function activeCue(cues: Cue[], t: number): string {
   return "";
 }
 
+/** Current or most recently started cue, including gaps after it has ended. */
+export function latestCue(cues: Cue[], t: number): string {
+  let lo = 0;
+  let hi = cues.length - 1;
+  let latest = "";
+  while (lo <= hi) {
+    const mid = (lo + hi) >> 1;
+    const cue = cues[mid]!;
+    if (cue.start <= t) {
+      latest = cue.text;
+      lo = mid + 1;
+    } else {
+      hi = mid - 1;
+    }
+  }
+  return latest;
+}
+
 export class Captions {
   readonly el: HTMLElement;
   private cues: Cue[];
@@ -59,5 +77,9 @@ export class Captions {
   setVisible(on: boolean): void {
     this.visible = on;
     if (!on) this.el.textContent = "";
+  }
+
+  latestText(t: number): string {
+    return latestCue(this.cues, t);
   }
 }

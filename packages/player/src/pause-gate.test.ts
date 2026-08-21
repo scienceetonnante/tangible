@@ -29,7 +29,7 @@ beforeEach(() => {
   media = new FakeMedia();
   media.paused = false; // playing
   clock = new AudioClock(media);
-  gate = new PauseGate(clock, [{ t: 5, id: "p0" }]);
+  gate = new PauseGate(clock, [{ t: 5, id: "p0", prompt: "Try it." }]);
 });
 
 describe("PauseGate", () => {
@@ -38,6 +38,7 @@ describe("PauseGate", () => {
     gate.update(5.01);
     expect(media.paused).toBe(true);
     expect(media.currentTime).toBe(5);
+    expect(gate.activePrompt).toBe("Try it.");
   });
 
   it("resumes from the normal play control and does not re-trigger", () => {
@@ -45,6 +46,7 @@ describe("PauseGate", () => {
     gate.update(5.01);
     clock.play();
     expect(media.paused).toBe(false);
+    expect(gate.activePrompt).toBeNull();
     gate.update(5.6); // still past the gate, already satisfied
     expect(media.paused).toBe(false);
   });

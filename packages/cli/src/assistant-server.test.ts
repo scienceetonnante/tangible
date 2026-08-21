@@ -29,6 +29,8 @@ const REQUEST: AssistantRequest = {
   question: "Why?",
   t: 0,
   state: { theta: 0 },
+  position: { chapter: "Intro", narrationJustHeard: "Circle.", pausePrompt: null },
+  temporaryAssistantState: {},
   history: [],
 };
 

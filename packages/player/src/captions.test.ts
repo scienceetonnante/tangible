@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseVtt, activeCue } from "./captions.js";
+import { parseVtt, activeCue, latestCue } from "./captions.js";
 
 const VTT = `WEBVTT
 
@@ -17,6 +17,18 @@ describe("parseVtt", () => {
       { start: 0, end: 2.5, text: "Bonjour le monde." },
       { start: 2.5, end: 5, text: "Ceci est un test." },
     ]);
+  });
+});
+
+describe("latestCue", () => {
+  const cues = parseVtt(VTT);
+
+  it("returns no future narration before the first cue", () => {
+    expect(latestCue(cues, -0.1)).toBe("");
+  });
+
+  it("retains the most recently heard sentence during a gap", () => {
+    expect(latestCue(cues, 6)).toBe("Ceci est un test.");
   });
 });
 

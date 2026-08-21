@@ -74,7 +74,7 @@ function structuredPrompt(context: AssistantContext): string {
     "",
     "Put a scene change in the same beat as the text that introduces that visual state. Omit unchanged controls. Do not change the scene merely to make an answer look active.",
     "Every `say` must remain understandable if the learner changes the scene. Never mention internal control names in `say`.",
-    "The current-turn user message contains the learner’s question, lesson time, and visible scene state. Earlier user and assistant messages are the retained conversation.",
+    "The current-turn user message contains the learner’s question, the latest lesson position, the visible scene state, and any temporary values left by your preceding answer. Earlier user and assistant messages are the retained conversation.",
     "",
     "# Output example",
     "",

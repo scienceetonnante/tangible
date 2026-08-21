@@ -16,6 +16,7 @@ import {
   type PlainState,
 } from "@narrable/core";
 import { parse as parseYaml } from "yaml";
+import { lessonPositionAt, latestCue, parseVtt } from "@narrable/player";
 import { loadScene } from "./scene-loader.js";
 import { loadManifest } from "./manifest.js";
 import { answerQuestion, buildAssistantProviderRequest } from "./assistant-service.js";
@@ -62,7 +63,7 @@ export async function runAssistantEval(opts: AssistantEvalOptions): Promise<void
   if (!manifest.assistant) throw new Error("assistant-eval requires an assistant-enabled lesson");
   const languages = opts.language ? [opts.language] : manifest.languages;
   const variants: AssistantPromptStyle[] = opts.variant === "both" ? ["legacy", "structured"] : [opts.variant];
-  const jobs: Array<{ language: string; context: AssistantContext; tracks: LessonTracks; cases: EvalCase[] }> = [];
+  const jobs: Array<{ language: string; context: AssistantContext; tracks: LessonTracks; captions: string; cases: EvalCase[] }> = [];
 
   for (const language of languages) {
     const evalPath = join(opts.lessonDir, `assistant.eval.${language}.yaml`);
@@ -79,6 +80,7 @@ export async function runAssistantEval(opts: AssistantEvalOptions): Promise<void
       language,
       context: JSON.parse(await readFile(contextPath, "utf8")) as AssistantContext,
       tracks: JSON.parse(await readFile(tracksPath, "utf8")) as LessonTracks,
+      captions: await readFile(join(buildDir, "captions.vtt"), "utf8"),
       cases: data.cases,
     });
   }
@@ -92,9 +94,11 @@ export async function runAssistantEval(opts: AssistantEvalOptions): Promise<void
   for (const job of jobs) {
     const sceneTracks = Object.fromEntries(Object.entries(job.tracks.tracks).filter(([param]) => param in scene.schema));
     const index = buildIndex(sceneTracks, scene.schema);
+    const cues = parseVtt(job.captions);
     for (const test of job.cases) {
       for (const variant of variants) {
         const state = { ...evaluate(index, test.at), ...test.state };
+        let temporaryAssistantState: PlainState = {};
         const history: AssistantHistoryTurn[] = [];
         const turns: EvalTurnResult[] = [];
         for (const question of test.turns) {
@@ -104,6 +108,8 @@ export async function runAssistantEval(opts: AssistantEvalOptions): Promise<void
             question,
             t: test.at,
             state: { ...state },
+            position: lessonPositionAt(test.at, job.tracks.chapters, latestCue(cues, test.at)),
+            temporaryAssistantState: { ...temporaryAssistantState },
             history: history.slice(-8),
           };
           if (!opts.real) {
@@ -115,6 +121,7 @@ export async function runAssistantEval(opts: AssistantEvalOptions): Promise<void
           turns.push({ question, answer: response.answer, beats: response.beats, latencyMs: Date.now() - started });
           history.push({ question, answer: response.answer, beats: response.beats });
           applyAnswerState(state, response.beats);
+          temporaryAssistantState = finalAnswerState(response.beats);
         }
         results.push({ lessonId: manifest.id, language: job.language, caseId: test.id, variant, at: test.at, turns });
       }
@@ -147,6 +154,12 @@ function applyAnswerState(state: PlainState, beats: AnswerBeat[]): void {
   for (const beat of beats) {
     for (const [param, value] of Object.entries(beat.set)) state[param] = clone(value);
   }
+}
+
+function finalAnswerState(beats: AnswerBeat[]): PlainState {
+  const state: PlainState = {};
+  applyAnswerState(state, beats);
+  return state;
 }
 
 function clone(value: ParamValue): ParamValue {

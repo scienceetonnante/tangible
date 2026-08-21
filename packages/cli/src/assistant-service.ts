@@ -77,9 +77,15 @@ export function buildAssistantProviderRequest(
     messages.push({ role: "user", content: turn.question });
     messages.push({ role: "assistant", content: JSON.stringify({ beats: turn.beats }) });
   }
+  const state = visibleState(request, context);
   messages.push({
     role: "user",
-    content: JSON.stringify({ question: request.question, lessonTime: request.t, visibleState: visibleState(request, context) }),
+    content: JSON.stringify({
+      question: request.question,
+      lessonPosition: request.position,
+      visibleState: state,
+      temporaryAssistantState: filteredTemporaryAssistantState(request, context, state),
+    }),
   });
 
   return {
@@ -130,7 +136,9 @@ export function validateAssistantRequest(request: AssistantRequest, context: Ass
   }
   if (!Number.isFinite(request.t)) throw new Error("lesson time must be finite");
   if (!request.state || typeof request.state !== "object" || Array.isArray(request.state)) throw new Error("scene state must be an object");
-  visibleState(request, context);
+  const state = visibleState(request, context);
+  validatePosition(request.position);
+  filteredTemporaryAssistantState(request, context, state);
   if (!Array.isArray(request.history) || request.history.length > 8) throw new Error("conversation history is limited to eight turns");
   for (const [index, turn] of request.history.entries()) {
     if (!turn || typeof turn !== "object" || Array.isArray(turn)) throw new Error(`history turn ${index + 1} must be an object`);
@@ -139,6 +147,14 @@ export function validateAssistantRequest(request: AssistantRequest, context: Ass
     }
     if (typeof turn.answer !== "string" || turn.answer.length > 2000) throw new Error(`history turn ${index + 1} has an invalid answer`);
     validateAnswer(turn.beats, context);
+  }
+}
+
+function validatePosition(position: AssistantRequest["position"]): void {
+  if (!position || typeof position !== "object" || Array.isArray(position)) throw new Error("lesson position must be an object");
+  for (const key of ["chapter", "narrationJustHeard", "pausePrompt"] as const) {
+    const value = position[key];
+    if (value !== null && (typeof value !== "string" || value.length > 2000)) throw new Error(`lesson position ${key} must be null or bounded text`);
   }
 }
 
@@ -155,6 +171,39 @@ function visibleState(request: AssistantRequest, context: AssistantContext): Rec
     state[param] = value;
   }
   return state;
+}
+
+function filteredTemporaryAssistantState(
+  request: AssistantRequest,
+  context: AssistantContext,
+  visible: Record<string, ParamValue>,
+): Record<string, ParamValue> {
+  const raw = request.temporaryAssistantState;
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new Error("temporary assistant state must be an object");
+  const state: Record<string, ParamValue> = {};
+  for (const [param, value] of Object.entries(raw)) {
+    if (!context.commandable.includes(param)) throw new Error(`temporary assistant state cannot contain "${param}"`);
+    const spec = context.schema[param]!;
+    const error = validateValue(spec.type, value);
+    if (error) throw new Error(`${param}: ${error}`);
+    if (spec.type.kind === "scalar" && spec.type.range && typeof value === "number") {
+      if (value < spec.type.range[0] || value > spec.type.range[1]) throw new Error(`${param}: ${value} is outside [${spec.type.range.join(", ")}]`);
+    }
+    if (!sameValue(visible[param], value)) throw new Error(`temporary assistant state for "${param}" does not match visible state`);
+    state[param] = value;
+  }
+  return state;
+}
+
+function sameValue(a: ParamValue | undefined, b: ParamValue): boolean {
+  if (Array.isArray(a) || Array.isArray(b)) {
+    return Array.isArray(a) && Array.isArray(b) && a.length === b.length && a.every((value, index) => value === b[index]);
+  }
+  if (typeof a === "object" || typeof b === "object") {
+    if (!a || !b || typeof a !== "object" || typeof b !== "object") return false;
+    return a.distance === b.distance && a.azimuth === b.azimuth && a.elevation === b.elevation && sameValue(a.target, b.target);
+  }
+  return a === b;
 }
 
 function answerJsonSchema(context: AssistantContext): Record<string, unknown> {

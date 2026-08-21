@@ -110,12 +110,20 @@ export interface AssistantHistoryTurn {
   beats: AnswerBeat[];
 }
 
+export interface LessonPosition {
+  chapter: string | null;
+  narrationJustHeard: string | null;
+  pausePrompt: string | null;
+}
+
 export interface AssistantRequest {
   lessonId: string;
   language: string;
   question: string;
   t: number;
   state: PlainState;
+  position: LessonPosition;
+  temporaryAssistantState: PlainState;
   history: AssistantHistoryTurn[];
 }
 

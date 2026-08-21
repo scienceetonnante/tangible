@@ -7,6 +7,7 @@ import type { AudioClock } from "./clock.js";
 interface Pause {
   t: number;
   id: string;
+  prompt?: string;
   tail?: number;
 }
 
@@ -51,6 +52,11 @@ export class PauseGate {
       }
     }
     this.lastT = t;
+  }
+
+  /** Prompt for the authored gate that currently holds playback. */
+  get activePrompt(): string | null {
+    return this.active?.prompt ?? null;
   }
 
   private trigger(p: Pause, stopT: number): void {

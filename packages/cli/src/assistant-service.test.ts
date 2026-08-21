@@ -18,7 +18,14 @@ const context: AssistantContext = {
 };
 
 const request: AssistantRequest = {
-  lessonId: "circle", language: "en", question: "Why?", t: 3, state: { theta: 0 }, history: [],
+  lessonId: "circle",
+  language: "en",
+  question: "Why?",
+  t: 3,
+  state: { theta: 0 },
+  position: { chapter: "Intro", narrationJustHeard: "A lesson.", pausePrompt: null },
+  temporaryAssistantState: {},
+  history: [],
 };
 
 describe("assistant service", () => {
@@ -59,7 +66,8 @@ describe("assistant service", () => {
     const messages = sent.messages as { content: string }[];
     expect(messages[0]!.content).toContain("<lesson_script>\nA lesson.\n</lesson_script>");
     expect(messages[0]!.content).not.toContain('"narration":"A lesson."');
-    expect(messages.at(-1)!.content).toContain('"lessonTime":3');
+    expect(messages.at(-1)!.content).toContain('"lessonPosition":{"chapter":"Intro"');
+    expect(messages.at(-1)!.content).toContain('"temporaryAssistantState":{}');
     expect(messages.at(-1)!.content).not.toContain("injected");
     expect(JSON.stringify(sent.response_format)).toContain('"additionalProperties":false');
     expect(JSON.stringify(sent.response_format)).not.toMatch(/minItems|maxItems|minLength|maxLength/);
@@ -76,6 +84,13 @@ describe("assistant service", () => {
     const badHistory = [{ question: "Earlier?", answer: "Earlier.", beats: [{ say: "x", set: { secret: true }, over: 0 }] }];
     expect(() => validateAssistantRequest({ ...request, history: badHistory }, context)).toThrow("cannot command");
     expect(() => validateAssistantRequest({ ...request, state: { theta: 9 } }, context)).toThrow("outside");
+  });
+
+  it("validates lesson position and temporary assistant provenance", () => {
+    expect(() => validateAssistantRequest({ ...request, position: { ...request.position, chapter: "x".repeat(2001) } }, context)).toThrow("chapter");
+    expect(() => validateAssistantRequest({ ...request, state: { theta: 1 }, temporaryAssistantState: { theta: 0 } }, context)).toThrow("does not match");
+    expect(() => validateAssistantRequest({ ...request, state: { theta: 1 }, temporaryAssistantState: { theta: 1 } }, context)).not.toThrow();
+    expect(() => validateAssistantRequest({ ...request, temporaryAssistantState: { secret: false } }, context)).toThrow("cannot contain");
   });
 
   it("does not expose provider response bodies", async () => {
