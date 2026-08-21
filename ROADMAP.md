@@ -1,8 +1,8 @@
 # Narrable roadmap
 
 This file contains future work only. Current capabilities belong in
-[README.md](./README.md), and durable constraints belong in the
-[architecture](./docs/framework/architecture.md).
+[README.md](./README.md), and durable constraints belong in the architecture
+section of [the contributor guide](./docs/contributing.md#architecture).
 
 ## 1. Performance capture
 

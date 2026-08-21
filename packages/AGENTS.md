@@ -4,7 +4,7 @@ These instructions apply to `packages/` and shared framework behavior.
 
 ## Required context
 
-Read `docs/framework/architecture.md` before changing package boundaries, the
+Read `docs/contributing.md` before changing package boundaries, the
 authoring contract, time evaluation, ownership, or assistant composition. Check
 `ROADMAP.md` before expanding scope.
 
@@ -29,12 +29,11 @@ Run `pnpm boundaries` after dependency changes.
 ## Verification
 
 Run `pnpm check` for every framework change. Run `pnpm test:e2e` when changing the
-player, bundling, browser interaction, or end-to-end authoring behavior. Use fake
-providers in automated tests.
+player, bundling, browser interaction, or end-to-end authoring behavior. Use
+local provider substitutes in automated tests.
 
-When framework work changes lesson syntax or workflow, update the relevant file in
-`docs/reference/` or `docs/authoring/`; do not put current instructions into
-`docs/archives/`.
+When framework work changes lesson syntax or workflow, update
+`docs/reference.md` or `docs/authoring.md`.
 
 ## VERY IMPORTANT: how to talke to me
  

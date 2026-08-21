@@ -14,7 +14,7 @@ review, and deployment.
 
 For a new lesson or a substantial lesson-production task, use the repo-local
 `create-narrable-lesson` skill in `.agents/skills/` and follow
-`docs/authoring/0-getting-started.md`.
+`docs/authoring.md`.
 
 ## Production sequence
 

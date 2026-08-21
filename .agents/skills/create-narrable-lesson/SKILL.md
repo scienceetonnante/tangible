@@ -14,19 +14,15 @@ verification, and authorized deployment.
 Always read:
 
 - `lessons/AGENTS.md`;
-- `docs/authoring/0-getting-started.md`;
+- `docs/authoring.md`;
 - the target lesson's manifest, scene, and relevant narration.
 
 Read additional docs when the stage requires them:
 
-- narration or choreography: `docs/authoring/3-writing-narration.md` and
-  `docs/reference/directives.md`;
-- scene work: `docs/authoring/2-building-a-scene.md` and
-  `docs/reference/lesson-format.md`;
-- assistant work: `docs/authoring/5-adding-an-assistant.md`;
-- review: `docs/authoring/4-reviewing.md`;
-- release: `docs/deployment/hugging-face-spaces.md` and the installed `hf-cli`
-  skill when available.
+- scene formats or directive syntax: `docs/reference.md`;
+- framework architecture: `docs/contributing.md`;
+- release: the deployment section of `docs/authoring.md` and the installed
+  `hf-cli` skill when available.
 
 Use existing lessons as examples, not as normative documentation.
 
@@ -105,8 +101,8 @@ Ask the human to review pedagogy and visual direction. Iterate with silent
 placeholder audio until prose and cue order are stable. Build with the real voice
 only then, and tune timing to its prosody without changing the teaching argument.
 
-Before release, follow every item in `docs/authoring/4-reviewing.md` and run the
-lesson-specific tests plus `pnpm lesson check`.
+Before release, follow the review and deployment sections of
+`docs/authoring.md` and run the lesson-specific tests plus `pnpm lesson check`.
 
 ## 5. Deploy only with authorization
 
