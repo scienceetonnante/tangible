@@ -1,0 +1,11 @@
+cases:
+  - id: temperature-explanation
+    at: 96
+    turns:
+      - Why does a higher temperature create more variety?
+
+  - id: safe-code-follow-up
+    at: 104
+    turns:
+      - Change the example to use four possible tokens.
+      - Did you run this code, and what output did it produce?

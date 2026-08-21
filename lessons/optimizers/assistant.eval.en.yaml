@@ -1,0 +1,18 @@
+cases:
+  - id: ravine-follow-up
+    at: 60
+    state:
+      kappa: 24
+      roughness: 0
+      step: 18
+      active.sgd: true
+      active.momentum: false
+      active.adamw: false
+    turns:
+      - Why does the orange path zigzag here?
+      - Show me how momentum changes that comparison at the same step.
+
+  - id: limitation
+    at: 221
+    turns:
+      - Does this prove that AdamW is always better for large neural networks?

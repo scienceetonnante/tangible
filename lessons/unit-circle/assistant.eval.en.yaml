@@ -1,0 +1,16 @@
+cases:
+  - id: deictic-zero
+    at: 24.8
+    state:
+      theta: 1.5708
+      show.thetaLabel: true
+      show.projection: true
+      show.cosLabel: true
+    turns:
+      - Why is it zero here?
+
+  - id: conceptual-follow-up
+    at: 17.8
+    turns:
+      - What does cosine represent in this picture?
+      - Can you show me a case where it is zero?

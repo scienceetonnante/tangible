@@ -16,7 +16,10 @@ export interface AssistantProviders {
   fetchImpl?: typeof fetch;
   hfToken?: string;
   fake?: boolean;
+  promptStyle?: AssistantPromptStyle;
 }
+
+export type AssistantPromptStyle = "legacy" | "structured";
 
 export async function answerQuestion(
   request: AssistantRequest,
@@ -43,8 +46,33 @@ async function huggingFaceAnswer(
   const token = providers.hfToken ?? process.env.HF_TOKEN ?? "";
   if (!token) throw new Error("HF_TOKEN is not set");
 
+  const providerRequest = buildAssistantProviderRequest(request, context, providers.promptStyle ?? "structured");
+
+  const response = await (providers.fetchImpl ?? fetch)("https://router.huggingface.co/v1/chat/completions", {
+    method: "POST",
+    headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+    body: JSON.stringify(providerRequest),
+  });
+  if (!response.ok) {
+    await response.body?.cancel();
+    throw new AssistantProviderError(response.status);
+  }
+  const responseBody = (await response.json()) as { choices?: { message?: { content?: string } }[] };
+  const content = responseBody.choices?.[0]?.message?.content;
+  if (!content) throw new Error("Hugging Face returned no answer");
+  return (JSON.parse(content) as { beats: AnswerBeat[] }).beats;
+}
+
+/** Construct the complete provider body without making a network request. */
+export function buildAssistantProviderRequest(
+  request: AssistantRequest,
+  context: AssistantContext,
+  promptStyle: AssistantPromptStyle = "structured",
+): Record<string, unknown> {
+  validateAssistantRequest(request, context);
+
   const messages: { role: "system" | "user" | "assistant"; content: string }[] = [
-    { role: "system", content: systemPrompt(context) },
+    { role: "system", content: systemPrompt(context, promptStyle) },
   ];
   for (const turn of request.history.slice(-8)) {
     messages.push({ role: "user", content: turn.question });
@@ -55,31 +83,19 @@ async function huggingFaceAnswer(
     content: JSON.stringify({ question: request.question, lessonTime: request.t, visibleState: visibleState(request, context) }),
   });
 
-  const response = await (providers.fetchImpl ?? fetch)("https://router.huggingface.co/v1/chat/completions", {
-    method: "POST",
-    headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-    body: JSON.stringify({
-      model: ASSISTANT_MODEL,
-      messages,
-      temperature: 0.2,
-      max_tokens: 1200,
-      response_format: {
-        type: "json_schema",
-        json_schema: { name: "lesson_answer", strict: true, schema: answerJsonSchema(context) },
-      },
-    }),
-  });
-  if (!response.ok) {
-    await response.body?.cancel();
-    throw new AssistantProviderError(response.status);
-  }
-  const body = (await response.json()) as { choices?: { message?: { content?: string } }[] };
-  const content = body.choices?.[0]?.message?.content;
-  if (!content) throw new Error("Hugging Face returned no answer");
-  return (JSON.parse(content) as { beats: AnswerBeat[] }).beats;
+  return {
+    model: ASSISTANT_MODEL,
+    messages,
+    temperature: 0.2,
+    max_tokens: 1200,
+    response_format: {
+      type: "json_schema",
+      json_schema: { name: "lesson_answer", strict: true, schema: answerJsonSchema(context) },
+    },
+  };
 }
 
-function systemPrompt(context: AssistantContext): string {
+function systemPrompt(context: AssistantContext, _style: AssistantPromptStyle): string {
   return [
     "You are the narrator of an interactive lesson. Answer in the lesson language.",
     "Use only the supplied lesson content. Be concise, correct, and pedagogical.",

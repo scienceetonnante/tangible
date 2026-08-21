@@ -23,6 +23,7 @@ import { transcodeToM4a } from "./transcode.js";
 import { buildAssistantContext, emitAssistantContext } from "./assistant-context.js";
 import { createAssistantApi, serveLesson } from "./assistant-server.js";
 import { bundleScenePreview } from "./scene-preview-bundle.js";
+import { runAssistantEval } from "./assistant-eval.js";
 
 async function main() {
   const argv = process.argv.slice(2);
@@ -53,6 +54,15 @@ async function main() {
     case "serve":
       await cmdServe(flags);
       return;
+    case "assistant-eval":
+      await runAssistantEval({
+        lessonDir: flags.lesson ?? process.cwd(),
+        language: flags.lang,
+        variant: flags.variant ?? "structured",
+        real: flags.real ?? false,
+        out: flags.out,
+      });
+      return;
     case "state":
       await cmdState(flags);
       return;
@@ -60,7 +70,7 @@ async function main() {
       await cmdRef(flags);
       return;
     default:
-      die(`unknown command "${cmd ?? ""}"\nusage: lesson <new|check|build|frame|preview|scene|serve|state|ref> [--lang fr] [--lesson dir] [--at t] [--drag p=v] [--bundle] [-o file] [--size WxH] [--port n] [--host address] [--fake]`);
+      die(`unknown command "${cmd ?? ""}"\nusage: lesson <new|check|build|frame|preview|scene|serve|assistant-eval|state|ref> [--lang fr] [--lesson dir] [--at t] [--drag p=v] [--bundle] [-o file] [--size WxH] [--port n] [--host address] [--fake] [--real] [--variant legacy|structured|both]`);
   }
 }
 
@@ -333,6 +343,8 @@ interface Flags {
   drag?: string;
   port?: number;
   host?: string;
+  real?: boolean;
+  variant?: "legacy" | "structured" | "both";
 }
 
 function parseFlags(args: string[]): Flags {
@@ -348,6 +360,12 @@ function parseFlags(args: string[]): Flags {
     else if (args[i] === "--drag") f.drag = args[++i];
     else if (args[i] === "--port") f.port = Number(args[++i]);
     else if (args[i] === "--host") f.host = args[++i];
+    else if (args[i] === "--real") f.real = true;
+    else if (args[i] === "--variant") {
+      const variant = args[++i];
+      if (variant !== "legacy" && variant !== "structured" && variant !== "both") die("--variant must be legacy, structured, or both");
+      f.variant = variant;
+    }
   }
   return f;
 }
