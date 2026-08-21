@@ -8,6 +8,7 @@ lesson.yaml             identity, languages, defaults, providers, assistant
 scene.ts                schema, scene implementation, optional helpers
 script.<lang>.md         narration, natural-language hints, and formal directives
 assistant.<lang>.md      optional semantic assistant context
+assistant.eval.<lang>.yaml optional tracked assistant question cases
 assets/                  optional authored assets
 ```
 
@@ -63,3 +64,7 @@ allowlisted parameters may be returned by the provider. Assistant-enabled bundle
 include a same-origin server; other lessons remain static. Follow
 [the assistant authoring guide](../authoring/5-adding-an-assistant.md) to choose the
 allowlist, write the context, and test fake and real answers.
+
+An optional `assistant.eval.<lang>.yaml` file records representative question
+sequences, lesson times, and state overrides for `lesson assistant-eval`. It is a
+review artifact rather than part of the deployed lesson bundle.

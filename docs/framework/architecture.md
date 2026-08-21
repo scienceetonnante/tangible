@@ -77,6 +77,19 @@ into ordinary tracks. Baker code never runs in the player.
 ## Assistant boundary
 
 An optional same-origin lesson server sends one request to a written-answer
-provider. It validates a bounded sequence of text beats and allowlisted absolute
-scene values. Provider credentials remain on the server. The temporary answer
-timeline disappears when playback resumes or another question begins.
+provider. The system message is assembled as readable sections from the authored
+assistant guide, scene contract, named references, script, and answer rules. The
+raw build artifact is not dumped into the prompt, and the generated narration is
+not repeated beside the script.
+
+The current user message carries a semantic lesson position, the visible scene
+state, and explicit provenance for any values temporarily left by the previous
+answer. The position includes only the latest chapter, current or most recent
+narration cue, and active pause prompt; it does not reveal future narration. Up
+to eight successful page-local turns precede the current message. The server does
+not persist this history.
+
+The provider receives no tools. A strict JSON schema and server validation bound
+the returned sequence of text beats and allowlisted absolute scene values.
+Provider credentials remain on the server. The temporary answer timeline
+disappears when playback resumes or another question begins.

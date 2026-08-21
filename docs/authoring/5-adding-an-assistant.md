@@ -61,10 +61,83 @@ unrelated to the lesson in this file. The built context is downloaded by the
 browser and is not private.
 
 The build adds the lesson title, complete script, spoken narration, scene schema,
-presets, constants, and groups to this authored context. At question time, the
-assistant also receives the current lesson time, the current scene state, and up
-to eight earlier turns from the current page. Authors do not need to repeat those
-generated details in the context file.
+presets, constants, and groups to the assistant artifact. Authors do not need to
+repeat those generated details in the context file.
+
+## Understand the assembled prompt
+
+The server turns the built artifact into a readable system message. It does not
+send the raw `assistant.json` object to the model. The system message contains,
+in this order:
+
+1. The assistant's teaching role, limitations, lesson language, and scene
+   capabilities.
+2. The complete authored `assistant.<lang>.md` guide, preserved as lesson-specific
+   instructions.
+3. A readable list of every scene value. Each entry gives its internal name,
+   label when available, type, range, default, transition behavior, and whether
+   the assistant may change it.
+4. The lesson's presets, constants, and groups, when present.
+5. The complete authored script and a short explanation of narration and `@`
+   directives. The separate generated narration is omitted because it duplicates
+   the prose in the script.
+6. Instructions for composing written beats, deciding when a visual change
+   helps, and returning only the required JSON. A written-only example shows the
+   output structure. Authors can add lesson-specific visual examples to the
+   context guide.
+
+The current user message is a JSON object with this shape:
+
+```json
+{
+  "question": "Why is it zero here?",
+  "lessonPosition": {
+    "chapter": "Projection",
+    "narrationJustHeard": "The horizontal projection is the cosine.",
+    "pausePrompt": "Try changing the angle."
+  },
+  "visibleState": {
+    "theta": 1.5708,
+    "show.projection": true
+  },
+  "temporaryAssistantState": {
+    "theta": 1.5708
+  }
+}
+```
+
+`lessonPosition` contains the latest chapter, the current or most recently
+started narration sentence, and the active authored pause prompt. It never
+contains upcoming narration. `visibleState` contains validated scene values at
+the moment of the question. `temporaryAssistantState` identifies the subset of
+those values that still comes from the preceding assistant answer, rather than
+from the lesson or the learner.
+
+For a follow-up question, the server inserts up to eight earlier successful turns
+between the system message and the current user message. Each earlier learner
+question is a user message. Each earlier answer is an assistant message containing
+its validated beats. History remains only in the current browser page and is
+cleared by a reload; it is not stored by the lesson server.
+
+The provider has no tools and cannot call scene code. It must return one JSON
+object that conforms to a strict response schema:
+
+```json
+{
+  "beats": [
+    {
+      "say": "The written explanation shown to the learner.",
+      "set": {},
+      "over": 0
+    }
+  ]
+}
+```
+
+The schema permits one to six beats after server validation. `set` accepts only
+the allowlisted scene parameters and valid absolute values. `over` is a visual
+transition duration from zero to two seconds. The server concatenates the `say`
+fields to form the displayed answer.
 
 ## Allow visual answers when they help
 
@@ -144,6 +217,45 @@ interface and request path without credentials or provider costs. The fake answe
 is deterministic and generic, so it does not test the quality of the authored
 context.
 
+For repeatable prompt review, add `assistant.eval.<lang>.yaml` beside the lesson:
+
+```yaml
+cases:
+  - id: visual-follow-up
+    at: 18.8
+    state:
+      theta: 1.5708
+    turns:
+      - What does cosine represent here?
+      - Can you show me a case where it is zero?
+```
+
+Create a fake build, then render the complete provider requests without making
+network calls:
+
+```bash
+pnpm lesson build --fake --lesson lessons/my-lesson
+pnpm lesson assistant-eval --lesson lessons/my-lesson -o assistant-eval.json
+```
+
+Use `--variant both` to compare the structured prompt with the former raw-context
+prompt. This comparison mode exists for evaluation; the lesson server uses the
+structured prompt. Inspect whether each request contains the intended lesson
+position, state, prior turns, and instructions.
+
+In dry mode, a deterministic fake answer supplies the history and temporary
+scene values needed to assemble each later question in a sequence. The result
+labels these fields as `simulatedAnswer` and `simulatedBeats`. They verify prompt
+structure and follow-up handling, not answer quality.
+
+Add `--real` only when you deliberately want to call the configured answer
+provider. Real evaluation requires `HF_TOKEN`, can incur provider costs, and is
+never run by ordinary checks:
+
+```bash
+pnpm lesson assistant-eval --lesson lessons/my-lesson --real -o assistant-results.json
+```
+
 To test a real answer without rebuilding narration through a real provider,
 first create a fake bundle and then serve that existing bundle without `--fake`:
 
@@ -154,9 +266,9 @@ pnpm lesson serve --lesson lessons/my-lesson
 
 Put a dedicated Hugging Face inference token in a gitignored `.env` file as
 `HF_TOKEN` before starting the server. Test questions that require a direct
-explanation, a clarification at different lesson times, and every kind of visual
-change you allow. Confirm that answers remain correct at boundary values and
-after the learner has manipulated the scene.
+explanation, a clarification at different lesson positions, and every kind of
+visual change you allow. Confirm that answers remain correct at boundary values,
+after the learner has manipulated the scene, and across follow-up questions.
 
 ## Review safety and deployment
 
