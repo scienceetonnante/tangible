@@ -18,7 +18,8 @@ import {
 import { parse as parseYaml } from "yaml";
 import { loadScene } from "./scene-loader.js";
 import { loadManifest } from "./manifest.js";
-import { answerQuestion, buildAssistantProviderRequest, type AssistantPromptStyle } from "./assistant-service.js";
+import { answerQuestion, buildAssistantProviderRequest } from "./assistant-service.js";
+import type { AssistantPromptStyle } from "./assistant-prompt.js";
 
 interface EvalFile {
   cases: EvalCase[];

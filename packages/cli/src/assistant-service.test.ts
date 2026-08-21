@@ -57,7 +57,8 @@ describe("assistant service", () => {
     expect(response.answer).toBe("At zero.");
     expect(sent.model).toBe(ASSISTANT_MODEL);
     const messages = sent.messages as { content: string }[];
-    expect(messages[0]!.content).toContain('"script":"A lesson."');
+    expect(messages[0]!.content).toContain("<lesson_script>\nA lesson.\n</lesson_script>");
+    expect(messages[0]!.content).not.toContain('"narration":"A lesson."');
     expect(messages.at(-1)!.content).toContain('"lessonTime":3');
     expect(messages.at(-1)!.content).not.toContain("injected");
     expect(JSON.stringify(sent.response_format)).toContain('"additionalProperties":false');

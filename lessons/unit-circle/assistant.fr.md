@@ -18,3 +18,30 @@ mise en pause, reprise ou déplacée avec la barre de transport.
 Réponds aux questions sur le cercle unité et sur le contenu de cette leçon.
 Préfère une courte démonstration visuelle lorsqu'un paramètre autorisé est utile.
 Les valeurs de `theta` sont en radians, de zéro à environ 2π.
+
+# Exemple de réponse
+
+Pour « Pouvez-vous montrer pourquoi le cosinus vaut zéro après un quart de tour ? »,
+un plan de réponse utile est :
+
+```json
+{
+  "beats": [
+    {
+      "say": "Après un quart de tour, le point se trouve directement au-dessus du centre.",
+      "set": {
+        "theta": 1.5708,
+        "show.thetaLabel": true,
+        "show.projection": true,
+        "show.cosLabel": true
+      },
+      "over": 0.4
+    },
+    {
+      "say": "Sa coordonnée horizontale vaut zéro, donc son cosinus vaut zéro.",
+      "set": {},
+      "over": 0
+    }
+  ]
+}
+```

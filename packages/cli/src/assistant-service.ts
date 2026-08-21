@@ -2,6 +2,7 @@
 // declarative written answer plan.
 
 import { validateValue, type AnswerBeat, type AssistantContext, type AssistantRequest, type AssistantResponse, type ParamType, type ParamValue } from "@narrable/core";
+import { formatAssistantSystemPrompt, type AssistantPromptStyle } from "./assistant-prompt.js";
 
 export const ASSISTANT_MODEL = "google/gemma-4-31B-it:cerebras";
 
@@ -18,8 +19,6 @@ export interface AssistantProviders {
   fake?: boolean;
   promptStyle?: AssistantPromptStyle;
 }
-
-export type AssistantPromptStyle = "legacy" | "structured";
 
 export async function answerQuestion(
   request: AssistantRequest,
@@ -96,15 +95,7 @@ export function buildAssistantProviderRequest(
 }
 
 function systemPrompt(context: AssistantContext, _style: AssistantPromptStyle): string {
-  return [
-    "You are the narrator of an interactive lesson. Answer in the lesson language.",
-    "Use only the supplied lesson content. Be concise, correct, and pedagogical.",
-    "Return one to six written beats. Each beat may set allowed scene parameters using absolute values.",
-    "Use an empty set object when no visual change helps. Never mention internal parameter names.",
-    "The learner may manipulate the scene while reading, so the explanation must remain understandable if they do.",
-    "LESSON CONTEXT:",
-    JSON.stringify(context),
-  ].join("\n");
+  return formatAssistantSystemPrompt(context, _style);
 }
 
 export function validateAnswer(beats: unknown, context: AssistantContext): asserts beats is AnswerBeat[] {
