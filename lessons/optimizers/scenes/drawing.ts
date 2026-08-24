@@ -2,7 +2,7 @@ import type { OrbitState, PlainState } from "@narrable/core";
 import { drawControls, drawStep } from "./controls.js";
 import type { OptimizerFrame } from "./frame.js";
 import { MAX_STEPS, type Trajectory } from "./model.js";
-import { lossPlotBox, SERIES, type View } from "./view.js";
+import { landscapeBox, lossPlotBox, SERIES, type View } from "./view.js";
 
 const BACKGROUND = "#050609";
 const FOREGROUND = "#f5f7fa";
@@ -37,7 +37,9 @@ function drawCameraReadout(g: CanvasRenderingContext2D, view: View, state: Reado
     y,
   );
   g.textAlign = "right";
-  g.fillText("drag to orbit · scroll to zoom", view.width * 0.985, y);
+  const landscape = landscapeBox(view);
+  const hintY = view.width < 700 ? y - unit * 0.055 : y;
+  g.fillText("drag to orbit · scroll to zoom", landscape.x + landscape.width, hintY);
 }
 
 function formatCameraValue(value: number): string {
@@ -79,6 +81,16 @@ function drawLossPlot(g: CanvasRenderingContext2D, view: View, trajectories: Tra
   for (let gridStep = 5; gridStep <= MAX_STEPS; gridStep += 5) {
     line(g, xAt(gridStep), top, xAt(gridStep), bottom);
   }
+
+  g.save();
+  g.translate(left - unit * 0.012, (top + bottom) / 2);
+  g.rotate(-Math.PI / 2);
+  g.fillStyle = CAMERA_READOUT;
+  g.font = `${unit * 0.014}px sans-serif`;
+  g.textAlign = "center";
+  g.textBaseline = "bottom";
+  g.fillText("Loss", 0, 0);
+  g.restore();
 
   for (const trajectory of trajectories) {
     const count = Math.min(Math.floor(step), trajectory.points.length - 1);

@@ -8,20 +8,34 @@ import { algorithmGroupBox, landscapeBox, lossPlotBox, sliderBox, SLIDERS, stepB
 function recordingContext() {
   const calls: string[] = [];
   const texts: string[] = [];
+  const textPositions: { text: string; x: number; y: number }[] = [];
   const segments: [number, number, number, number][] = [];
+  const arcs: number[] = [];
   let start: [number, number] | undefined;
   const handler: ProxyHandler<Record<string, unknown>> = {
     get: (_target, property) => (...args: unknown[]) => {
       calls.push(String(property));
-      if (property === "fillText") texts.push(String(args[0]));
+      if (property === "fillText") {
+        const text = String(args[0]);
+        texts.push(text);
+        textPositions.push({ text, x: Number(args[1]), y: Number(args[2]) });
+      }
       if (property === "moveTo") start = [Number(args[0]), Number(args[1])];
       if (property === "lineTo" && start) {
         segments.push([start[0], start[1], Number(args[0]), Number(args[1])]);
       }
+      if (property === "arc") arcs.push(Number(args[2]));
     },
     set: () => true,
   };
-  return { context: new Proxy({}, handler) as unknown as CanvasRenderingContext2D, calls, texts, segments };
+  return {
+    context: new Proxy({}, handler) as unknown as CanvasRenderingContext2D,
+    calls,
+    texts,
+    textPositions,
+    segments,
+    arcs,
+  };
 }
 
 function defaultState(): PlainState {
@@ -29,10 +43,10 @@ function defaultState(): PlainState {
 }
 
 function instance(width = 1000, height = 600) {
-  const { context, calls, texts, segments } = recordingContext();
+  const { context, calls, texts, textPositions, segments, arcs } = recordingContext();
   const canvas = { getContext: () => context } as unknown as HTMLCanvasElement;
   const created = scene.create({ canvas, overlay: {} as HTMLElement, viewport: () => ({ width, height }) });
-  return { created, calls, texts, segments };
+  return { created, calls, texts, textPositions, segments, arcs };
 }
 
 describe("optimizer scene", () => {
@@ -123,7 +137,7 @@ describe("optimizer scene", () => {
   });
 
   it("renders the terrain, trajectories, plots, and controls", () => {
-    const { created, calls, texts } = instance();
+    const { created, calls, texts, arcs } = instance();
     const state = {
       ...defaultState(),
       step: 24,
@@ -138,15 +152,19 @@ describe("optimizer scene", () => {
     expect(calls).toContain("fillRect");
     expect(calls).toContain("lineTo");
     expect(calls).toContain("fillText");
+    expect(calls).toContain("rotate");
     expect(created.handles()).toHaveLength(12);
+    expect(texts).toContain("Loss");
     expect(texts).toContain("step 24");
     expect(texts.some((text) => text.startsWith("matched step"))).toBe(false);
     expect(texts.some((text) => text.startsWith("stable while"))).toBe(false);
     expect(texts.some((text) => text.startsWith("L "))).toBe(false);
+    expect(arcs.some((radius) => Math.abs(radius - 600 * 0.0112) < 1e-9)).toBe(true);
+    expect(arcs.some((radius) => Math.abs(radius - 600 * 0.012) < 1e-9)).toBe(true);
   });
 
   it("shows script-ready camera values in degrees", () => {
-    const { created, texts } = instance();
+    const { created, texts, textPositions } = instance();
     created.render(
       {
         ...defaultState(),
@@ -164,6 +182,20 @@ describe("optimizer scene", () => {
       "[1.00,-0.50,2.25] · d=6.80 · az. 60° · el. 30°",
     );
     expect(texts).toContain("drag to orbit · scroll to zoom");
+    const hint = textPositions.find((entry) => entry.text === "drag to orbit · scroll to zoom")!;
+    const readout = textPositions.find((entry) => entry.text.startsWith("[1.00,-0.50,2.25]"))!;
+    const landscape = landscapeBox({ width: 1000, height: 600 });
+    expect(hint.x).toBe(landscape.x + landscape.width);
+    expect(hint.y).toBe(readout.y);
+  });
+
+  it("separates the camera and interaction text in a compact viewport", () => {
+    const { created, textPositions } = instance(390, 219);
+    created.render(defaultState(), 0.016);
+    const hint = textPositions.find((entry) => entry.text === "drag to orbit · scroll to zoom")!;
+    const readout = textPositions.find((entry) => entry.text.startsWith("["))!;
+
+    expect(hint.y).toBeLessThan(readout.y);
   });
 
   it("draws a vertical loss-plot guide every five steps", () => {

@@ -37,8 +37,8 @@ export function drawStep(g: CanvasRenderingContext2D, view: View, step: number):
   line(g, box.x0, box.y, x, box.y);
   g.fillStyle = "#050609";
   g.strokeStyle = FOREGROUND;
-  g.lineWidth = unit * 0.004;
-  disc(g, x, box.y, unit * 0.015);
+  g.lineWidth = unit * 0.0032;
+  disc(g, x, box.y, unit * 0.012);
   g.fill();
   g.stroke();
   g.fillStyle = FOREGROUND;
@@ -112,8 +112,8 @@ function drawSlider(
   line(g, box.x0, box.y, knobX, box.y);
   g.fillStyle = "#050609";
   g.strokeStyle = liveColor;
-  g.lineWidth = unit * 0.004;
-  disc(g, knobX, box.y, unit * 0.014);
+  g.lineWidth = unit * 0.0032;
+  disc(g, knobX, box.y, unit * 0.0112);
   g.fill();
   g.stroke();
   g.fillStyle = active ? FOREGROUND : DISABLED;

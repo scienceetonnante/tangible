@@ -40,7 +40,6 @@ This first problem is easy because the surface has the same curvature in every d
 
 @chapter(Two different fixes)
 
-@clear(sgd)
 @cue(problem -> [24, 0], start -> [-1.65, 1.15], step -> 18, active -> [true, false, false], sgd.lr -> 0.075, momentum.lr -> 0.15, momentum.beta = 0.3, adamw.lr -> 0.1, over: 2s) Let us return to the same ravine and compare every optimizer at step eighteen.
 @cue(active.momentum = true) First, add momentum. The blue path smooths the wall-to-wall motion, and the parameter beta controls how much history the optimizer retains.
 @board(momentum: $\begin{aligned}\text{Momentum: }u_t&=\beta u_{t-1}+(1-\beta)g_t\\\Delta w_t&=-\eta u_t\end{aligned}$)
@@ -50,13 +49,12 @@ This first problem is easy because the surface has the same curvature in every d
 Now consider AdamW, a widely used variant of Adam. Adam stands for adaptive moment estimation, and AdamW adds decoupled weight decay.
 @cue(active.adamw = true) The green path tracks running averages of the gradient and its square for each coordinate. It divides the first average by a scale derived from the second, so a direction does not dominate the update merely because its gradients are consistently larger.
 
-@clear(momentum)
 @board(adamw: $\begin{aligned}m_t&\leftarrow\beta_1m_{t-1}+(1-\beta_1)g_t\\v_t&\leftarrow\beta_2v_{t-1}+(1-\beta_2)g_t^2\\\Delta w_t&=-\eta\frac{\hat m_t}{\sqrt{\hat v_t}+\epsilon}-\eta\lambda w_t\end{aligned}$)
 
 Momentum mainly changes how gradients are combined across steps. AdamW also adapts the scale separately for each coordinate.
 
 @chapter(A different kind of hard)
-@clear(adamw)
+@clear(board)
 
 Conditioning is not the only difficulty for optimizers. @cue(kappa -> 1, roughness = 0, step = 0, over: 2s) First, I make the bowl round again.
 @camera(target: [0, 0.55, 0], distance: 6.8, azimuth: 2.86°, elevation: 19.48°, over: 2.5s) Now look from a lower angle.
