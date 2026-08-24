@@ -22,6 +22,7 @@ export interface AssistantServerOptions {
   fake?: boolean;
   limits?: AssistantLimits;
   logger?: (entry: Record<string, unknown>) => void;
+  onProviderRequest?: (request: Record<string, unknown>) => Promise<void> | void;
   now?: () => number;
   answer?: typeof answerQuestion;
 }
@@ -78,7 +79,7 @@ export function createAssistantApi(opts: AssistantServerOptions): AssistantApiHa
       stage = "provider";
       let response;
       try {
-        response = await answer(request, context, { fake: opts.fake });
+        response = await answer(request, context, { fake: opts.fake, onProviderRequest: opts.onProviderRequest });
       } finally {
         active--;
       }

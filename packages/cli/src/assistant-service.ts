@@ -16,6 +16,7 @@ export interface AssistantProviders {
   hfToken?: string;
   fake?: boolean;
   promptStyle?: AssistantPromptStyle;
+  onProviderRequest?: (request: Record<string, unknown>) => Promise<void> | void;
 }
 
 export async function answerQuestion(
@@ -25,7 +26,11 @@ export async function answerQuestion(
 ): Promise<AssistantResponse> {
   validateAssistantRequest(request, context);
   if (context.provider !== "huggingface") throw new Error(`unsupported assistant provider "${String(context.provider)}"`);
-  const beats = providers.fake ? fakeAnswer(context) : await huggingFaceAnswer(request, context, providers);
+  const providerRequest = !providers.fake || providers.onProviderRequest
+    ? buildAssistantProviderRequest(request, context, providers.promptStyle ?? "structured")
+    : undefined;
+  if (providerRequest && providers.onProviderRequest) await providers.onProviderRequest(providerRequest);
+  const beats = providers.fake ? fakeAnswer(context) : await huggingFaceAnswer(providerRequest!, providers);
   validateAnswer(beats, context);
 
   let answer = "";
@@ -37,14 +42,11 @@ export async function answerQuestion(
 }
 
 async function huggingFaceAnswer(
-  request: AssistantRequest,
-  context: AssistantContext,
+  providerRequest: Record<string, unknown>,
   providers: AssistantProviders,
 ): Promise<AnswerBeat[]> {
   const token = providers.hfToken ?? process.env.HF_TOKEN ?? "";
   if (!token) throw new Error("HF_TOKEN is not set");
-
-  const providerRequest = buildAssistantProviderRequest(request, context, providers.promptStyle ?? "structured");
 
   const response = await (providers.fetchImpl ?? fetch)("https://router.huggingface.co/v1/chat/completions", {
     method: "POST",

@@ -36,6 +36,18 @@ describe("assistant service", () => {
     expect(response).not.toHaveProperty("audioBase64");
   });
 
+  it("exposes the exact provider request for local inspection in offline mode", async () => {
+    let logged: Record<string, unknown> | undefined;
+    await answerQuestion(request, context, { fake: true, onProviderRequest: (providerRequest) => { logged = providerRequest; } });
+
+    expect(logged?.model).toBe(context.model);
+    const messages = logged?.messages as { role: string; content: string }[];
+    expect(messages[0]).toMatchObject({ role: "system" });
+    expect(messages[0]!.content).toContain("# Role and capabilities");
+    expect(messages.at(-1)!.content).toContain('"question":"Why?"');
+    expect(logged?.response_format).toBeDefined();
+  });
+
   it("rejects commands outside the allowlist and scalar range", () => {
     expect(() => validateAnswer([{ say: "x", set: { secret: true }, over: 0 }], context)).toThrow("cannot command");
     expect(() => validateAnswer([{ say: "x", set: { theta: 9 }, over: 0 }], context)).toThrow("outside");

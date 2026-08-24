@@ -24,6 +24,7 @@ import { buildAssistantContext, emitAssistantContext } from "./assistant-context
 import { createAssistantApi, serveLesson } from "./assistant-server.js";
 import { bundleScenePreview } from "./scene-preview-bundle.js";
 import { runAssistantEval } from "./assistant-eval.js";
+import { writeAssistantProviderRequest } from "./assistant-request-log.js";
 
 async function main() {
   const argv = process.argv.slice(2);
@@ -190,13 +191,17 @@ async function cmdPreview(flags: Flags): Promise<void> {
     ...(manifest.assistant ? [join(lessonDir, manifest.assistant.context)] : []),
   ];
   const siteDir = join(lessonDir, "build", "site");
+  const onProviderRequest = async (request: Record<string, unknown>) => {
+    const path = await writeAssistantProviderRequest(lessonDir, request);
+    console.error(`assistant provider request → ${path}`);
+  };
   preview({
     siteDir,
     watchPaths,
     rebuild,
     port: flags.port,
     host: flags.host,
-    assistantApi: manifest.assistant ? createAssistantApi({ siteDir, fake: flags.offline }) : undefined,
+    assistantApi: manifest.assistant ? createAssistantApi({ siteDir, fake: flags.offline, onProviderRequest }) : undefined,
   });
 }
 
@@ -225,7 +230,16 @@ async function cmdServe(flags: Flags): Promise<void> {
   const lessonDir = flags.lesson ?? process.cwd();
   const siteDir = join(lessonDir, "build", "site");
   if (!existsSync(join(siteDir, "index.html"))) die('no static bundle — run "lesson build --bundle" first');
-  serveLesson({ siteDir, port: flags.port, host: flags.host, fake: flags.offline });
+  serveLesson({
+    siteDir,
+    port: flags.port,
+    host: flags.host,
+    fake: flags.offline,
+    onProviderRequest: async (request) => {
+      const path = await writeAssistantProviderRequest(lessonDir, request);
+      console.error(`assistant provider request → ${path}`);
+    },
+  });
 }
 
 async function cmdState(flags: Flags): Promise<void> {
