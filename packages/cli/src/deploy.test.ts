@@ -45,11 +45,13 @@ describe("Hugging Face Space deployment", () => {
     });
   });
 
-  it("creates a Space privately but stops before upload when its assistant secret is missing", async () => {
+  it("creates and deploys a Space while warning when its assistant secret is missing", async () => {
     const lessonDir = await fixture();
     const calls: string[][] = [];
+    const messages: string[] = [];
     const run = runner(calls, async (_command, args) => {
       if (args[0] === "spaces" && args[1] === "secrets") return ok("[]");
+      if (args[0] === "spaces" && args[1] === "info" && args.includes("--expand")) return ok('{"sha":"remote-sha"}');
       return standardResponse(args);
     });
 
@@ -60,12 +62,17 @@ describe("Hugging Face Space deployment", () => {
       check: async () => {},
       build: () => buildSite(lessonDir),
       runCommand: run,
-      log: () => {},
-    })).rejects.toThrow("needs a dedicated HF_TOKEN secret");
+      log: (message) => messages.push(message),
+    })).resolves.toMatchObject({ remoteRevision: "remote-sha", dryRun: false });
 
     const create = calls.find((args) => args[0] === "repos" && args[1] === "create")!;
     expect(create).toEqual(expect.arrayContaining(["example/circle", "--sdk", "docker", "--private", "--exist-ok"]));
-    expect(calls.some((args) => args[0] === "upload")).toBe(false);
+    expect(calls.some((args) => args[0] === "upload")).toBe(true);
+    expect(messages).toContain("https://huggingface.co/spaces/example/circle");
+    expect(messages).toContain("The lesson is deployed, but its assistant is not ready because the Space has no HF_TOKEN secret.");
+    expect(messages).toContain("Add a dedicated inference token at https://huggingface.co/spaces/example/circle/settings");
+    expect(messages.indexOf("https://huggingface.co/spaces/example/circle"))
+      .toBeLessThan(messages.indexOf("The lesson is deployed, but its assistant is not ready because the Space has no HF_TOKEN secret."));
   });
 
   it("performs local release work but makes no Hugging Face calls during a dry run", async () => {

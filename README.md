@@ -69,11 +69,12 @@ After reviewing the real narration locally, create the private Space with:
 pnpm lesson deploy --lesson lessons/my-lesson --create
 ```
 
-Assistant-enabled lessons stop before their first upload until the new Space has
-a dedicated `HF_TOKEN` secret. Add the secret, then rerun without `--create`.
-The same command without `--create` publishes later updates. It builds the real
-voice, uploads only the release artifact and Space card, waits for startup, and
-shows logs when the Space fails.
+Assistant-enabled lessons are deployed even when the new Space does not yet have
+a dedicated `HF_TOKEN` secret. The command then prints the Space settings URL
+and explains that questions will not work until the secret is added. The same
+command without `--create` publishes later updates. It builds the real voice,
+uploads only the release artifact and Space card, waits for startup, and shows
+logs when the Space fails.
 
 Test playback, interaction, captions, and the assistant when enabled before
 making the Space public. The complete process is described in

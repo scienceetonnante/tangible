@@ -551,18 +551,23 @@ The first remote operation requires an explicit flag:
 pnpm lesson deploy --lesson lessons/my-lesson --create
 ```
 
-The command creates the Space privately. If the lesson has an assistant, it then
+The command creates the Space privately. If the lesson has an assistant, it also
 checks for a Space secret named `HF_TOKEN`. A new Space will not have this
-secret, so the command stops before uploading lesson files and gives an
-actionable message. Add a dedicated fine-grained inference token through the
-Space settings or the CLI, for example:
+secret, but the lesson is still uploaded and started so that playback and
+interaction can be reviewed. The command exits successfully and prints a
+warning with the Space URL and settings URL. Questions will fail until the
+secret is added.
+
+Add a dedicated fine-grained inference token through the Space settings or the
+CLI, for example:
 
 ```bash
 hf spaces secrets add namespace/space-name --secrets-file <secure-file>
 ```
 
-The secure file must remain outside version control. After the secret exists,
-deploy without `--create`:
+The secure file must remain outside version control. Adding the secret does not
+require another upload. Use the command without `--create` for later lesson
+updates:
 
 ```bash
 pnpm lesson deploy --lesson lessons/my-lesson

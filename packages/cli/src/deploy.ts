@@ -83,6 +83,7 @@ export async function deployLessonToSpace(options: DeployOptions): Promise<Deplo
       );
     }
 
+    let assistantTokenMissing = false;
     if (options.manifest.assistant) {
       const secrets = await checked(
         run,
@@ -92,12 +93,7 @@ export async function deployLessonToSpace(options: DeployOptions): Promise<Deplo
         true,
         "Space secret check",
       );
-      if (!hasNamedSecret(secrets.stdout, "HF_TOKEN")) {
-        throw new Error(
-          `Space "${deployment.space}" needs a dedicated HF_TOKEN secret for lesson answers. Add it in the Space settings or with `
-          + `"hf spaces secrets add ${deployment.space} --secrets-file <file>", then rerun without --create. No lesson files were uploaded.`,
-        );
-      }
+      assistantTokenMissing = !hasNamedSecret(secrets.stdout, "HF_TOKEN");
     }
 
     const shortCommit = sourceCommit.slice(0, 12);
@@ -155,6 +151,12 @@ export async function deployLessonToSpace(options: DeployOptions): Promise<Deplo
     const remoteRevision = findStringProperty(info.stdout, "sha");
     log(`deployed ${deployment.space}${remoteRevision ? ` at ${remoteRevision}` : ""}`);
     log(`https://huggingface.co/spaces/${deployment.space}`);
+    if (assistantTokenMissing) {
+      log("");
+      log("The lesson is deployed, but its assistant is not ready because the Space has no HF_TOKEN secret.");
+      log(`Add a dedicated inference token at https://huggingface.co/spaces/${deployment.space}/settings`);
+      log(`You can also use: hf spaces secrets add ${deployment.space} --secrets-file <secure-file>`);
+    }
     return { space: deployment.space, sourceCommit, remoteRevision, uploadUrl, dryRun: false };
   } finally {
     await rm(staged.root, { recursive: true, force: true });
