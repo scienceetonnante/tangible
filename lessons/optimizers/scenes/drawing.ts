@@ -1,4 +1,4 @@
-import type { PlainState } from "@narrable/core";
+import type { OrbitState, PlainState } from "@narrable/core";
 import { drawControls, drawStep } from "./controls.js";
 import type { OptimizerFrame } from "./frame.js";
 import { MAX_STEPS, type Trajectory } from "./model.js";
@@ -7,6 +7,7 @@ import { landscapeBox, lossPlotBox, SERIES, type View } from "./view.js";
 const BACKGROUND = "#050609";
 const FOREGROUND = "#f5f7fa";
 const MUTED = "#9aa3af";
+const CAMERA_READOUT = "#b8bec8";
 
 export function draw(g: CanvasRenderingContext2D, view: View, state: Readonly<PlainState>, frame: OptimizerFrame): void {
   g.clearRect(0, 0, view.width, view.height);
@@ -18,6 +19,34 @@ export function draw(g: CanvasRenderingContext2D, view: View, state: Readonly<Pl
   drawLossPlot(g, view, frame.trajectories, frame.step);
   drawControls(g, view, state, frame.trajectories);
   drawStep(g, view, frame.step);
+  drawCameraReadout(g, view, state);
+}
+
+function drawCameraReadout(g: CanvasRenderingContext2D, view: View, state: Readonly<PlainState>): void {
+  const camera = state.camera as OrbitState;
+  const unit = Math.min(view.width, view.height);
+  const target = camera.target.map(formatCameraValue).join(",");
+
+  g.fillStyle = CAMERA_READOUT;
+  g.font = `${Math.max(7.5, unit * 0.013)}px ui-monospace, SFMono-Regular, Menlo, monospace`;
+  g.textAlign = "left";
+  g.textBaseline = "middle";
+  const y = view.height * (view.height < 360 ? 0.965 : 0.91);
+  g.fillText(
+    `target [${target}] · distance ${formatCameraValue(camera.distance)} · ` +
+      `azimuth ${formatCameraValue(toDegrees(camera.azimuth))}° · ` +
+      `elevation ${formatCameraValue(toDegrees(camera.elevation))}°`,
+    view.width * 0.015,
+    y,
+  );
+}
+
+function formatCameraValue(value: number): string {
+  return (Math.abs(value) < 0.005 ? 0 : value).toFixed(2);
+}
+
+function toDegrees(radians: number): number {
+  return (radians * 180) / Math.PI;
 }
 
 function drawLandscapeLabels(g: CanvasRenderingContext2D, view: View): void {

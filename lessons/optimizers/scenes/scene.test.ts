@@ -7,11 +7,15 @@ import { landscapeBox, sliderBox, SLIDERS } from "./view.js";
 
 function recordingContext() {
   const calls: string[] = [];
+  const texts: string[] = [];
   const handler: ProxyHandler<Record<string, unknown>> = {
-    get: (_target, property) => () => calls.push(String(property)),
+    get: (_target, property) => (...args: unknown[]) => {
+      calls.push(String(property));
+      if (property === "fillText") texts.push(String(args[0]));
+    },
     set: () => true,
   };
-  return { context: new Proxy({}, handler) as unknown as CanvasRenderingContext2D, calls };
+  return { context: new Proxy({}, handler) as unknown as CanvasRenderingContext2D, calls, texts };
 }
 
 function defaultState(): PlainState {
@@ -19,10 +23,10 @@ function defaultState(): PlainState {
 }
 
 function instance(width = 1000, height = 600) {
-  const { context, calls } = recordingContext();
+  const { context, calls, texts } = recordingContext();
   const canvas = { getContext: () => context } as unknown as HTMLCanvasElement;
   const created = scene.create({ canvas, overlay: {} as HTMLElement, viewport: () => ({ width, height }) });
-  return { created, calls };
+  return { created, calls, texts };
 }
 
 describe("optimizer scene", () => {
@@ -110,6 +114,26 @@ describe("optimizer scene", () => {
     expect(calls).toContain("lineTo");
     expect(calls).toContain("fillText");
     expect(created.handles()).toHaveLength(12);
+  });
+
+  it("shows script-ready camera values in degrees", () => {
+    const { created, texts } = instance();
+    created.render(
+      {
+        ...defaultState(),
+        camera: {
+          target: [1, -0.5, 2.25],
+          distance: 6.8,
+          azimuth: Math.PI / 3,
+          elevation: Math.PI / 6,
+        },
+      },
+      0.016,
+    );
+
+    expect(texts).toContain(
+      "target [1.00,-0.50,2.25] · distance 6.80 · azimuth 60.00° · elevation 30.00°",
+    );
   });
 
   it("confines camera navigation to the landscape", () => {
