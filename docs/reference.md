@@ -263,6 +263,13 @@ resumes.
 @clear(board)
 ```
 
+Board content belongs to the script rather than the scene schema. The player
+renders it as an overlay in the rightmost 28 percent of the player by default.
+Scene authors must reserve that area in the visual composition so equations and
+notes do not cover important scene content or interactive controls. A lesson may
+change the board's bounds with scoped `.xv-board` CSS, but there is currently no
+scene export for declaring those bounds.
+
 KaTeX subexpressions are addressed through `\htmlClass{name}{...}` tags.
 
 ### Build-time computation

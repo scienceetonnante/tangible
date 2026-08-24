@@ -74,6 +74,27 @@ The scene must render from the complete current state. Do not accumulate
 authored state frame by frame. Seeking directly to any lesson time must recreate
 the same view.
 
+### Reserve a board region
+
+Every scene intended for a narrated lesson must reserve a stable region for the
+board, even if the first version of the script does not use it. The board holds
+short equations and notes introduced by narration directives. It is a player
+overlay, so showing an item does not move or resize the scene underneath it.
+
+The default board occupies the rightmost 28 percent of the player. Keep
+important data, labels, controls, and drag targets out of that region, and leave
+enough clear space above the captions and playback controls for at least one
+equation or a few short lines of text. Check the result at both desktop and
+narrow sizes. Board text must remain legible against the scene, and board items
+should be concise enough that scrolling is exceptional.
+
+There is currently no `boardRegion` export in the scene contract. Reserving the
+region is therefore an explicit scene-layout responsibility rather than a
+compiler-validated declaration. A scene that needs a smaller or differently
+placed region may override `.xv-board` in lesson-local CSS, scoped under a class
+on that scene's player root. The narration later declares the actual content and
+visibility with `@board`, `@highlight`, `@dim`, and `@clear`.
+
 ### Scene development loop
 
 Run the scene without narration:
