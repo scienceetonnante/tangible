@@ -25,27 +25,27 @@ function structuredPrompt(context: AssistantContext): string {
   return [
     `# Teaching assistant for “${context.title}”`,
     "",
-    "## Task",
+    "## 1. Task",
     "",
     "Answer the learner’s question directly in concise, correct English. Use only the supplied lesson material.",
     "You receive a semantic scene state, not a screenshot, and you do not execute the scene. You may request temporary changes to selected controls, but you do not observe the result afterward.",
     "Use the current chapter, the narration just heard, and the conversation history to interpret short or ambiguous questions. Avoid introducing later lesson material unless it is needed to answer the question.",
     "",
-    "## Lesson-specific guidance",
+    "## 2. Lesson-specific guidance",
     "",
     normalizeGuideHeadings(context.guide),
     "",
-    "## Lesson content",
+    "## 3. Lesson narration",
     "",
-    "This outline preserves the spoken lesson, chapter structure, useful demonstrated settings, and board material. It omits authoring syntax and visual choreography that do not help answer questions.",
+    "The content inside `<lesson_narration>` is organized by chapter. Each `<spoken_narration>` block contains words spoken in the lesson. Demonstrated settings, board material, and silent learner activities are supporting context, not narration.",
     "",
     ...formatLessonOutline(context),
-    "## Scene controls",
+    "## 4. Scene controls",
     "",
     "The current user message supplies the actual visible values. Use the exact internal keys below only in a beat’s `set` object, never in its `say` text.",
     "",
     ...formatControls(context),
-    "## Response",
+    "## 5. Response",
     "",
     "Return one to six written beats. Use one beat when one visual state is enough, and use several beats only when the explanation benefits from a sequence of visual states.",
     "",
@@ -147,7 +147,7 @@ function formatLessonOutline(context: AssistantContext): string[] {
     }
   }
 
-  const lines: string[] = [];
+  const lines: string[] = ["<lesson_narration>", ""];
   for (const section of sections) {
     const narration = parsed.narration.slice(section.start, section.end).trim();
     const settings = section.directives.flatMap((directive) => directive.kind === "cue" ? formatCue(directive, context) : []);
@@ -155,13 +155,25 @@ function formatLessonOutline(context: AssistantContext): string[] {
     const silentActivities = section.directives.flatMap((directive) => directive.kind === "pause" && !directive.speak ? [directive.prompt] : []);
     if (!narration && !settings.length && !board.length && !silentActivities.length) continue;
 
-    lines.push(`### ${section.title}`, "");
-    if (narration) lines.push(narration, "");
-    if (settings.length) lines.push("#### Demonstrated settings", "", ...settings, "");
-    if (board.length) lines.push("#### Board material", "", ...board, "");
-    if (silentActivities.length) lines.push("#### Learner activities", "", ...silentActivities.map((prompt) => `- ${prompt}`), "");
+    lines.push(`<chapter title="${escapeXmlAttribute(section.title)}">`, "");
+    if (narration) lines.push("<spoken_narration>", narration, "</spoken_narration>", "");
+    if (settings.length) lines.push("<demonstrated_settings>", ...settings, "</demonstrated_settings>", "");
+    if (board.length) lines.push("<board_material>", ...board, "</board_material>", "");
+    if (silentActivities.length) {
+      lines.push("<learner_activities>", ...silentActivities.map((prompt) => `- ${prompt}`), "</learner_activities>", "");
+    }
+    lines.push("</chapter>", "");
   }
+  lines.push("</lesson_narration>", "");
   return lines;
+}
+
+function escapeXmlAttribute(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
 }
 
 function formatCue(directive: Extract<Directive, { kind: "cue" }>, context: AssistantContext): string[] {

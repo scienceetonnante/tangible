@@ -28,25 +28,32 @@ describe("assistant prompt", () => {
     const prompt = formatAssistantSystemPrompt(context, "structured");
 
     expect(prompt).toContain("# Teaching assistant for “A circle”");
-    expect(prompt).toContain("## Lesson-specific guidance\n\n### Visual context");
+    expect(prompt.match(/^## .+$/gm)).toEqual([
+      "## 1. Task",
+      "## 2. Lesson-specific guidance",
+      "## 3. Lesson narration",
+      "## 4. Scene controls",
+      "## 5. Response",
+    ]);
+    expect(prompt).toContain("## 2. Lesson-specific guidance\n\n### Visual context");
     expect(prompt).toContain("```python\n# This is a code comment.\n```");
     expect(prompt).toContain("### Changeable controls");
     expect(prompt).toContain("`theta` — angle; number from 0 to 6.28; changes gradually.");
     expect(prompt).toContain("### Read-only values");
     expect(prompt).toContain("`note` — text.");
-    expect(prompt).toContain("### Projection");
-    expect(prompt).toContain("The cosine becomes zero.");
-    expect(prompt).toContain("#### Demonstrated settings");
-    expect(prompt).toContain("angle (`theta`) → `1.57`");
-    expect(prompt).toContain("#### Board material");
-    expect(prompt).toContain("Equation: \\(\\cos(\\pi/2)=0\\)");
-    expect(prompt).toContain("#### Learner activities\n\n- Try another angle.");
+    expect(prompt).toContain('<lesson_narration>\n\n<chapter title="Projection">');
+    expect(prompt).toContain("<spoken_narration>\nThe cosine becomes zero.");
+    expect(prompt).toContain("This equation records the result.\n</spoken_narration>");
+    expect(prompt).toContain("<demonstrated_settings>\n- angle (`theta`) → `1.57`\n</demonstrated_settings>");
+    expect(prompt).toContain("<board_material>\n- Equation: \\(\\cos(\\pi/2)=0\\)\n</board_material>");
+    expect(prompt).toContain("<learner_activities>\n- Try another angle.\n</learner_activities>");
+    expect(prompt).toContain("</chapter>\n\n</lesson_narration>");
     expect(prompt).toContain("Return only the JSON object required by the response schema.");
     expect(prompt).not.toContain("Default:");
     expect(prompt).not.toContain("@cue");
     expect(prompt).not.toContain("Scene presets used by the script");
     expect(prompt).not.toContain("Output example");
-    expect(prompt).not.toContain("<lesson_");
+    expect(prompt).not.toContain("### Projection");
     expect(prompt).not.toContain('"narration":"The cosine becomes zero."');
     expect(prompt).not.toContain('"ownership":"script"');
   });

@@ -297,19 +297,21 @@ control names, ranges, defaults, generic response rules, or lesson conclusions.
 Do not put credentials, private information, or unrelated instructions in this
 file. The built context is downloaded by the browser and is not private.
 
-The generated prompt adds the lesson title, a chapter-organized outline of the
-spoken lesson, useful demonstrated settings, board material, and the scene
-control contract. Authors do not need to repeat those details in `assistant.md`.
+The generated prompt adds the lesson title, the spoken lesson organized into
+chapters, useful demonstrated settings, board material, and the scene control
+contract. Authors do not need to repeat those details in `assistant.md`.
 
 ### Understand the assistant request
 
-The server assembles a readable system message containing:
+The server assembles a readable system message with five numbered sections:
 
 1. The assistant's teaching role, limitations, and scene capabilities.
 2. The complete `assistant.md` guide.
-3. A readable lesson outline grouped by chapter. It preserves spoken prose,
-   useful literal scene settings, board equations and notes, and silent activity
-   prompts without exposing authoring directives.
+3. The lesson narration inside `<lesson_narration>` tags. Each
+   `<chapter title="…">` contains its `<spoken_narration>` and, when present,
+   separate `<demonstrated_settings>`, `<board_material>`, and
+   `<learner_activities>` sections. These tags make the boundary between spoken
+   prose and supporting context explicit without exposing authoring directives.
 4. Compact lists of changeable controls and read-only scene values. The current
    values arrive in the learner message, so defaults are omitted.
 5. Instructions for composing written answer beats. The JSON example is omitted

@@ -76,7 +76,7 @@ describe("assistant service", () => {
     expect(response.answer).toBe("At zero.");
     expect(sent.model).toBe(context.model);
     const messages = sent.messages as { content: string }[];
-    expect(messages[0]!.content).toContain("### Lesson\n\nA lesson.");
+    expect(messages[0]!.content).toContain('<chapter title="Lesson">\n\n<spoken_narration>\nA lesson.\n</spoken_narration>');
     expect(messages[0]!.content).not.toContain('"narration":"A lesson."');
     const current = JSON.parse(messages.at(-1)!.content);
     expect(current.lessonPosition).toMatchObject({ chapter: "Intro" });

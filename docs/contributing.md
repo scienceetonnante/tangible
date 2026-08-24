@@ -105,11 +105,12 @@ ordinary tracks. Baker code never runs in the player.
 ## Assistant boundary
 
 An optional same-origin lesson server sends one request to a written-answer
-provider. It assembles one Markdown system message from the authored assistant
-guide, a chapter-organized semantic lesson outline, a compact scene-control
-contract, and answer rules. The outline preserves spoken prose, useful literal
-settings, board material, and silent activity prompts without exposing raw
-authoring directives, presets, constants, or groups.
+provider. It assembles one system message with numbered Markdown instruction
+sections from the authored assistant guide, lesson narration, a compact
+scene-control contract, and answer rules. XML tags delimit the generated lesson
+narration, its chapters, its spoken prose, and supporting context. The prompt
+preserves useful literal settings, board material, and silent activity prompts
+without exposing raw authoring directives, presets, constants, or groups.
 
 The current user message contains a semantic lesson position, visible scene
 state, and provenance for values temporarily left by the preceding answer. The
