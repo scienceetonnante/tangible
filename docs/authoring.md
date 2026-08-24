@@ -393,11 +393,13 @@ pnpm lesson preview --offline --lesson lessons/my-lesson
 The offline answer is deterministic and generic. It checks the interface and
 request path, but it does not measure the quality of `assistant.md`.
 Whenever a learner asks a question in a local `preview` or `serve` session,
-Narrable writes the complete provider request to
-`build/assistant-provider-request.json`. This file contains the model, system
-prompt, conversation, current question and state, and response schema. Offline
-mode writes the same request without sending it to the provider. The file is a
-local generated artifact and is not included in a release bundle.
+Narrable writes `build/assistant-prompt.txt`. This file shows only the system
+prompt and the current user message, exactly as they are sent to the model. It
+renders line breaks as normal line breaks instead of JSON escape sequences. It
+does not include model settings, earlier conversation messages, the response
+schema, or authorization data. Offline mode writes the same prompt without
+sending it to the provider. The file is a local generated artifact and is not
+included in a release bundle.
 
 For repeatable prompt review, add `assistant.eval.yaml`:
 

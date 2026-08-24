@@ -24,7 +24,7 @@ import { buildAssistantContext, emitAssistantContext } from "./assistant-context
 import { createAssistantApi, serveLesson } from "./assistant-server.js";
 import { bundleScenePreview } from "./scene-preview-bundle.js";
 import { runAssistantEval } from "./assistant-eval.js";
-import { writeAssistantProviderRequest } from "./assistant-request-log.js";
+import { writeAssistantPromptLog } from "./assistant-prompt-log.js";
 
 async function main() {
   const argv = process.argv.slice(2);
@@ -192,8 +192,8 @@ async function cmdPreview(flags: Flags): Promise<void> {
   ];
   const siteDir = join(lessonDir, "build", "site");
   const onProviderRequest = async (request: Record<string, unknown>) => {
-    const path = await writeAssistantProviderRequest(lessonDir, request);
-    console.error(`assistant provider request → ${path}`);
+    const path = await writeAssistantPromptLog(lessonDir, request);
+    console.error(`assistant prompt → ${path}`);
   };
   preview({
     siteDir,
@@ -236,8 +236,8 @@ async function cmdServe(flags: Flags): Promise<void> {
     host: flags.host,
     fake: flags.offline,
     onProviderRequest: async (request) => {
-      const path = await writeAssistantProviderRequest(lessonDir, request);
-      console.error(`assistant provider request → ${path}`);
+      const path = await writeAssistantPromptLog(lessonDir, request);
+      console.error(`assistant prompt → ${path}`);
     },
   });
 }
