@@ -11,6 +11,7 @@ export interface Manifest {
   voice: string;
   defaults: { anticipation: number; ease: string; transition: number };
   tts?: { speed?: number };
+  player?: { autoplay?: boolean };
   assistant?: {
     context: string;
     commandable: string[];

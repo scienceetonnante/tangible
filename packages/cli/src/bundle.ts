@@ -41,7 +41,7 @@ async function main() {
     audioSrc.push(URL.createObjectURL(new Blob([buf], { type: mimeForAudio(src) })));
   }
   const style = document.createElement("style"); style.textContent = PLAYER_CSS; document.head.append(style);
-  const player = new Player({ mount: document.getElementById("app"), scene, tracks, captionsVtt: vtt, audioSrc, baseUrl: "", assistant });
+  const player = new Player({ mount: document.getElementById("app"), scene, tracks, captionsVtt: vtt, audioSrc, baseUrl: "", autoplay: ${JSON.stringify(manifest.player?.autoplay ?? false)}, assistant });
   window.__player = player;
   player.start();
 }

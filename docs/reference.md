@@ -161,12 +161,18 @@ defaults:
   transition: 1.0
 tts:
   speed: 0.9
+player:
+  autoplay: true
 ```
 
 Voice specifications support `elevenlabs:<voice-id>` and
 `hf-endpoint:<voice-id>`. `--offline` replaces provider speech with
 deterministic silent audio. The CLI loads gitignored `.env` files from both the
 invocation directory and the lesson directory.
+
+`player.autoplay` asks the browser to start the narrated lesson when it loads.
+Browsers may reject audible autoplay; when that happens, Narrable shows a
+`Start Lesson` overlay whose click supplies the required learner interaction.
 
 ### Scene exports
 

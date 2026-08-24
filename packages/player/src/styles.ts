@@ -14,6 +14,8 @@ export const PLAYER_CSS = `
 .xv-board-item.xv-shown { opacity: 1; }
 .xv-board-item.xv-dimmed { opacity: 0.4; }
 .xv-hl { background: #fff3a0; border-radius: 3px; }
+.xv-start-overlay { position: absolute; inset: 0; z-index: 10; border: 0; background: rgba(0,0,0,0.42); color: #fff; font: 600 24px/1.2 sans-serif; cursor: pointer; }
+.xv-start-overlay:hover { background: rgba(0,0,0,0.5); }
 .xv-chrome { position: absolute; left: 0; right: 0; bottom: 0; height: 44px; display: flex; align-items: center; gap: 6px; padding: 0 8px; background: rgba(255,255,255,0.85); box-sizing: border-box; }
 .xv-chrome button { border: none; background: none; cursor: pointer; color: #222; font-size: 18px; height: 34px; min-width: 34px; padding: 0 6px; display: inline-flex; align-items: center; justify-content: center; line-height: 1; border-radius: 4px; }
 .xv-chrome button:hover { background: rgba(0,0,0,0.06); }

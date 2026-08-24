@@ -77,6 +77,19 @@ describe("Player composition", () => {
     player.dispose();
   });
 
+  it("shows a Start Lesson overlay when configured autoplay is rejected", async () => {
+    const mount = document.createElement("div");
+    const player = new Player({ mount, scene: stubScene([]), tracks, autoplay: true });
+    player.audio.play = vi.fn().mockRejectedValueOnce(new DOMException("blocked", "NotAllowedError")).mockResolvedValue(undefined);
+
+    player.start();
+    await vi.waitFor(() => expect(mount.querySelector(".xv-start-overlay")).toBeTruthy());
+    (mount.querySelector(".xv-start-overlay") as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(mount.querySelector(".xv-start-overlay")).toBeNull());
+    expect(player.audio.play).toHaveBeenCalledTimes(2);
+    player.dispose();
+  });
+
   it("starts with captions off and enables them from the CC button", () => {
     const mount = document.createElement("div");
     const player = new Player({

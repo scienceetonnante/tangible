@@ -30,9 +30,14 @@ export class AudioClock {
     return Number.isFinite(this.media.duration) ? this.media.duration : 0;
   }
 
-  play(): void {
-    // Surface autoplay/codec rejections (notably Safari) instead of swallowing them.
-    void Promise.resolve(this.media.play()).catch((e: unknown) => console.warn("audio play() rejected:", e));
+  async play(): Promise<boolean> {
+    try {
+      await this.media.play();
+      return true;
+    } catch (error) {
+      console.warn("audio play() rejected:", error);
+      return false;
+    }
   }
 
   pause(): void {

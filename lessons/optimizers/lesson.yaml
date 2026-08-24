@@ -6,6 +6,8 @@ defaults:
   anticipation: -0.2
   ease: inOutCubic
   transition: 1.0
+player:
+  autoplay: true
 assistant:
   context: assistant.md
   commandable:

@@ -32,6 +32,7 @@ export interface PlayerOptions {
   audioSrc?: string[];
   baseUrl?: string;
   chrome?: boolean; // default true
+  autoplay?: boolean; // default false; rejected autoplay gets a Start Lesson overlay
   assistant?: {
     context: AssistantContext;
     endpoint?: string;
@@ -74,9 +75,12 @@ export class Player {
   private assistantEndpoint = "/api/answer";
   private assistantClientId?: string;
   private tracks: LessonTracks;
+  private autoplay: boolean;
+  private startOverlay?: HTMLButtonElement;
 
   constructor(opts: PlayerOptions) {
     this.tracks = opts.tracks;
+    this.autoplay = opts.autoplay ?? false;
     const schema: Schema = { ...opts.scene.schema, ...boardSchema(opts.tracks.tracks) };
     this.index = buildIndex(opts.tracks.tracks, schema);
     this.store = new StateStore(schema);
@@ -177,6 +181,7 @@ export class Player {
   start(): void {
     this.driver.tick(); // initial paint
     this.driver.start();
+    if (this.autoplay) void this.tryAutoplay();
   }
 
   dispose(): void {
@@ -187,7 +192,23 @@ export class Player {
     this.board.dispose();
     this.host.dispose();
     this.cancelAnswer();
+    this.startOverlay?.remove();
     this.shell.remove();
+  }
+
+  private async tryAutoplay(): Promise<void> {
+    if (await this.clock.play()) return;
+    const button = el("button", "xv-start-overlay") as HTMLButtonElement;
+    button.type = "button";
+    button.textContent = "Start Lesson";
+    button.onclick = async () => {
+      if (await this.clock.play()) {
+        button.remove();
+        this.startOverlay = undefined;
+      }
+    };
+    this.startOverlay = button;
+    this.container.append(button);
   }
 
   private frame(t: number): void {

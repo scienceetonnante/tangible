@@ -120,7 +120,7 @@ export class Chrome {
 
   private togglePlay(): void {
     if (this.clock.playing) this.clock.pause();
-    else this.clock.play();
+    else void this.clock.play();
   }
 
   private toggleFullscreen(): void {
