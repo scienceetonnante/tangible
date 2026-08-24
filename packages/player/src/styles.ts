@@ -26,9 +26,7 @@ export const PLAYER_CSS = `
 .xv-assistant-transcript { max-height: 180px; overflow: auto; margin-top: 8px; }
 .xv-assistant-turn { border-left: 3px solid #ddd; padding-left: 9px; margin: 8px 0; }
 .xv-assistant-question { margin: 0 0 4px; font-weight: 600; }
-.xv-assistant-question::before { content: "You: "; }
 .xv-assistant-answer { margin: 0; }
-.xv-assistant-answer::before { content: "Narrator: "; font-weight: 600; }
 .xv-assistant-form { display: flex; gap: 6px; }
 .xv-assistant-input { flex: 1; min-width: 0; padding: 8px 10px; border: 1px solid #aaa; border-radius: 4px; font: inherit; }
 .xv-assistant-input:disabled { color: #777; background: #eee; }

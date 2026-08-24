@@ -18,6 +18,10 @@ test("paused question writes, demonstrates, yields to interaction, and resumes",
   await input.fill("Why is the cosine zero at a quarter turn?");
   await page.locator(".xv-assistant-ask").click();
   await expect(page.locator(".xv-assistant-answer")).toContainText("quarter turn");
+  const generatedLabels = await page.locator(".xv-assistant-question, .xv-assistant-answer").evaluateAll((elements) =>
+    elements.map((element) => getComputedStyle(element, "::before").content),
+  );
+  expect(generatedLabels).toEqual(["none", "none"]);
   const formBox = (await page.locator(".xv-assistant-form").boundingBox())!;
   const answerBox = (await page.locator(".xv-assistant-answer").boundingBox())!;
   expect(formBox.y).toBeLessThan(answerBox.y);
