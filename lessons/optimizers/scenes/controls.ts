@@ -53,6 +53,11 @@ export function drawStep(g: CanvasRenderingContext2D, view: View, step: number):
   disc(g, x, box.y, unit * 0.015);
   g.fill();
   g.stroke();
+  g.fillStyle = FOREGROUND;
+  g.font = `${unit * 0.017}px sans-serif`;
+  g.textAlign = "left";
+  g.textBaseline = "top";
+  g.fillText(`matched step ${Math.round(step)}`, box.x0, box.y + unit * 0.018);
 }
 
 function drawAlgorithmGroups(
