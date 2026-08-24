@@ -37,11 +37,10 @@ const RIPPLE_FREQUENCY = 8;
 const DIVERGENCE_RADIUS = DOMAIN * 3;
 const EPSILON = 1e-8;
 
-/** A conditioned quadratic bowl with independent ripples along both coordinate directions. */
+/** A conditioned quadratic bowl with a ripple along its first coordinate direction. */
 export function loss(x: number, y: number, problem: Pick<Problem, "kappa" | "roughness">): number {
-  const rippleX = problem.roughness * (1 - Math.cos(RIPPLE_FREQUENCY * x));
-  const rippleY = problem.roughness * (1 - Math.cos(RIPPLE_FREQUENCY * y));
-  return 0.5 * (x * x + problem.kappa * y * y) + rippleX + rippleY;
+  const ripple = problem.roughness * (1 - Math.cos(RIPPLE_FREQUENCY * x));
+  return 0.5 * (x * x + problem.kappa * y * y) + ripple;
 }
 
 /** Analytic gradient of the lesson's loss surface. */
@@ -52,7 +51,7 @@ export function gradient(
 ): { x: number; y: number } {
   return {
     x: x + RIPPLE_FREQUENCY * problem.roughness * Math.sin(RIPPLE_FREQUENCY * x),
-    y: problem.kappa * y + RIPPLE_FREQUENCY * problem.roughness * Math.sin(RIPPLE_FREQUENCY * y),
+    y: problem.kappa * y,
   };
 }
 

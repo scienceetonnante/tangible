@@ -11,13 +11,13 @@ const settings: OptimizerSettings = {
 };
 
 describe("optimizer lesson model", () => {
-  it("uses double-frequency ripples in both coordinate directions", () => {
+  it("uses double-frequency ripples in the first coordinate only", () => {
     const rough = { kappa: 1, roughness: 0.5 };
     const crest = Math.PI / 8;
     const nextTrough = Math.PI / 4;
 
     expect(loss(crest, 0, rough) - 0.5 * crest * crest).toBeCloseTo(1, 9);
-    expect(loss(0, crest, rough) - 0.5 * crest * crest).toBeCloseTo(1, 9);
+    expect(loss(0, crest, rough) - 0.5 * crest * crest).toBeCloseTo(0, 9);
     expect(loss(nextTrough, 0, rough) - 0.5 * nextTrough * nextTrough).toBeCloseTo(0, 9);
     expect(loss(0, nextTrough, rough) - 0.5 * nextTrough * nextTrough).toBeCloseTo(0, 9);
   });
