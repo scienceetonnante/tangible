@@ -112,6 +112,43 @@ describe("Player composition", () => {
     player.dispose();
   });
 
+  it("does not reveal the next caption while an authored pause is active", () => {
+    const mount = document.createElement("div");
+    const pauseTracks: LessonTracks = {
+      ...tracks,
+      pauses: [{ t: 1, id: "pause-0", prompt: "Try it." }],
+    };
+    const player = new Player({
+      mount,
+      scene: stubScene([]),
+      tracks: pauseTracks,
+      captionsVtt: `WEBVTT
+
+00:00:00.000 --> 00:00:01.000
+Before the pause.
+
+00:00:01.000 --> 00:00:02.000
+After the pause.
+`,
+    });
+    player.audio.pause = vi.fn();
+    (mount.querySelector(".xv-captions-toggle") as HTMLButtonElement).click();
+
+    player.audio.currentTime = 0.99;
+    player.driver.tick();
+    expect(mount.querySelector(".xv-captions")!.textContent).toBe("Before the pause.");
+
+    player.audio.currentTime = 1.01;
+    player.driver.tick();
+    expect(player.pauseGate.activePrompt).toBe("Try it.");
+    expect(mount.querySelector(".xv-captions")!.textContent).toBe("Before the pause.");
+
+    player.audio.dispatchEvent(new Event("play"));
+    player.driver.tick();
+    expect(mount.querySelector(".xv-captions")!.textContent).toBe("After the pause.");
+    player.dispose();
+  });
+
   it("enables questions only after playback reaches a manual or scripted pause", () => {
     const mount = document.createElement("div");
     const player = new Player({ mount, scene: stubScene([]), tracks, assistant: { context: assistantContext } });

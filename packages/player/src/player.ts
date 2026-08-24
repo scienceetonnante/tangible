@@ -217,8 +217,8 @@ export class Player {
     for (const key of this.store.keys()) this.displayStore.set(key, this.store.plain[key]!);
     for (const [param, value] of Object.entries(this.temporaryAnswerState())) this.displayStore.set(param, value);
     this.host.render(this.displayStore.plain, dt);
-    this.captions.update(t);
     this.pauseGate.update(t);
+    if (this.pauseGate.activePrompt === null) this.captions.update(t);
     this.chrome?.update(t);
     if (this.dumpState) window.__XV_STATE__ = { ...this.store.plain };
   }
