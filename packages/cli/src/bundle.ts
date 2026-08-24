@@ -97,7 +97,7 @@ function indexHtml(manifest: Manifest): string {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${manifest.title}</title>
 <link rel="stylesheet" href="katex.css">
-<style>body { margin: 0; font-family: sans-serif; } #app { max-width: 960px; margin: 0 auto; }</style>
+<style>body { margin: 0; font-family: sans-serif; } #app { width: 100%; }</style>
 </head>
 <body>
 <div id="app"></div>

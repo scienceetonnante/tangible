@@ -20,7 +20,10 @@ export const scene = { schema, create: () => ({ render() {}, handles: () => [], 
     const manifest = await loadSceneManifest(lessonDir);
     const result = await bundleScenePreview(lessonDir, manifest.id, manifest.scene);
 
-    expect(await readFile(join(result.siteDir, "index.html"), "utf8")).toContain("bare-scene scene preview");
+    const html = await readFile(join(result.siteDir, "index.html"), "utf8");
+    expect(html).toContain("bare-scene scene preview");
+    expect(html).toContain("#app { width: 100%; }");
+    expect(html).not.toContain("max-width");
     expect(await readFile(join(result.siteDir, "scene.js"), "utf8")).toContain("ScenePreview");
     expect(result.watchPaths).toEqual([join(lessonDir, "scenes", "scene.ts")]);
   });
