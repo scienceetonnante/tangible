@@ -33,14 +33,15 @@ export const ADAM_BETA_1 = 0.7;
 export const ADAM_BETA_2 = 0.95;
 export const WEIGHT_DECAY = 0.01;
 
-const RIPPLE_FREQUENCY = 4;
+const RIPPLE_FREQUENCY = 8;
 const DIVERGENCE_RADIUS = DOMAIN * 3;
 const EPSILON = 1e-8;
 
-/** A conditioned quadratic bowl with an independent ripple along its flat direction. */
+/** A conditioned quadratic bowl with independent ripples along both coordinate directions. */
 export function loss(x: number, y: number, problem: Pick<Problem, "kappa" | "roughness">): number {
-  const ripple = problem.roughness * (1 - Math.cos(RIPPLE_FREQUENCY * x));
-  return 0.5 * (x * x + problem.kappa * y * y) + ripple;
+  const rippleX = problem.roughness * (1 - Math.cos(RIPPLE_FREQUENCY * x));
+  const rippleY = problem.roughness * (1 - Math.cos(RIPPLE_FREQUENCY * y));
+  return 0.5 * (x * x + problem.kappa * y * y) + rippleX + rippleY;
 }
 
 /** Analytic gradient of the lesson's loss surface. */
@@ -51,7 +52,7 @@ export function gradient(
 ): { x: number; y: number } {
   return {
     x: x + RIPPLE_FREQUENCY * problem.roughness * Math.sin(RIPPLE_FREQUENCY * x),
-    y: problem.kappa * y,
+    y: problem.kappa * y + RIPPLE_FREQUENCY * problem.roughness * Math.sin(RIPPLE_FREQUENCY * y),
   };
 }
 

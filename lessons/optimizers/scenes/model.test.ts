@@ -11,6 +11,17 @@ const settings: OptimizerSettings = {
 };
 
 describe("optimizer lesson model", () => {
+  it("uses double-frequency ripples in both coordinate directions", () => {
+    const rough = { kappa: 1, roughness: 0.5 };
+    const crest = Math.PI / 8;
+    const nextTrough = Math.PI / 4;
+
+    expect(loss(crest, 0, rough) - 0.5 * crest * crest).toBeCloseTo(1, 9);
+    expect(loss(0, crest, rough) - 0.5 * crest * crest).toBeCloseTo(1, 9);
+    expect(loss(nextTrough, 0, rough) - 0.5 * nextTrough * nextTrough).toBeCloseTo(0, 9);
+    expect(loss(0, nextTrough, rough) - 0.5 * nextTrough * nextTrough).toBeCloseTo(0, 9);
+  });
+
   it("matches a numerical gradient on a rough, conditioned bowl", () => {
     const rough = { kappa: 17, roughness: 0.23 };
     const point = { x: -0.73, y: 0.41 };
@@ -56,10 +67,11 @@ describe("optimizer lesson model", () => {
   });
 
   it("shows momentum and AdamW crossing a ripple that traps SGD", () => {
-    const rough = { ...problem, roughness: 0.28 };
-    const sgd = simulate("sgd", rough, settings);
-    const momentum = simulate("momentum", rough, settings);
-    const adamw = simulate("adamw", rough, settings);
+    const rough = { ...problem, roughness: 0.07 };
+    const narratedSettings = { ...settings, momentumLr: 0.1, adamwLr: 0.12 };
+    const sgd = simulate("sgd", rough, narratedSettings);
+    const momentum = simulate("momentum", rough, narratedSettings);
+    const adamw = simulate("adamw", rough, narratedSettings);
 
     expect(sgd.points.at(-1)!.loss).toBeGreaterThan(0.2);
     expect(momentum.points.at(-1)!.loss).toBeLessThan(1e-6);

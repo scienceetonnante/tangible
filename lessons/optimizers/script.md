@@ -58,7 +58,7 @@ Momentum mainly changes how gradients are combined across steps. AdamW also adap
 
 Conditioning is not the only difficulty for optimizers. @cue(kappa -> 1, roughness = 0, step = 0, over: 2s) First, I make the bowl round again.
 @camera(target: [0, 0.55, 0], distance: 6.8, azimuth: 2.86°, elevation: 19.48°, over: 2.5s) Now look from a lower angle.
-@cue(roughness -> 0.28, over: 3s) I add regular ripples along the route to the minimum. The roughness control changes their amplitude independently of kappa.
+@cue(roughness -> 0.07, over: 3s) I add regular ripples along the route to the minimum. The roughness control changes their amplitude independently of kappa.
 
 @camera(target: [0, 0.4, 0], distance: 7.4, azimuth: -8.59°, elevation: 69.9°, over: 2s) Now return to the path view.
 @cue(step -> 60, over: 5s) Plain gradient descent settles into a local trough. The other paths carry enough history or adaptive scaling to cross this particular bump. These settings do not make either optimizer universally better. They show that a change designed for one failure mode can also affect behavior on another.

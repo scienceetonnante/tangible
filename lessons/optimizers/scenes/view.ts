@@ -24,7 +24,7 @@ export const SERIES: Record<OptimizerName, { color: string; wash: string; label:
 
 export const PROBLEM_SLIDERS: SliderDefinition[] = [
   { param: "kappa", label: "condition κ", range: [1, 40], digits: 0, y: 0.065, section: "problem", slot: 0 },
-  { param: "roughness", label: "roughness", range: [0, 0.35], digits: 2, y: 0.065, section: "problem", slot: 1 },
+  { param: "roughness", label: "roughness", range: [0, 0.5], digits: 2, y: 0.065, section: "problem", slot: 1 },
 ];
 
 export const ALGORITHM_SLIDERS: SliderDefinition[] = [

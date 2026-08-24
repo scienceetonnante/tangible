@@ -60,6 +60,11 @@ describe("optimizer scene", () => {
     expect(schema["start.y"]!.type).toEqual({ kind: "scalar", range: [-2, 2] });
   });
 
+  it("lets roughness reach one half in both the schema and slider", () => {
+    expect(schema.roughness!.type).toEqual({ kind: "scalar", range: [0, 0.5] });
+    expect(SLIDERS.find((slider) => slider.param === "roughness")!.range).toEqual([0, 0.5]);
+  });
+
   it("freezes learner changes while paused, then returns after a fresh resume hold", () => {
     const scripted = defaultState();
     const store = new StateStore(schema);
