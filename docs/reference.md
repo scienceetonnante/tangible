@@ -248,7 +248,23 @@ Convenience directives are:
 @show(projection, cosLabel)
 @hide(projection)
 @camera(sideView, over: 3s)
+@camera(target: [0, 0.5, 0], distance: 7, azimuth: -45°, elevation: 30deg)
+@camera(azimuth: 45, over: 2s)
 ```
+
+`@camera` accepts either a named scene preset or inline orbit-camera fields.
+The fields are `target: [x, y, z]`, `distance`, `azimuth`, and `elevation`.
+`target` contains three numbers and `distance` must be positive. Angles may use
+`deg` or `°`; a number without a unit also means degrees.
+
+An inline directive may provide only the fields that change. Missing fields keep
+their latest authored values, starting from the camera default in the scene
+schema. The compiler resolves every partial directive to a complete camera value
+at build time, so it never depends on camera movement made by the learner.
+
+Orbit interpolation follows the shortest path between two viewing directions.
+A complete turn therefore needs intermediate camera directives rather than one
+directive whose final angle differs from its initial angle by 360 degrees.
 
 ### Structure and pauses
 

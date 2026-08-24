@@ -4,8 +4,9 @@
 // truncated at the new cue's start (conflict rule) with a warning. Recorded tracks
 // are merged verbatim. All easing/timing is baked here so the runtime stays dumb.
 
-import type { Keyframe, ParamValue, ParamSpec, BoardItem } from "@narrable/core";
+import type { Keyframe, ParamValue, ParamSpec, BoardItem, OrbitState } from "@narrable/core";
 import { buildIndex, evaluate } from "@narrable/core";
+import { applyCameraPatch } from "./camera.js";
 import type { ResolvedCue } from "./resolve.js";
 import type { SceneInfo } from "./check.js";
 import { parseValue, parseGroup } from "./value.js";
@@ -126,13 +127,22 @@ export function expand(cues: ResolvedCue[], scene: SceneInfo, opts: ExpandOption
         break;
       }
       case "camera": {
-        const preset = presets[d.preset];
-        if (!preset) break;
-        for (const [param, value] of Object.entries(preset)) {
-          const spec = scene.schema[param];
-          if (!spec) continue;
-          if (d.options.over) setAnimate(param, spec, t, d.options.over, d.options.ease ?? opts.defaults.ease, value, loc);
-          else setInstant(param, spec, t, value, loc);
+        if (d.value.kind === "preset") {
+          const preset = presets[d.value.name];
+          if (!preset) break;
+          for (const [param, value] of Object.entries(preset)) {
+            const spec = scene.schema[param];
+            if (!spec) continue;
+            if (d.options.over) setAnimate(param, spec, t, d.options.over, d.options.ease ?? opts.defaults.ease, value, loc);
+            else setInstant(param, spec, t, value, loc);
+          }
+        } else {
+          const spec = scene.schema.camera;
+          if (spec?.type.kind !== "orbit") break;
+          const camera = builder("camera", spec);
+          const value = applyCameraPatch(camera.current as OrbitState, d.value.patch);
+          if (d.options.over) setAnimate("camera", spec, t, d.options.over, d.options.ease ?? opts.defaults.ease, value, loc);
+          else setInstant("camera", spec, t, value, loc);
         }
         break;
       }

@@ -3,6 +3,7 @@
 // into the stripped text (the only thing TTS later turns into a time).
 
 import { parse as parseYaml } from "yaml";
+import type { CameraPatch } from "./camera.js";
 import type { SourceLoc } from "./diagnostics.js";
 
 export interface ParsedScript {
@@ -41,7 +42,11 @@ export type Directive = Base &
     | { kind: "cue"; assignments: Assignment[]; options: Options }
     | { kind: "bake"; name: string; options: BakeOptions }
     | { kind: "show" | "hide"; ids: string[] }
-    | { kind: "camera"; preset: string; options: Options }
+    | {
+        kind: "camera";
+        value: { kind: "preset"; name: string } | { kind: "inline"; patch: CameraPatch };
+        options: Options;
+      }
     | { kind: "track"; param: string; name: string }
     | { kind: "board"; id: string; itemKind: "katex" | "text"; source: string }
     | { kind: "highlight" | "dim" | "clear"; target: string }
@@ -258,9 +263,7 @@ function parseDirective(r: RawDirective, anchorOffset: number): Directive {
     case "hide":
       return { ...base, kind: r.name, ids: splitTop(a).map((s) => s.trim()).filter(Boolean) };
     case "camera": {
-      const parts = splitTop(a);
-      const preset = parts.shift()?.trim() ?? "";
-      return { ...base, kind: "camera", preset, options: parseOptions(parts, r.loc) };
+      return { ...base, kind: "camera", ...parseCameraArgs(a, r.loc) };
     }
     case "track": {
       const parts = splitTop(a).map((s) => s.trim());
@@ -308,6 +311,91 @@ function parseCueArgs(a: string, loc: SourceLoc): { assignments: Assignment[]; o
     }
   }
   return { assignments, options: parseOptions(optionParts, loc) };
+}
+
+function parseCameraArgs(
+  a: string,
+  loc: SourceLoc,
+): {
+  value: { kind: "preset"; name: string } | { kind: "inline"; patch: CameraPatch };
+  options: Options;
+} {
+  const parts = splitTop(a).map((part) => part.trim()).filter(Boolean);
+  const first = parts[0] ?? "";
+  if (!first.includes(":")) {
+    const name = parts.shift() ?? "";
+    for (const part of parts) {
+      const key = splitOnce(part, ":")[0].trim();
+      if (["target", "distance", "azimuth", "elevation"].includes(key)) {
+        throw new ParseError(`@camera cannot combine preset "${name}" with inline field "${key}"`, loc);
+      }
+    }
+    return { value: { kind: "preset", name }, options: parseOptions(parts, loc) };
+  }
+
+  const patch: CameraPatch = {};
+  const optionParts: string[] = [];
+  const seen = new Set<string>();
+  for (const part of parts) {
+    const [rawKey, rawValue] = splitOnce(part, ":");
+    const key = rawKey.trim();
+    const value = rawValue.trim();
+    if (["over", "ease", "at"].includes(key)) {
+      optionParts.push(part);
+      continue;
+    }
+    if (!["target", "distance", "azimuth", "elevation"].includes(key)) {
+      throw new ParseError(`unknown @camera field or option "${key}"`, loc);
+    }
+    if (seen.has(key)) throw new ParseError(`duplicate @camera field "${key}"`, loc);
+    seen.add(key);
+
+    if (key === "target") patch.target = parseCameraTarget(value, loc);
+    else if (key === "distance") patch.distance = parseCameraDistance(value, loc);
+    else if (key === "azimuth") patch.azimuth = parseCameraAngle(value, "azimuth", loc);
+    else patch.elevation = parseCameraAngle(value, "elevation", loc);
+  }
+  if (seen.size === 0) {
+    throw new ParseError("inline @camera expects at least one of target, distance, azimuth, or elevation", loc);
+  }
+  return { value: { kind: "inline", patch }, options: parseOptions(optionParts, loc) };
+}
+
+function parseCameraTarget(raw: string, loc: SourceLoc): [number, number, number] {
+  const match = /^\[(.*)\]$/s.exec(raw);
+  const parts = match?.[1]?.split(",").map((part) => part.trim()) ?? [];
+  const values = parts.map(Number);
+  if (
+    values.length !== 3 ||
+    !parts.every((part) => /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(part)) ||
+    !values.every(Number.isFinite)
+  ) {
+    throw new ParseError(`@camera target expects three numbers like [0, 1, 0], got "${raw}"`, loc);
+  }
+  return values as [number, number, number];
+}
+
+function parseCameraDistance(raw: string, loc: SourceLoc): number {
+  if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$/.test(raw)) {
+    throw new ParseError(`@camera distance expects a finite number, got "${raw}"`, loc);
+  }
+  const value = Number(raw);
+  if (!Number.isFinite(value)) {
+    throw new ParseError(`@camera distance expects a finite number, got "${raw}"`, loc);
+  }
+  if (value <= 0) {
+    throw new ParseError(`@camera distance expects a positive number, got "${raw}"`, loc);
+  }
+  return value;
+}
+
+function parseCameraAngle(raw: string, field: string, loc: SourceLoc): number {
+  const match = /^([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)\s*(?:deg|°)?$/.exec(raw);
+  const degrees = match ? Number(match[1]) : Number.NaN;
+  if (!Number.isFinite(degrees)) {
+    throw new ParseError(`@camera ${field} expects an angle like 45, 45deg, or 45°, got "${raw}"`, loc);
+  }
+  return (degrees * Math.PI) / 180;
 }
 
 function parseBakeOptions(parts: string[], loc: SourceLoc): BakeOptions {

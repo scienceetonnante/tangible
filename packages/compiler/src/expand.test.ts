@@ -118,6 +118,51 @@ describe("expand — conflict rule", () => {
   });
 });
 
+describe("expand — inline cameras", () => {
+  it("keeps named camera presets working", () => {
+    const directive = parseScript("@camera(sideView, over: 2s)").directives[0]!;
+    const result = expand([{ t: 1, directive }], SCENE, { defaults: DEFAULTS });
+
+    expect(result.tracks.camera).toEqual([
+      { t: 1, v: SCENE.schema.camera!.default },
+      { t: 3, v: SCENE.presets!.sideView!.camera, ease: "inOutCubic" },
+    ]);
+  });
+
+  it("emits complete orbit values from sequential partial directives", () => {
+    const parsed = parseScript(`
+@camera(target: [1, 2, 3], distance: 8, azimuth: 45deg, elevation: 20°)
+@camera(azimuth: 135, over: 2s, ease: linear)
+`);
+    const cameras = parsed.directives.filter((directive) => directive.kind === "camera");
+    const result = expand(
+      [
+        { t: 0, directive: cameras[0]! },
+        { t: 1, directive: cameras[1]! },
+      ],
+      SCENE,
+      { defaults: DEFAULTS },
+    );
+
+    expect(result.warnings).toEqual([]);
+    expect(result.tracks.camera).toEqual([
+      {
+        t: 0,
+        v: { target: [1, 2, 3], distance: 8, azimuth: Math.PI / 4, elevation: Math.PI / 9 },
+      },
+      {
+        t: 1,
+        v: { target: [1, 2, 3], distance: 8, azimuth: Math.PI / 4, elevation: Math.PI / 9 },
+      },
+      {
+        t: 3,
+        v: { target: [1, 2, 3], distance: 8, azimuth: (3 * Math.PI) / 4, elevation: Math.PI / 9 },
+        ease: "linear",
+      },
+    ]);
+  });
+});
+
 describe("expand — parameter groups", () => {
   it("fans a group cue out to its member params in order", () => {
     const scene = {

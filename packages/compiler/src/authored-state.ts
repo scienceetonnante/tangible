@@ -2,8 +2,9 @@
 // order for both `check` and `compile`; audio timing only places its computed steps.
 
 import { isDeepStrictEqual } from "node:util";
-import type { BakerDefinition, ParamValue } from "@narrable/core";
+import type { BakerDefinition, OrbitState, ParamValue } from "@narrable/core";
 import { validateValue } from "@narrable/core";
+import { applyCameraPatch } from "./camera.js";
 import type { SceneInfo } from "./check.js";
 import type { Directive, ParsedScript } from "./parse.js";
 import { parseGroup, parseValue } from "./value.js";
@@ -57,8 +58,12 @@ export function evaluateAuthoredState(parsed: ParsedScript, scene: SceneInfo): A
         }
         break;
       case "camera":
-        for (const [param, value] of Object.entries(scene.presets?.[directive.preset] ?? {})) {
-          if (param in scene.schema) state[param] = structuredClone(value);
+        if (directive.value.kind === "preset") {
+          for (const [param, value] of Object.entries(scene.presets?.[directive.value.name] ?? {})) {
+            if (param in scene.schema) state[param] = structuredClone(value);
+          }
+        } else if (scene.schema.camera?.type.kind === "orbit") {
+          state.camera = applyCameraPatch(state.camera as OrbitState, directive.value.patch);
         }
         break;
       case "scene":

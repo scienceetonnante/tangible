@@ -118,6 +118,64 @@ describe("parseScript — escapes and edge cases", () => {
   });
 });
 
+describe("parseScript — @camera", () => {
+  it("keeps named presets backward compatible", () => {
+    const directive = parseScript("@camera(sideView, over: 3s)").directives[0];
+    expect(directive).toMatchObject({
+      kind: "camera",
+      value: { kind: "preset", name: "sideView" },
+      options: { over: 3 },
+    });
+  });
+
+  it("parses complete and partial inline cameras", () => {
+    const parsed = parseScript(`
+@camera(
+  target: [0, 0.5, 0],
+  distance: 7,
+  azimuth: -45°,
+  elevation: 30deg
+)
+@camera(azimuth: 90, over: 1.8s, ease: linear)
+`);
+    const [complete, partial] = parsed.directives;
+    expect(complete).toMatchObject({
+      kind: "camera",
+      value: {
+        kind: "inline",
+        patch: { target: [0, 0.5, 0], distance: 7 },
+      },
+    });
+    expect(partial).toMatchObject({
+      kind: "camera",
+      value: { kind: "inline" },
+      options: { over: 1.8, ease: "linear" },
+    });
+    if (complete?.kind === "camera" && complete.value.kind === "inline") {
+      expect(complete.value.patch.azimuth).toBeCloseTo(-Math.PI / 4, 12);
+      expect(complete.value.patch.elevation).toBeCloseTo(Math.PI / 6, 12);
+    }
+    if (partial?.kind === "camera" && partial.value.kind === "inline") {
+      expect(partial.value.patch.azimuth).toBeCloseTo(Math.PI / 2, 12);
+    }
+  });
+
+  it("reports malformed or ambiguous inline camera values", () => {
+    const cases = [
+      ["@camera(target: [0, 1])", '@camera target expects three numbers like [0, 1, 0], got "[0, 1]"'],
+      ["@camera(azimuth: north)", '@camera azimuth expects an angle like 45, 45deg, or 45°, got "north"'],
+      ["@camera(distance: far)", '@camera distance expects a finite number, got "far"'],
+      ["@camera(distance: 0)", '@camera distance expects a positive number, got "0"'],
+      ["@camera(azimuth: 10, azimuth: 20)", 'duplicate @camera field "azimuth"'],
+      ["@camera(over: 2s)", "inline @camera expects at least one of target, distance, azimuth, or elevation"],
+      ["@camera(sideView, azimuth: 90)", '@camera cannot combine preset "sideView" with inline field "azimuth"'],
+    ];
+    for (const [source, message] of cases) {
+      expect(() => parseScript(source!, "script.md")).toThrowError(message);
+    }
+  });
+});
+
 describe("parseScript — @bake", () => {
   it("parses the baker name and timing options", () => {
     const parsed = parseScript("Start @bake(descent, steps: 3, over: 6s, ease: linear, at: +0.5s) end.");

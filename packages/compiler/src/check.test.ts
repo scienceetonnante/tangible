@@ -64,6 +64,22 @@ describe("check — diagnostics (snapshots)", () => {
     `);
   });
 
+  it("accepts inline camera values for an orbit camera", () => {
+    expect(diagnose("Words @camera(target: [0, 1, 0], distance: 4, azimuth: 90°, elevation: 30) end.")).toEqual([]);
+  });
+
+  it("rejects inline camera values for a non-orbit camera parameter", () => {
+    const scene: SceneInfo = {
+      schema: {
+        camera: { type: { kind: "scalar" }, default: 0, interpolate: "lerp", ownership: "script" },
+      },
+    };
+    const diagnostics = check(parseScript("Words @camera(azimuth: 90) end.", "script.md"), scene).map(formatDiagnostic);
+    expect(diagnostics).toEqual([
+      'script.md:1:7: error: inline @camera values require parameter "camera" to have type "orbit"',
+    ]);
+  });
+
   it("highlight target not tagged in the board item", () => {
     const src = "@board(euler: $e^{i\\theta} = \\cos\\theta$) words @highlight(euler.sin) end.";
     expect(diagnose(src)).toMatchInlineSnapshot(`

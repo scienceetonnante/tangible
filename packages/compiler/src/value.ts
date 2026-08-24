@@ -47,7 +47,7 @@ export function parseValue(
       break;
     }
     case "orbit":
-      return { error: "orbit values come from camera presets or recorded tracks, not inline cues" };
+      return { error: "orbit values use @camera(...) or recorded tracks, not @cue" };
   }
 
   const err = validateValue(type, value);

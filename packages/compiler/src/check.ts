@@ -84,11 +84,13 @@ export function check(parsed: ParsedScript, scene: SceneInfo, opts: CheckOptions
         break;
       }
       case "camera": {
-        if (!(d.preset in presets)) {
-          const s = suggest(d.preset, Object.keys(presets));
-          err(`unknown camera preset "${d.preset}"${s ? ` — did you mean "${s}"?` : ""}`, d.loc);
+        if (d.value.kind === "preset" && !(d.value.name in presets)) {
+          const s = suggest(d.value.name, Object.keys(presets));
+          err(`unknown camera preset "${d.value.name}"${s ? ` — did you mean "${s}"?` : ""}`, d.loc);
         }
-        checkParam("camera", d.loc);
+        if (checkParam("camera", d.loc) && d.value.kind === "inline" && scene.schema.camera!.type.kind !== "orbit") {
+          err('inline @camera values require parameter "camera" to have type "orbit"', d.loc);
+        }
         checkEase(d.options, d.loc);
         break;
       }

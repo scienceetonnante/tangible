@@ -65,4 +65,27 @@ describe("evaluateAuthoredState", () => {
     expect(result.bakes.get(directives[1]!)).toEqual([{ y: 7 }, { y: 8 }]);
     expect(result.state.y).toBe(8);
   });
+
+  it("merges partial inline cameras in source order", () => {
+    const camera = { target: [0, 0, 0] as [number, number, number], distance: 5, azimuth: 0, elevation: 0 };
+    const scene: SceneInfo = {
+      schema: {
+        camera: { type: { kind: "orbit" }, default: camera, interpolate: "orbit", ownership: "viewer" },
+      },
+    };
+    const parsed = parseScript(`
+@camera(target: [1, 2, 3], distance: 8, azimuth: 45, elevation: 20)
+@camera(azimuth: 135°)
+`);
+
+    const result = evaluateAuthoredState(parsed, scene);
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.state.camera).toEqual({
+      target: [1, 2, 3],
+      distance: 8,
+      azimuth: (135 * Math.PI) / 180,
+      elevation: (20 * Math.PI) / 180,
+    });
+  });
 });
