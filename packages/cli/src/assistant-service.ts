@@ -86,7 +86,7 @@ export function buildAssistantProviderRequest(
       lessonPosition: request.position,
       visibleState: state,
       temporaryAssistantState: filteredTemporaryAssistantState(request, context, state),
-    }),
+    }, null, 2),
   });
 
   return {

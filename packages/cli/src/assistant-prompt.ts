@@ -1,6 +1,7 @@
 // Human-readable prompt assembly from the validated assistant build artifact.
 
-import type { AssistantContext, ParamSpec, ParamValue } from "@narrable/core";
+import type { AssistantContext, ParamSpec } from "@narrable/core";
+import { parseScript, type Directive } from "@narrable/compiler";
 
 export type AssistantPromptStyle = "legacy" | "structured";
 
@@ -22,48 +23,30 @@ function legacyPrompt(context: AssistantContext): string {
 
 function structuredPrompt(context: AssistantContext): string {
   return [
-    "# Role and capabilities",
+    `# Teaching assistant for “${context.title}”`,
     "",
-    `You are the teaching assistant for the interactive narrated lesson “${context.title}”.`,
-    "Answer in English. Use only the supplied lesson content.",
-    "Give a concise, correct, and pedagogically useful answer.",
+    "## Task",
     "",
-    "You do not see a screenshot and you do not execute the scene. You receive a semantic description and the current scene state. You may request temporary changes to selected scene controls, but you do not observe the rendered result afterward.",
-    "The learner can manipulate the scene while reading, so the explanation must remain understandable if the scene changes.",
+    "Answer the learner’s question directly in concise, correct English. Use only the supplied lesson material.",
+    "You receive a semantic scene state, not a screenshot, and you do not execute the scene. You may request temporary changes to selected controls, but you do not observe the result afterward.",
+    "Use the current chapter, the narration just heard, and the conversation history to interpret short or ambiguous questions. Avoid introducing later lesson material unless it is needed to answer the question.",
     "",
-    "# Lesson-specific guide",
+    "## Lesson-specific guidance",
     "",
-    "<lesson_guide>",
-    context.guide.trim(),
-    "</lesson_guide>",
+    normalizeGuideHeadings(context.guide),
     "",
-    "# Scene values and controls",
+    "## Lesson content",
     "",
-    "Every value below can be observed in the current scene state. Only values explicitly marked as changeable may appear in a beat’s `set` object.",
-    "Internal names are used only in `set`; never mention them in `say`.",
+    "This outline preserves the spoken lesson, chapter structure, useful demonstrated settings, and board material. It omits authoring syntax and visual choreography that do not help answer questions.",
+    "",
+    ...formatLessonOutline(context),
+    "## Scene controls",
+    "",
+    "The current user message supplies the actual visible values. Use the exact internal keys below only in a beat’s `set` object, never in its `say` text.",
     "",
     ...formatControls(context),
-    ...formatNamedReferences(context),
-    "# Lesson script",
+    "## Response",
     "",
-    "Ordinary prose in the script is spoken to the learner. Instructions beginning with `@` are not spoken; they describe scene changes synchronized with nearby narration.",
-    "",
-    "- `@cue(name = value)` assigns an absolute value immediately.",
-    "- `@cue(name -> value, over: 2s)` moves toward an absolute value gradually.",
-    "- `@show`, `@hide`, `@camera`, and `@scene` change the visible scene.",
-    "- `@chapter` begins a section, while `@pause` stops playback for interaction.",
-    "- `@board`, `@highlight`, `@dim`, and `@clear` manage written board material.",
-    "- `@bake` and `@track` refer to authored sequences that are resolved before playback.",
-    "",
-    "Named references listed above stand for their displayed absolute values. The script is:",
-    "",
-    "<lesson_script>",
-    context.script.trim(),
-    "</lesson_script>",
-    "",
-    "# How to answer",
-    "",
-    "Answer the learner’s question directly before adding supporting detail.",
     "Return one to six written beats. Use one beat when one visual state is enough, and use several beats only when the explanation benefits from a sequence of visual states.",
     "",
     "Each beat contains:",
@@ -73,83 +56,138 @@ function structuredPrompt(context: AssistantContext): string {
     "- `over`: the visual interpolation duration in seconds, from 0 to 2. It does not control reading or speaking time.",
     "",
     "Put a scene change in the same beat as the text that introduces that visual state. Omit unchanged controls. Do not change the scene merely to make an answer look active.",
-    "Every `say` must remain understandable if the learner changes the scene. Never mention internal control names in `say`.",
-    "The current-turn user message contains the learner’s question, the latest lesson position, the visible scene state, and any temporary values left by your preceding answer. Earlier user and assistant messages are the retained conversation.",
-    "",
-    "# Output example",
-    "",
-    "This example shows the structure of an answer that needs no visual change:",
-    "",
-    "```json",
-    "{",
-    '  "beats": [',
-    "    {",
-    '      "say": "Answer the learner directly in English.",',
-    '      "set": {},',
-    '      "over": 0',
-    "    }",
-    "  ]",
-    "}",
-    "```",
-    "",
+    "The learner may manipulate the scene while reading, so every `say` must remain understandable if the visible state changes.",
     "Return only the JSON object required by the response schema.",
   ].join("\n");
 }
 
 function formatControls(context: AssistantContext): string[] {
   const lines: string[] = [];
-  for (const [name, spec] of Object.entries(context.schema)) {
-    const label = spec.label ? `, labelled “${spec.label}”` : "";
-    const permission = context.commandable.includes(name) ? "You may change it." : "You may observe it but not change it.";
-    lines.push(`- \`${name}\`${label}: ${describeType(spec)} Default: \`${formatInline(spec.default)}\` ${permission} ${describeTransition(spec)}`);
+  const changeable = Object.entries(context.schema).filter(([name]) => context.commandable.includes(name));
+  const readOnly = Object.entries(context.schema).filter(([name]) => !context.commandable.includes(name));
+  if (changeable.length) {
+    lines.push("### Changeable controls", "");
+    for (const [name, spec] of changeable) lines.push(formatControl(name, spec, true));
+    lines.push("");
   }
-  lines.push("");
+  if (readOnly.length) {
+    lines.push("### Read-only values", "");
+    for (const [name, spec] of readOnly) lines.push(formatControl(name, spec, false));
+    lines.push("");
+  }
   return lines;
+}
+
+function formatControl(name: string, spec: ParamSpec, changeable: boolean): string {
+  const label = spec.label ? `${spec.label}; ` : "";
+  const transition = changeable ? `; ${describeTransition(spec)}` : "";
+  return `- \`${name}\` — ${label}${describeType(spec)}${transition}.`;
 }
 
 function describeType(spec: ParamSpec): string {
   switch (spec.type.kind) {
-    case "scalar": return spec.type.range ? `a number from ${spec.type.range[0]} to ${spec.type.range[1]}.` : "a finite number.";
-    case "boolean": return "true or false.";
-    case "text": return "text.";
-    case "enum": return `one of ${spec.type.values.map((value) => `\`${value}\``).join(", ")}.`;
-    case "boardItem": return "one of `hidden`, `shown`, or `dimmed`.";
-    case "vec2": return "an array of two numbers.";
-    case "vec3": return "an array of three numbers.";
-    case "quaternion": return "a four-number quaternion `[w, x, y, z]`.";
-    case "orbit": return "a camera orbit with `target`, `distance`, `azimuth`, and `elevation`.";
+    case "scalar": return spec.type.range ? `number from ${spec.type.range[0]} to ${spec.type.range[1]}` : "finite number";
+    case "boolean": return "true or false";
+    case "text": return "text";
+    case "enum": return `one of ${spec.type.values.map((value) => `\`${value}\``).join(", ")}`;
+    case "boardItem": return "one of `hidden`, `shown`, or `dimmed`";
+    case "vec2": return "array of two numbers";
+    case "vec3": return "array of three numbers";
+    case "quaternion": return "four-number quaternion `[w, x, y, z]`";
+    case "orbit": return "camera orbit with `target`, `distance`, `azimuth`, and `elevation`";
   }
 }
 
 function describeTransition(spec: ParamSpec): string {
-  if (spec.interpolate === "snap") return "It changes immediately.";
-  if (spec.interpolate === "typewriter") return "Text changes appear progressively.";
-  return "It can change gradually.";
+  if (spec.interpolate === "snap") return "changes immediately";
+  if (spec.interpolate === "typewriter") return "text appears progressively";
+  return "changes gradually";
 }
 
-function formatNamedReferences(context: AssistantContext): string[] {
-  const sections: string[] = [];
-  if (Object.keys(context.presets).length) sections.push(...referenceSection("Scene presets used by the script", context.presets));
-  if (Object.keys(context.constants).length) sections.push(...referenceSection("Named values used by the script", context.constants));
-  if (Object.keys(context.groups).length) sections.push(...referenceSection("Parameter groups used by the script", context.groups));
-  if (sections.length) sections.push("These names explain the script. Responses must still use absolute values and exact changeable control names.", "");
-  return sections;
+function normalizeGuideHeadings(guide: string): string {
+  let fence: string | undefined;
+  return guide.trim().split("\n").map((line) => {
+    const marker = /^\s*(```|~~~)/.exec(line)?.[1];
+    if (marker) {
+      fence = fence === marker ? undefined : fence ?? marker;
+      return line;
+    }
+    if (fence) return line;
+    const heading = /^(#{1,6})(\s+.*)$/.exec(line);
+    if (!heading) return line;
+    return `${"#".repeat(Math.min(6, heading[1]!.length + 2))}${heading[2]}`;
+  }).join("\n");
 }
 
-function referenceSection(title: string, values: Record<string, unknown>): string[] {
-  const lines = [`## ${title}`, ""];
-  for (const [name, value] of Object.entries(values)) {
-    lines.push(`- \`${name}\` = ${formatReference(value)}`);
+function formatLessonOutline(context: AssistantContext): string[] {
+  const parsed = parseScript(context.script);
+  const chapters = parsed.directives.flatMap((directive, index) => directive.kind === "chapter" ? [{ directive, index }] : []);
+  const sections: { title: string; start: number; end: number; directives: Directive[] }[] = [];
+
+  if (!chapters.length) {
+    sections.push({ title: "Lesson", start: 0, end: parsed.narration.length, directives: parsed.directives });
+  } else {
+    const first = chapters[0]!;
+    if (parsed.narration.slice(0, first.directive.anchorOffset).trim() || first.index > 0) {
+      sections.push({
+        title: "Introduction",
+        start: 0,
+        end: first.directive.anchorOffset,
+        directives: parsed.directives.slice(0, first.index),
+      });
+    }
+    for (const [index, chapter] of chapters.entries()) {
+      const next = chapters[index + 1];
+      sections.push({
+        title: chapter.directive.title,
+        start: chapter.directive.anchorOffset,
+        end: next?.directive.anchorOffset ?? parsed.narration.length,
+        directives: parsed.directives.slice(chapter.index + 1, next?.index),
+      });
+    }
   }
-  lines.push("");
+
+  const lines: string[] = [];
+  for (const section of sections) {
+    const narration = parsed.narration.slice(section.start, section.end).trim();
+    const settings = section.directives.flatMap((directive) => directive.kind === "cue" ? formatCue(directive, context) : []);
+    const board = section.directives.flatMap((directive) => directive.kind === "board" ? [formatBoardItem(directive)] : []);
+    const silentActivities = section.directives.flatMap((directive) => directive.kind === "pause" && !directive.speak ? [directive.prompt] : []);
+    if (!narration && !settings.length && !board.length && !silentActivities.length) continue;
+
+    lines.push(`### ${section.title}`, "");
+    if (narration) lines.push(narration, "");
+    if (settings.length) lines.push("#### Demonstrated settings", "", ...settings, "");
+    if (board.length) lines.push("#### Board material", "", ...board, "");
+    if (silentActivities.length) lines.push("#### Learner activities", "", ...silentActivities.map((prompt) => `- ${prompt}`), "");
+  }
   return lines;
 }
 
-function formatReference(value: unknown): string {
-  if (typeof value === "string" && value.includes("\n")) return `<reference>\n${value}\n</reference>`;
-  return `\`${JSON.stringify(value)}\``;
+function formatCue(directive: Extract<Directive, { kind: "cue" }>, context: AssistantContext): string[] {
+  const assignments = directive.assignments.flatMap((assignment) => {
+    const spec = context.schema[assignment.param];
+    const value = displayCueValue(assignment.value, spec, context);
+    if (!spec || value === undefined) return [];
+    const label = spec.label ?? assignment.param;
+    return [`${label} (\`${assignment.param}\`) → \`${value}\``];
+  });
+  return assignments.length ? [`- ${assignments.join("; ")}`] : [];
 }
 
-function formatInline(value: ParamValue): string {
-  return JSON.stringify(value);
+function displayCueValue(raw: string, spec: ParamSpec | undefined, context: AssistantContext): string | undefined {
+  if (!spec) return undefined;
+  if (spec.type.kind === "enum" && spec.type.values.includes(raw)) return JSON.stringify(raw);
+  if (/^(?:true|false|-?(?:\d+(?:\.\d+)?|\.\d+))$/.test(raw)) return raw;
+  if (Object.hasOwn(context.constants, raw)) {
+    const value = JSON.stringify(context.constants[raw]);
+    if (value.length <= 100) return value;
+  }
+  return undefined;
+}
+
+function formatBoardItem(directive: Extract<Directive, { kind: "board" }>): string {
+  return directive.itemKind === "katex"
+    ? `- Equation: \\(${directive.source}\\)`
+    : `- Note: ${JSON.stringify(directive.source)}`;
 }

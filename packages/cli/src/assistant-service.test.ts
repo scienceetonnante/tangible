@@ -43,8 +43,8 @@ describe("assistant service", () => {
     expect(logged?.model).toBe(context.model);
     const messages = logged?.messages as { role: string; content: string }[];
     expect(messages[0]).toMatchObject({ role: "system" });
-    expect(messages[0]!.content).toContain("# Role and capabilities");
-    expect(messages.at(-1)!.content).toContain('"question":"Why?"');
+    expect(messages[0]!.content).toContain("# Teaching assistant for “Circle”");
+    expect(messages.at(-1)!.content).toContain('"question": "Why?"');
     expect(logged?.response_format).toBeDefined();
   });
 
@@ -76,11 +76,12 @@ describe("assistant service", () => {
     expect(response.answer).toBe("At zero.");
     expect(sent.model).toBe(context.model);
     const messages = sent.messages as { content: string }[];
-    expect(messages[0]!.content).toContain("<lesson_script>\nA lesson.\n</lesson_script>");
+    expect(messages[0]!.content).toContain("### Lesson\n\nA lesson.");
     expect(messages[0]!.content).not.toContain('"narration":"A lesson."');
-    expect(messages.at(-1)!.content).toContain('"lessonPosition":{"chapter":"Intro"');
-    expect(messages.at(-1)!.content).toContain('"temporaryAssistantState":{}');
-    expect(messages.at(-1)!.content).not.toContain("injected");
+    const current = JSON.parse(messages.at(-1)!.content);
+    expect(current.lessonPosition).toMatchObject({ chapter: "Intro" });
+    expect(current.temporaryAssistantState).toEqual({});
+    expect(current.visibleState).not.toHaveProperty("injected");
     expect(JSON.stringify(sent.response_format)).toContain('"additionalProperties":false');
     expect(JSON.stringify(sent.response_format)).not.toMatch(/minItems|maxItems|minLength|maxLength/);
   });

@@ -8,8 +8,8 @@ const context: AssistantContext = {
   title: "A circle",
   provider: "huggingface",
   model: "test/model:provider",
-  guide: "The learner drags a point.",
-  script: "@cue(theta -> HALF_PI, over: 1s) The cosine becomes zero.",
+  guide: "# Visual context\n\nThe learner drags a point.\n\n```python\n# This is a code comment.\n```",
+  script: "@chapter(Projection)\n\n@cue(theta -> HALF_PI, over: 1s) The cosine becomes zero.\n\n@board(rule: $\\cos(\\pi/2)=0$)\nThis equation records the result.\n\n@pause(prompt: \"Try another angle.\", speak: false)",
   narration: "The cosine becomes zero.",
   schema: {
     theta: { type: { kind: "scalar", range: [0, 6.28] }, default: 0, interpolate: "lerp", ownership: "script", label: "angle" },
@@ -27,16 +27,26 @@ describe("assistant prompt", () => {
   it("formats the lesson artifact as readable structured context", () => {
     const prompt = formatAssistantSystemPrompt(context, "structured");
 
-    expect(prompt).toContain("# Role and capabilities");
-    expect(prompt).toContain("<lesson_guide>\nThe learner drags a point.\n</lesson_guide>");
-    expect(prompt).toContain("`theta`, labelled “angle”: a number from 0 to 6.28.");
-    expect(prompt).toContain("You may change it. It can change gradually.");
-    expect(prompt).toContain("`note`: text.");
-    expect(prompt).toContain("You may observe it but not change it. Text changes appear progressively.");
-    expect(prompt).toContain("## Named values used by the script");
-    expect(prompt).toContain("`HALF_PI` = `1.57`");
-    expect(prompt).toContain("<lesson_script>\n@cue(theta -> HALF_PI, over: 1s)");
-    expect(prompt).toContain('"set": {}');
+    expect(prompt).toContain("# Teaching assistant for “A circle”");
+    expect(prompt).toContain("## Lesson-specific guidance\n\n### Visual context");
+    expect(prompt).toContain("```python\n# This is a code comment.\n```");
+    expect(prompt).toContain("### Changeable controls");
+    expect(prompt).toContain("`theta` — angle; number from 0 to 6.28; changes gradually.");
+    expect(prompt).toContain("### Read-only values");
+    expect(prompt).toContain("`note` — text.");
+    expect(prompt).toContain("### Projection");
+    expect(prompt).toContain("The cosine becomes zero.");
+    expect(prompt).toContain("#### Demonstrated settings");
+    expect(prompt).toContain("angle (`theta`) → `1.57`");
+    expect(prompt).toContain("#### Board material");
+    expect(prompt).toContain("Equation: \\(\\cos(\\pi/2)=0\\)");
+    expect(prompt).toContain("#### Learner activities\n\n- Try another angle.");
+    expect(prompt).toContain("Return only the JSON object required by the response schema.");
+    expect(prompt).not.toContain("Default:");
+    expect(prompt).not.toContain("@cue");
+    expect(prompt).not.toContain("Scene presets used by the script");
+    expect(prompt).not.toContain("Output example");
+    expect(prompt).not.toContain("<lesson_");
     expect(prompt).not.toContain('"narration":"The cosine becomes zero."');
     expect(prompt).not.toContain('"ownership":"script"');
   });
