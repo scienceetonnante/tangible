@@ -21,11 +21,14 @@ export async function scaffold(id: string, opts: ScaffoldOptions = {}): Promise<
 const MANIFEST = (id: string) => `id: ${id}
 title: ${id}
 scene: ./scenes/scene.ts
-voice: elevenlabs:VOICE_ID
 defaults:
   anticipation: -0.2
   ease: inOutCubic
   transition: 1.0
+tts:
+  provider: elevenlabs
+  voice: VOICE_ID
+  model: eleven_multilingual_v2
 `;
 
 const SCENE = `import type { Schema } from "@narrable/core";

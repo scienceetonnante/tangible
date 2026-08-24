@@ -6,6 +6,8 @@ const context: AssistantContext = {
   version: 1,
   lessonId: "circle",
   title: "A circle",
+  provider: "huggingface",
+  model: "test/model:provider",
   guide: "The learner drags a point.",
   script: "@cue(theta -> HALF_PI, over: 1s) The cosine becomes zero.",
   narration: "The cosine becomes zero.",

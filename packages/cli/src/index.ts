@@ -13,7 +13,7 @@ import type { Schema, Keyframe, TtsAdapter, ParamSpec, ParamValue } from "@narra
 import { StateStore, Reconciler } from "@narrable/player";
 import { FakeTtsAdapter, ElevenLabsAdapter, HuggingFaceVoiceAdapter } from "@narrable/tts";
 import { loadScene } from "./scene-loader.js";
-import { loadManifest, loadSceneManifest, type Manifest } from "./manifest.js";
+import { loadManifest, loadSceneManifest, type Manifest, type TtsConfig } from "./manifest.js";
 import { refSheet } from "./ref.js";
 import { scaffold } from "./scaffold.js";
 import { bundleSite } from "./bundle.js";
@@ -119,17 +119,17 @@ async function cmdFrame(flags: Flags): Promise<void> {
   console.error(`rendered frame at t=${t} → ${out}`);
 }
 
-/** Choose a TTS adapter from the manifest voice spec. */
-function selectTts(voiceSpec: string, fake: boolean): { adapter: TtsAdapter; voice: string } {
-  const [provider, id] = voiceSpec.split(":");
-  if (!fake && provider === "hf-endpoint") {
-    return { adapter: new HuggingFaceVoiceAdapter(), voice: id ?? "" };
+/** Choose the configured build-time speech provider. */
+function selectTts(config: TtsConfig, fake: boolean): { adapter: TtsAdapter; voice: string } {
+  if (fake) return { adapter: new FakeTtsAdapter(), voice: config.voice };
+  if (config.provider === "hf-endpoint") {
+    return { adapter: new HuggingFaceVoiceAdapter({ speaker: config.voice }), voice: config.voice };
   }
-  if (!fake && provider === "elevenlabs" && process.env.ELEVENLABS_API_KEY) {
-    return { adapter: new ElevenLabsAdapter(), voice: id ?? "" };
+  if (process.env.ELEVENLABS_API_KEY) {
+    return { adapter: new ElevenLabsAdapter({ modelId: config.model }), voice: config.voice };
   }
-  if (!fake && provider === "elevenlabs") console.error("note: ELEVENLABS_API_KEY not set — using silent placeholder audio");
-  return { adapter: new FakeTtsAdapter(), voice: voiceSpec };
+  console.error("note: ELEVENLABS_API_KEY not set — using silent placeholder audio");
+  return { adapter: new FakeTtsAdapter(), voice: config.voice };
 }
 
 async function buildLesson(lessonDir: string, manifest: Manifest, scene: SceneInfo, fake: boolean) {
@@ -143,11 +143,11 @@ async function buildLesson(lessonDir: string, manifest: Manifest, scene: SceneIn
     die(`build aborted: ${errs.length} error(s) in ${file}`);
   }
 
-  const { adapter, voice } = selectTts(manifest.voice, fake);
+  const { adapter, voice } = selectTts(manifest.tts, fake);
   const result = await synthesize(adapter, parsed.narration, {
     voice,
     cacheDir: join(lessonDir, ".cache", "tts"),
-    speed: manifest.tts?.speed,
+    speed: manifest.tts.provider === "elevenlabs" ? manifest.tts.speed : undefined,
     segmentOffsets: narrationSegmentOffsets(parsed.narration, parsed.directives.map((directive) => directive.anchorOffset)),
   });
 

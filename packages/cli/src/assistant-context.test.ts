@@ -9,10 +9,9 @@ const manifest: Manifest = {
   id: "circle",
   title: "Circle",
   scene: "scenes/scene.ts",
-  voice: "elevenlabs:voice",
   defaults: { anticipation: -0.2, ease: "linear", transition: 1 },
-  tts: { speed: 0.9 },
-  assistant: { context: "assistant.md", commandable: ["theta"] },
+  tts: { provider: "elevenlabs", voice: "voice", speed: 0.9 },
+  assistant: { provider: "huggingface", model: "test/model:provider", context: "assistant.md", commandable: ["theta"] },
 };
 
 const scene = {
@@ -43,7 +42,8 @@ describe("assistant context", () => {
     expect(got.script).toBe(script);
     expect(got.narration).toBe("The angle is half a turn.");
     expect(got.commandable).toEqual(["theta"]);
-    expect(got).not.toHaveProperty("voice");
+    expect(got).toMatchObject({ provider: "huggingface", model: "test/model:provider" });
+    expect(got).not.toHaveProperty("tts");
   });
 
   it("rejects an unknown commandable parameter", async () => {

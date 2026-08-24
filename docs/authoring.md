@@ -244,12 +244,15 @@ Add an `assistant` section to `lesson.yaml`:
 
 ```yaml
 assistant:
+  provider: huggingface
+  model: google/gemma-4-31B-it:cerebras
   context: assistant.md
   commandable: []
 ```
 
 An empty `commandable` list enables written answers without giving the assistant
-control of the scene. Then create `assistant.md` with four short sections:
+control of the scene. `model` selects the Hugging Face router model used by the
+deployed lesson. Then create `assistant.md` with four short sections:
 
 ```markdown
 # Scene and purpose
@@ -346,6 +349,8 @@ Run `lesson ref`, then add only parameters with a clear explanatory purpose:
 
 ```yaml
 assistant:
+  provider: huggingface
+  model: google/gemma-4-31B-it:cerebras
   context: assistant.md
   commandable:
     - theta

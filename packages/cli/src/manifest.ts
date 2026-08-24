@@ -4,15 +4,20 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { parse as parseYaml } from "yaml";
 
+export type TtsConfig =
+  | { provider: "elevenlabs"; voice: string; model?: string; speed?: number }
+  | { provider: "hf-endpoint"; voice: string };
+
 export interface Manifest {
   id: string;
   title: string;
   scene: string;
-  voice: string;
   defaults: { anticipation: number; ease: string; transition: number };
-  tts?: { speed?: number };
+  tts: TtsConfig;
   player?: { autoplay?: boolean };
   assistant?: {
+    provider: "huggingface";
+    model: string;
     context: string;
     commandable: string[];
   };
@@ -25,7 +30,9 @@ export interface SceneManifest {
 
 export async function loadManifest(lessonDir: string): Promise<Manifest> {
   const text = await readFile(join(lessonDir, "lesson.yaml"), "utf8");
-  return parseYaml(text) as Manifest;
+  const manifest = parseYaml(text) as unknown;
+  validateManifest(manifest);
+  return manifest;
 }
 
 /** Load only the manifest fields needed for narration-free scene development. */
@@ -35,4 +42,66 @@ export async function loadSceneManifest(lessonDir: string): Promise<SceneManifes
   if (!manifest || typeof manifest.id !== "string") throw new Error('lesson.yaml must define a string "id"');
   if (typeof manifest.scene !== "string") throw new Error('lesson.yaml must define a string "scene"');
   return { id: manifest.id, scene: manifest.scene };
+}
+
+function validateManifest(value: unknown): asserts value is Manifest {
+  const manifest = object(value, "lesson.yaml");
+  nonEmptyString(manifest.id, 'lesson.yaml field "id"');
+  nonEmptyString(manifest.title, 'lesson.yaml field "title"');
+  nonEmptyString(manifest.scene, 'lesson.yaml field "scene"');
+
+  const defaults = object(manifest.defaults, 'lesson.yaml field "defaults"');
+  finiteNumber(defaults.anticipation, 'lesson.yaml field "defaults.anticipation"');
+  nonEmptyString(defaults.ease, 'lesson.yaml field "defaults.ease"');
+  finiteNumber(defaults.transition, 'lesson.yaml field "defaults.transition"');
+
+  const tts = object(manifest.tts, 'lesson.yaml field "tts"');
+  if (tts.provider !== "elevenlabs" && tts.provider !== "hf-endpoint") {
+    throw new Error('lesson.yaml field "tts.provider" must be "elevenlabs" or "hf-endpoint"');
+  }
+  nonEmptyString(tts.voice, 'lesson.yaml field "tts.voice"');
+  if (tts.provider === "elevenlabs") {
+    optionalString(tts.model, 'lesson.yaml field "tts.model"');
+    optionalNumber(tts.speed, 'lesson.yaml field "tts.speed"');
+  } else if (tts.model !== undefined || tts.speed !== undefined) {
+    throw new Error('lesson.yaml fields "tts.model" and "tts.speed" are supported only by ElevenLabs');
+  }
+
+  if (manifest.player !== undefined) {
+    const player = object(manifest.player, 'lesson.yaml field "player"');
+    if (player.autoplay !== undefined && typeof player.autoplay !== "boolean") {
+      throw new Error('lesson.yaml field "player.autoplay" must be true or false');
+    }
+  }
+
+  if (manifest.assistant !== undefined) {
+    const assistant = object(manifest.assistant, 'lesson.yaml field "assistant"');
+    if (assistant.provider !== "huggingface") throw new Error('lesson.yaml field "assistant.provider" must be "huggingface"');
+    nonEmptyString(assistant.model, 'lesson.yaml field "assistant.model"');
+    nonEmptyString(assistant.context, 'lesson.yaml field "assistant.context"');
+    if (!Array.isArray(assistant.commandable) || assistant.commandable.some((value) => typeof value !== "string" || !value)) {
+      throw new Error('lesson.yaml field "assistant.commandable" must be a list of parameter names');
+    }
+  }
+}
+
+function object(value: unknown, name: string): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error(`${name} must be an object`);
+  return value as Record<string, unknown>;
+}
+
+function nonEmptyString(value: unknown, name: string): asserts value is string {
+  if (typeof value !== "string" || !value.trim()) throw new Error(`${name} must be a non-empty string`);
+}
+
+function finiteNumber(value: unknown, name: string): asserts value is number {
+  if (typeof value !== "number" || !Number.isFinite(value)) throw new Error(`${name} must be a finite number`);
+}
+
+function optionalString(value: unknown, name: string): void {
+  if (value !== undefined) nonEmptyString(value, name);
+}
+
+function optionalNumber(value: unknown, name: string): void {
+  if (value !== undefined) finiteNumber(value, name);
 }

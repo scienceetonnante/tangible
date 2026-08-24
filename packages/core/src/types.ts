@@ -85,6 +85,8 @@ export interface AssistantContext {
   version: 1;
   lessonId: string;
   title: string;
+  provider: "huggingface";
+  model: string;
   guide: string;
   script: string;
   narration: string;

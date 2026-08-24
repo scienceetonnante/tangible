@@ -35,6 +35,8 @@ export async function buildAssistantContext(
     version: 1,
     lessonId: manifest.id,
     title: manifest.title,
+    provider: config.provider,
+    model: config.model,
     guide: await readFile(join(lessonDir, config.context), "utf8"),
     script,
     narration: parseScript(script).narration,

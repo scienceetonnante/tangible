@@ -1,13 +1,17 @@
 id: unit-circle
 title: The unit circle
 scene: ./scenes/scene.ts
-voice: elevenlabs:s3TPKV1kjDlVtZbl4Ksh
 defaults:
   anticipation: -0.2
   ease: inOutCubic
   transition: 1.0
 tts:
+  provider: elevenlabs
+  voice: s3TPKV1kjDlVtZbl4Ksh
+  model: eleven_multilingual_v2
   speed: 0.9 # ElevenLabs speaking rate: 0.7 (slow) .. 1.2 (fast), 1.0 = default
 assistant:
+  provider: huggingface
+  model: google/gemma-4-31B-it:cerebras
   context: assistant.md
   commandable: [theta, show.thetaLabel, show.projection, show.cosLabel]

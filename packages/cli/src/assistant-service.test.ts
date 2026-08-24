@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { AssistantContext, AssistantRequest } from "@narrable/core";
-import { ASSISTANT_MODEL, AssistantProviderError, answerQuestion, validateAnswer, validateAssistantRequest } from "./assistant-service.js";
+import { AssistantProviderError, answerQuestion, validateAnswer, validateAssistantRequest } from "./assistant-service.js";
 
 const context: AssistantContext = {
   version: 1,
   lessonId: "circle",
   title: "Circle",
+  provider: "huggingface",
+  model: "test/model:provider",
   guide: "A circle.",
   script: "A lesson.",
   narration: "A lesson.",
@@ -60,7 +62,7 @@ describe("assistant service", () => {
       { fetchImpl, hfToken: "token" },
     );
     expect(response.answer).toBe("At zero.");
-    expect(sent.model).toBe(ASSISTANT_MODEL);
+    expect(sent.model).toBe(context.model);
     const messages = sent.messages as { content: string }[];
     expect(messages[0]!.content).toContain("<lesson_script>\nA lesson.\n</lesson_script>");
     expect(messages[0]!.content).not.toContain('"narration":"A lesson."');

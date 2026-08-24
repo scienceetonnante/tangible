@@ -4,8 +4,6 @@
 import { validateValue, type AnswerBeat, type AssistantContext, type AssistantRequest, type AssistantResponse, type ParamType, type ParamValue } from "@narrable/core";
 import { formatAssistantSystemPrompt, type AssistantPromptStyle } from "./assistant-prompt.js";
 
-export const ASSISTANT_MODEL = "google/gemma-4-31B-it:cerebras";
-
 export class AssistantProviderError extends Error {
   constructor(readonly status: number) {
     super(`assistant provider returned HTTP ${status}`);
@@ -26,6 +24,7 @@ export async function answerQuestion(
   providers: AssistantProviders,
 ): Promise<AssistantResponse> {
   validateAssistantRequest(request, context);
+  if (context.provider !== "huggingface") throw new Error(`unsupported assistant provider "${String(context.provider)}"`);
   const beats = providers.fake ? fakeAnswer(context) : await huggingFaceAnswer(request, context, providers);
   validateAnswer(beats, context);
 
@@ -89,7 +88,7 @@ export function buildAssistantProviderRequest(
   });
 
   return {
-    model: ASSISTANT_MODEL,
+    model: context.model,
     messages,
     temperature: 0.2,
     max_tokens: 1200,

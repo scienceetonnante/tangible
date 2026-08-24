@@ -154,21 +154,25 @@ A minimal `lesson.yaml` is:
 id: unit-circle
 title: The unit circle
 scene: ./scenes/scene.ts
-voice: elevenlabs:VOICE_ID
 defaults:
   anticipation: -0.2
   ease: inOutCubic
   transition: 1.0
 tts:
+  provider: elevenlabs
+  voice: VOICE_ID
+  model: eleven_multilingual_v2
   speed: 0.9
 player:
   autoplay: true
 ```
 
-Voice specifications support `elevenlabs:<voice-id>` and
-`hf-endpoint:<voice-id>`. `--offline` replaces provider speech with
-deterministic silent audio. The CLI loads gitignored `.env` files from both the
-invocation directory and the lesson directory.
+`tts.provider` supports `elevenlabs` and `hf-endpoint`. Both providers require a
+`voice`. ElevenLabs also accepts an optional `model` and `speed`. The private
+Hugging Face endpoint selects its own model and generation settings, so those
+values are not declared by the lesson. `--offline` replaces provider speech
+with deterministic silent audio. The CLI loads gitignored `.env` files from
+both the invocation directory and the lesson directory.
 
 `player.autoplay` asks the browser to start the narrated lesson when it loads.
 Browsers may reject audible autoplay; when that happens, Narrable shows a
@@ -189,13 +193,17 @@ Run `pnpm lesson ref --lesson <dir>` for the exact lesson-specific contract.
 
 ```yaml
 assistant:
+  provider: huggingface
+  model: google/gemma-4-31B-it:cerebras
   context: assistant.md
   commandable: [theta, show.projection]
 ```
 
-The context describes the scene, controls, terminology, and answer guidance.
-Only allowlisted parameters may be returned by the provider. Assistant-enabled
-bundles include a same-origin server; other lessons remain static. See
+The `model` is a Hugging Face router model identifier and may include an
+inference-provider suffix. The context describes the scene, controls,
+terminology, and answer guidance. Only allowlisted parameters may be returned
+by the provider. Assistant-enabled bundles include a same-origin server; other
+lessons remain static. See
 [the assistant section of the authoring guide](./authoring.md#add-a-lesson-assistant).
 
 An optional `assistant.eval.yaml` records representative question sequences,

@@ -26,6 +26,8 @@ const assistantContext: AssistantContext = {
   version: 1,
   lessonId: "t",
   title: "Test",
+  provider: "huggingface",
+  model: "test/model:provider",
   guide: "A test scene.",
   script: "Test.",
   narration: "Test.",

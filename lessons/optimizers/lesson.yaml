@@ -1,14 +1,18 @@
 id: optimizers
 title: Why adaptive optimizers exist
 scene: ./scenes/scene.ts
-voice: hf-endpoint:david_v1
 defaults:
   anticipation: -0.2
   ease: inOutCubic
   transition: 1.0
 player:
   autoplay: true
+tts:
+  provider: hf-endpoint
+  voice: david_v1
 assistant:
+  provider: huggingface
+  model: google/gemma-4-31B-it:cerebras
   context: assistant.md
   commandable:
     - kappa

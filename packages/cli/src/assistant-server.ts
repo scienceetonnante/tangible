@@ -6,7 +6,7 @@ import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { AssistantContext, AssistantRequest } from "@narrable/core";
-import { ASSISTANT_MODEL, AssistantProviderError, answerQuestion, validateAssistantRequest } from "./assistant-service.js";
+import { AssistantProviderError, answerQuestion, validateAssistantRequest } from "./assistant-service.js";
 import { serveFromDir } from "./static-server.js";
 
 export interface AssistantLimits {
@@ -45,11 +45,12 @@ export function createAssistantApi(opts: AssistantServerOptions): AssistantApiHa
     const requestId = randomUUID().slice(0, 8);
     const started = Date.now();
     let request: AssistantRequest | undefined;
+    let context: AssistantContext | undefined;
     let stage: "request" | "server" | "provider" = "request";
     try {
       request = await readJson(req) as AssistantRequest;
       stage = "server";
-      const context = JSON.parse(await readFile(join(opts.siteDir, "assistant.json"), "utf8")) as AssistantContext;
+      context = JSON.parse(await readFile(join(opts.siteDir, "assistant.json"), "utf8")) as AssistantContext;
       stage = "request";
       validateAssistantRequest(request, context);
 
@@ -85,7 +86,7 @@ export function createAssistantApi(opts: AssistantServerOptions): AssistantApiHa
         event: "assistant.success",
         requestId,
         lessonId: request.lessonId,
-        model: opts.fake ? "fake" : ASSISTANT_MODEL,
+        model: opts.fake ? "fake" : context.model,
         beats: response.beats.length,
         answerChars: response.answer.length,
         latencyMs: Date.now() - started,
@@ -98,7 +99,7 @@ export function createAssistantApi(opts: AssistantServerOptions): AssistantApiHa
         event: "assistant.error",
         requestId,
         lessonId: request?.lessonId,
-        model: opts.fake ? "fake" : ASSISTANT_MODEL,
+        model: opts.fake ? "fake" : context?.model,
         category,
         ...(error instanceof AssistantProviderError ? { providerStatus: error.status } : {}),
         latencyMs: Date.now() - started,
