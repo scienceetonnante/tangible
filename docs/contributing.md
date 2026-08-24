@@ -58,8 +58,8 @@ player or involve scripts, tracks, audio, or providers.
   mathematics. It depends on nothing.
 - `compiler` contains parsing, validation, authored-state evaluation, timing
   resolution, track expansion, and artifact emission.
-- `tts` contains the offline substitute, ElevenLabs, and private endpoint
-  adapters.
+- `tts` contains the local Supertonic voice, the silent test substitute,
+  ElevenLabs, and private endpoint adapters.
 - `player` contains the clock, state composition, interaction, board, captions,
   and playback controls.
 - `ingredients` contains reusable scene helpers.

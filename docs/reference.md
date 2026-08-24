@@ -43,10 +43,16 @@ pnpm lesson check --lesson lessons/my-lesson
 pnpm lesson preview --offline --lesson lessons/my-lesson
 ```
 
-`--offline` prevents speech and answer provider calls. It creates silent
-placeholder audio at a fixed rate of 60 milliseconds per written character. The
-placeholder gives the player a predictable clock for testing cues, captions,
-seeking, pauses, and interaction. It cannot validate timing against real speech.
+`--offline` prevents speech and answer provider calls. It synthesizes English
+narration locally with a pinned, quantized Supertonic 3 model and uses the local
+assistant substitute. The first offline build downloads a 123 MB model archive;
+later builds use the shared local copy. The local voice is intended for quick
+iteration, but its sentence-based character timings are approximate and still
+need a final check against the production voice.
+
+Use `--silent` when a build needs deterministic silent audio and must not
+download the local speech model. Silent audio advances at 60 milliseconds per
+written character. Automated tests use this option.
 
 Remove `--offline` to synthesize or reuse the configured voice:
 
@@ -87,7 +93,8 @@ Compiled lesson files go to `build/lesson/`. The deployable site goes to
 ### Options
 
 - `--lesson <dir>` selects the lesson directory.
-- `--offline` prevents provider calls and uses deterministic local substitutes.
+- `--offline` uses local Supertonic narration and the local assistant substitute.
+- `--silent` uses deterministic silent narration and the local assistant substitute.
 - `--bundle` asks `build` to create the deployable site.
 - `deploy --create` creates the configured Space privately before the first deployment.
 - `deploy --dry-run` performs local release checks and builds without contacting Hugging Face.
@@ -105,11 +112,11 @@ when another device must reach the local server.
 ### Assistant evaluation
 
 `assistant-eval` reads `assistant.eval.yaml` and existing `build/lesson/`
-artifacts. Run an offline build first. Without `--real`, it prints the complete
-requests that would be sent to the provider and makes no network calls:
+artifacts. Run a silent or offline build first. Without `--real`, it prints the
+complete requests that would be sent to the provider and makes no network calls:
 
 ```bash
-pnpm lesson build --offline --lesson lessons/my-lesson
+pnpm lesson build --silent --lesson lessons/my-lesson
 pnpm lesson assistant-eval --lesson lessons/my-lesson -o assistant-eval.json
 ```
 
@@ -177,8 +184,16 @@ deployment:
 `voice`. ElevenLabs also accepts an optional `model` and `speed`. The private
 Hugging Face endpoint selects its own model and generation settings, so those
 values are not declared by the lesson. `--offline` replaces provider speech
-with deterministic silent audio. The CLI loads gitignored `.env` files from
-both the invocation directory and the lesson directory.
+with the fixed local Supertonic voice, independently of the manifest voice.
+`--silent` selects deterministic silent audio instead. The CLI loads gitignored
+`.env` files from both the invocation directory and the lesson directory.
+
+The local model is stored in the operating system's user cache and shared by
+all lessons. Set `NARRABLE_CACHE_DIR` to choose another Narrable cache root, or
+set `NARRABLE_SUPERTONIC_MODEL_DIR` to an already extracted model directory for
+an air-gapped installation. Narrable verifies the archive checksum before
+installing it and keeps the model's license file. The Supertonic model uses the
+[OpenRAIL-M license](https://huggingface.co/Supertone/supertonic-3/blob/main/LICENSE).
 
 `player.autoplay` asks the browser to start the narrated lesson when it loads.
 Browsers may reject audible autoplay; when that happens, Narrable shows a

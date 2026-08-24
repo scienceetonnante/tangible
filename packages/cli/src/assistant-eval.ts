@@ -68,7 +68,7 @@ export async function runAssistantEval(opts: AssistantEvalOptions): Promise<void
   const contextPath = join(buildDir, "assistant.json");
   const tracksPath = join(buildDir, "tracks.json");
   if (!existsSync(contextPath) || !existsSync(tracksPath)) {
-    throw new Error("assistant-eval requires a lesson build; run lesson build --offline first");
+    throw new Error("assistant-eval requires a lesson build; run lesson build --silent or --offline first");
   }
   const data = parseYaml(await readFile(evalPath, "utf8")) as EvalFile;
   validateEvalFile(data, evalPath);

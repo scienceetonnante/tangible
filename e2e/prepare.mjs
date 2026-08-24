@@ -1,4 +1,4 @@
-// Playwright globalSetup: build the packages + the unit-circle lesson (placeholder audio),
+// Playwright globalSetup: build the packages + the unit-circle lesson (silent audio),
 // then bundle the harness into a self-contained e2e/dist/ (tracks/captions/audio
 // inlined) that the static server serves.
 
@@ -15,8 +15,8 @@ const run = (cmd, args) => {
 
 export default async function prepare() {
   run("node", ["node_modules/typescript/bin/tsc", "--build"]);
-  // --offline keeps e2e hermetic: deterministic timing, no API key, no credits, WAV.
-  run("node", ["packages/cli/dist/index.js", "build", "--offline", "--lesson", "lessons/unit-circle"]);
+  // --silent keeps e2e hermetic: deterministic timing, no model download, no API key, WAV.
+  run("node", ["packages/cli/dist/index.js", "build", "--silent", "--lesson", "lessons/unit-circle"]);
 
   const buildDir = join(root, "lessons/unit-circle/build/lesson");
   const tracks = await readFile(join(buildDir, "tracks.json"), "utf8");

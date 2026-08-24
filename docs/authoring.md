@@ -204,11 +204,18 @@ Use an offline preview while the prose and cue order are changing:
 pnpm lesson preview --offline --lesson lessons/my-lesson
 ```
 
-Offline mode does not call a speech or answer provider. It creates silent
-placeholder audio at a fixed rate of 60 milliseconds per written character. The
-placeholder provides a predictable clock for testing cue order, captions,
-seeking, pauses, and interaction. It cannot show whether a cue feels well timed
-against the rhythm of a real voice.
+Offline mode does not call a speech or answer provider. It synthesizes the
+narration locally with the quantized Supertonic 3 model and uses a local
+substitute for assistant answers. The first offline build downloads a pinned
+123 MB model archive; subsequent builds use the shared local copy. Narrable also
+caches the generated audio inside the lesson, so cue-only edits do not run the
+model again.
+
+The local voice is fast enough for prose and cue iteration, but it does not
+provide word alignment. Narrable estimates character timing within each
+sentence. Treat this timing as a useful draft and make the final timing pass
+against the production voice. Use `--silent` when an automated test or a
+strictly hermetic build needs the former predictable silent clock instead.
 
 Review the lesson in layers.
 
@@ -433,10 +440,11 @@ cases:
       - Can you show me a case where it is zero?
 ```
 
-Render the provider requests without making network calls:
+Render the provider requests without downloading a voice model or making
+provider calls:
 
 ```bash
-pnpm lesson build --offline --lesson lessons/my-lesson
+pnpm lesson build --silent --lesson lessons/my-lesson
 pnpm lesson assistant-eval --lesson lessons/my-lesson -o assistant-eval.json
 ```
 
@@ -491,8 +499,8 @@ hf auth login
 pnpm lesson preview --lesson lessons/my-lesson
 ```
 
-Use `--offline` only for structural review. A release bundle must contain the
-intended narration.
+Use `--offline` only for local review. A release bundle must contain the
+intended production narration.
 
 ### Configure the deployment target
 

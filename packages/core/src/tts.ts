@@ -34,7 +34,7 @@ export interface SegmentedTtsResult extends TtsResult {
 }
 
 export interface TtsAdapter {
-  id: string; // "fake", "elevenlabs", "hf-endpoint", "align"
+  id: string; // "fake", "supertonic", "elevenlabs", "hf-endpoint", "align"
   modelId?: string; // participates in the cache key
   synthesize(req: TtsRequest): Promise<TtsResult>;
   synthesizeSegments?(req: SegmentedTtsRequest): Promise<SegmentedTtsResult>;

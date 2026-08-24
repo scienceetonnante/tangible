@@ -34,8 +34,8 @@ test("agent loop: check catches error → fix → build → state + frame", () =
   writeFileSync(join(dir, "script.md"), fixedScript);
   expect(lesson(["check", "--lesson", dir]).status).toBe(0);
 
-  // 3. Build the static bundle with deterministic placeholder audio.
-  expect(lesson(["build", "--bundle", "--offline", "--lesson", dir]).status).toBe(0);
+  // 3. Build the static bundle with deterministic silent audio.
+  expect(lesson(["build", "--bundle", "--silent", "--lesson", dir]).status).toBe(0);
 
   // 4. State is inspectable and correct (past the end → holds the last cue).
   const st = lesson(["state", "--at", "30", "--lesson", dir]);

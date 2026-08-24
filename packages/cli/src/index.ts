@@ -11,7 +11,7 @@ import type { SceneInfo } from "@narrable/compiler";
 import { buildIndex, evaluate, validateSchema } from "@narrable/core";
 import type { Schema, Keyframe, TtsAdapter, ParamSpec, ParamValue } from "@narrable/core";
 import { StateStore, Reconciler } from "@narrable/player";
-import { FakeTtsAdapter, ElevenLabsAdapter, HuggingFaceVoiceAdapter } from "@narrable/tts";
+import { FakeTtsAdapter, ElevenLabsAdapter, HuggingFaceVoiceAdapter, SupertonicTtsAdapter } from "@narrable/tts";
 import { loadScene } from "./scene-loader.js";
 import { loadManifest, loadSceneManifest, type Manifest, type TtsConfig } from "./manifest.js";
 import { refSheet } from "./ref.js";
@@ -74,7 +74,7 @@ async function main() {
       await cmdRef(flags);
       return;
     default:
-      die(`unknown command "${cmd ?? ""}"\nusage: lesson <new|check|build|frame|preview|scene|serve|deploy|assistant-eval|state|ref> [--lesson dir] [--at t] [--drag p=v] [--bundle] [-o file] [--size WxH] [--port n] [--host address] [--offline] [--real] [--create] [--dry-run] [--variant legacy|structured|both]`);
+      die(`unknown command "${cmd ?? ""}"\nusage: lesson <new|check|build|frame|preview|scene|serve|deploy|assistant-eval|state|ref> [--lesson dir] [--at t] [--drag p=v] [--bundle] [-o file] [--size WxH] [--port n] [--host address] [--offline] [--silent] [--real] [--create] [--dry-run] [--variant legacy|structured|both]`);
   }
 }
 
@@ -106,7 +106,7 @@ async function cmdBuild(flags: Flags): Promise<void> {
   const lessonDir = flags.lesson ?? process.cwd();
   const manifest = await loadManifest(lessonDir);
   const scene = await loadScene(join(lessonDir, manifest.scene));
-  await buildLesson(lessonDir, manifest, scene, flags.offline ?? false);
+  await buildLesson(lessonDir, manifest, scene, narrationMode(flags));
   console.error(`built ${manifest.id} → build/lesson/`);
   if (flags.bundle) {
     const out = await bundleSite(lessonDir, manifest, join(lessonDir, manifest.scene));
@@ -124,9 +124,17 @@ async function cmdFrame(flags: Flags): Promise<void> {
   console.error(`rendered frame at t=${t} → ${out}`);
 }
 
-/** Choose the configured build-time speech provider. */
-function selectTts(config: TtsConfig, fake: boolean): { adapter: TtsAdapter; voice: string } {
-  if (fake) return { adapter: new FakeTtsAdapter(), voice: config.voice };
+type NarrationMode = "provider" | "offline" | "silent";
+
+/** Choose the configured provider, local draft voice, or silent test substitute. */
+function selectTts(config: TtsConfig, mode: NarrationMode): { adapter: TtsAdapter; voice: string } {
+  if (mode === "silent") return { adapter: new FakeTtsAdapter(), voice: config.voice };
+  if (mode === "offline") {
+    return {
+      adapter: new SupertonicTtsAdapter({ onStatus: (message) => console.error(message) }),
+      voice: "supertonic-3-speaker-0",
+    };
+  }
   if (config.provider === "hf-endpoint") {
     return { adapter: new HuggingFaceVoiceAdapter({ speaker: config.voice }), voice: config.voice };
   }
@@ -137,7 +145,7 @@ function selectTts(config: TtsConfig, fake: boolean): { adapter: TtsAdapter; voi
   return { adapter: new FakeTtsAdapter(), voice: config.voice };
 }
 
-async function buildLesson(lessonDir: string, manifest: Manifest, scene: SceneInfo, fake: boolean, requireReal = false) {
+async function buildLesson(lessonDir: string, manifest: Manifest, scene: SceneInfo, mode: NarrationMode, requireReal = false) {
   const file = "script.md";
   const script = await readFile(join(lessonDir, file), "utf8");
   const parsed = parseScript(script, file);
@@ -148,8 +156,8 @@ async function buildLesson(lessonDir: string, manifest: Manifest, scene: SceneIn
     die(`build aborted: ${errs.length} error(s) in ${file}`);
   }
 
-  const { adapter, voice } = selectTts(manifest.tts, fake);
-  if (requireReal && adapter.id === "fake") {
+  const { adapter, voice } = selectTts(manifest.tts, mode);
+  if (requireReal && (adapter.id === "fake" || adapter.id === "supertonic")) {
     throw new Error("lesson deploy requires real narration; configure credentials for the selected TTS provider");
   }
   const result = await synthesize(adapter, parsed.narration, {
@@ -187,8 +195,8 @@ async function cmdPreview(flags: Flags): Promise<void> {
   const rebuild = async () => {
     const scene = await loadScene(join(lessonDir, manifest.scene));
     // Same TTS selection as build; cached, so it only re-synthesizes on prose edits.
-    // Pass --offline for a zero-cost loop while editing narration.
-    await buildLesson(lessonDir, manifest, scene, flags.offline ?? false);
+    // Pass --offline for fast local narration while editing the lesson.
+    await buildLesson(lessonDir, manifest, scene, narrationMode(flags));
     await bundleSite(lessonDir, manifest, join(lessonDir, manifest.scene));
   };
   await rebuild();
@@ -208,7 +216,7 @@ async function cmdPreview(flags: Flags): Promise<void> {
     rebuild,
     port: flags.port,
     host: flags.host,
-    assistantApi: manifest.assistant ? createAssistantApi({ siteDir, fake: flags.offline, onProviderRequest }) : undefined,
+    assistantApi: manifest.assistant ? createAssistantApi({ siteDir, fake: noProviders(flags), onProviderRequest }) : undefined,
   });
 }
 
@@ -241,7 +249,7 @@ async function cmdServe(flags: Flags): Promise<void> {
     siteDir,
     port: flags.port,
     host: flags.host,
-    fake: flags.offline,
+    fake: noProviders(flags),
     onProviderRequest: async (request) => {
       const path = await writeAssistantPromptLog(lessonDir, request);
       console.error(`assistant prompt → ${path}`);
@@ -250,7 +258,7 @@ async function cmdServe(flags: Flags): Promise<void> {
 }
 
 async function cmdDeploy(flags: Flags): Promise<void> {
-  if (flags.offline) die("lesson deploy does not support --offline because a release must contain real narration");
+  if (flags.offline || flags.silent) die("lesson deploy does not support --offline or --silent because a release must contain real narration");
   const lessonDir = flags.lesson ?? process.cwd();
   const manifest = await loadManifest(lessonDir);
   await deployLessonToSpace({
@@ -263,7 +271,7 @@ async function cmdDeploy(flags: Flags): Promise<void> {
     },
     build: async () => {
       const scene = await loadScene(join(lessonDir, manifest.scene));
-      await buildLesson(lessonDir, manifest, scene, false, true);
+      await buildLesson(lessonDir, manifest, scene, "provider", true);
       console.error(`built ${manifest.id} with real narration → build/lesson/`);
       await rm(join(lessonDir, "build", "site"), { recursive: true, force: true });
       const out = await bundleSite(lessonDir, manifest, join(lessonDir, manifest.scene));
@@ -363,6 +371,7 @@ interface Flags {
   lesson?: string;
   at?: string;
   offline?: boolean;
+  silent?: boolean;
   bundle?: boolean;
   out?: string;
   size?: string;
@@ -381,6 +390,7 @@ function parseFlags(args: string[]): Flags {
     if (args[i] === "--at") f.at = args[++i];
     else if (args[i] === "--lesson") f.lesson = resolvePath(args[++i]!);
     else if (args[i] === "--offline") f.offline = true;
+    else if (args[i] === "--silent") f.silent = true;
     else if (args[i] === "--bundle") f.bundle = true;
     else if (args[i] === "-o" || args[i] === "--out") f.out = args[++i];
     else if (args[i] === "--size") f.size = args[++i];
@@ -390,7 +400,7 @@ function parseFlags(args: string[]): Flags {
     else if (args[i] === "--real") f.real = true;
     else if (args[i] === "--create") f.create = true;
     else if (args[i] === "--dry-run") f.dryRun = true;
-    else if (args[i] === "--fake") die('the --fake option was renamed to --offline');
+    else if (args[i] === "--fake") die('the --fake option was renamed to --silent');
     else if (args[i] === "--variant") {
       const variant = args[++i];
       if (variant !== "legacy" && variant !== "structured" && variant !== "both") die("--variant must be legacy, structured, or both");
@@ -399,6 +409,16 @@ function parseFlags(args: string[]): Flags {
     else if (args[i]?.startsWith("--")) die(`unknown option "${args[i]}"`);
   }
   return f;
+}
+
+function narrationMode(flags: Flags): NarrationMode {
+  if (flags.silent) return "silent";
+  if (flags.offline) return "offline";
+  return "provider";
+}
+
+function noProviders(flags: Flags): boolean {
+  return Boolean(flags.offline || flags.silent);
 }
 
 /** Load .env from the current dir and the lesson dir (built-in, no dependency). */

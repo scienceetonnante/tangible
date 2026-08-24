@@ -97,9 +97,10 @@ Build a bundle and inspect representative `state` and `frame` outputs across eve
 chapter. Then review the live preview for interaction, resizing, pause/resume,
 seeking, and touch where relevant.
 
-Ask the human to review pedagogy and visual direction. Iterate with silent
-placeholder audio until prose and cue order are stable. Build with the real voice
-only then, and tune timing to its prosody without changing the teaching argument.
+Ask the human to review pedagogy and visual direction. Iterate with the local
+Supertonic voice until prose and cue order are stable. Build with the production
+voice only then, and tune timing to its prosody without changing the teaching
+argument. Use `--silent` instead when a test must avoid the local model download.
 
 Before release, follow the review and deployment sections of
 `docs/authoring.md` and run the lesson-specific tests plus `pnpm lesson check`.

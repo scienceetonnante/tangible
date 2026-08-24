@@ -43,10 +43,21 @@ pnpm lesson preview --offline --lesson lessons/my-lesson
 ```
 
 Open <http://localhost:5179>. 
-Offline mode creates predictable silent audio and does not call a speech or answer provider. It lets you test cues, captions,
-seeking, pauses, layout, and interaction without an API key. 
+Offline mode synthesizes narration locally with Supertonic and uses a local
+substitute for assistant answers. The first offline build downloads a pinned
+123 MB speech model; later builds need no network connection or API key. This
+voice lets you review cues, captions, seeking, pauses, layout, and interaction
+against audible draft narration.
 
-When the narration and cue order are stable, remove `--offline` to synthesize the voice:
+Use `--silent` instead of `--offline` when you need the former predictable
+silent clock, such as in an automated test:
+
+```bash
+pnpm lesson build --silent --lesson lessons/my-lesson
+```
+
+When the narration and cue order are stable, remove `--offline` to synthesize
+the configured production voice:
 
 ```bash
 pnpm lesson preview --lesson lessons/my-lesson

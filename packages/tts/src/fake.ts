@@ -1,5 +1,5 @@
-// Deterministic placeholder speech: 60 ms per character and silent audio. This
-// keeps the compiler pipeline offline in CI and during structural review.
+// Deterministic placeholder speech: 60 ms per character and silent audio. The
+// --silent path uses it for automated tests and other hermetic builds.
 
 import type { TtsAdapter, TtsRequest, TtsResult, WordTime } from "@narrable/core";
 

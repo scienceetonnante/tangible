@@ -1,7 +1,7 @@
 {
   "name": "@narrable/tts",
   "version": "0.1.0",
-  "description": "TTS provider adapters (fake, ElevenLabs, and Hugging Face voice endpoints).",
+  "description": "Local and hosted TTS provider adapters for Narrable.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -12,6 +12,7 @@
     }
   },
   "dependencies": {
-    "@narrable/core": "workspace:*"
+    "@narrable/core": "workspace:*",
+    "sherpa-onnx-node": "1.13.6"
   }
 }
