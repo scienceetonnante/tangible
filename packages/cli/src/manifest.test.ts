@@ -30,9 +30,13 @@ assistant:
   model: test/model:provider
   context: assistant.md
   commandable: [theta]
+deployment:
+  provider: huggingface
+  space: example/circle
 `)).resolves.toMatchObject({
       tts: { provider: "elevenlabs", voice: "voice-id", model: "eleven_multilingual_v2", speed: 0.9 },
       assistant: { provider: "huggingface", model: "test/model:provider" },
+      deployment: { provider: "huggingface", space: "example/circle" },
     });
   });
 
@@ -63,5 +67,23 @@ tts:
   voice: david_v1
   speed: 0.9
 `)).rejects.toThrow("supported only by ElevenLabs");
+  });
+
+  it("rejects a deployment URL in place of a Space identifier", async () => {
+    await expect(manifest(`
+id: circle
+title: Circle
+scene: ./scenes/scene.ts
+defaults:
+  anticipation: -0.2
+  ease: linear
+  transition: 1
+tts:
+  provider: hf-endpoint
+  voice: david_v1
+deployment:
+  provider: huggingface
+  space: https://huggingface.co/spaces/example/circle
+`)).rejects.toThrow('must use the "namespace/name" form');
   });
 });

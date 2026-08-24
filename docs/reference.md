@@ -165,6 +165,9 @@ tts:
   speed: 0.9
 player:
   autoplay: true
+deployment:
+  provider: huggingface
+  space: example/lesson-space
 ```
 
 `tts.provider` supports `elevenlabs` and `hf-endpoint`. Both providers require a
@@ -177,6 +180,11 @@ both the invocation directory and the lesson directory.
 `player.autoplay` asks the browser to start the narrated lesson when it loads.
 Browsers may reject audible autoplay; when that happens, Narrable shows a
 `Start Lesson` overlay whose click supplies the required learner interaction.
+
+`deployment.space` records the stable Hugging Face Space identifier in
+`namespace/name` form. It is optional unless `lesson deploy` is used. Do not put
+tokens, visibility, hardware, or deployment status in `lesson.yaml`; those are
+remote Space settings.
 
 ### Scene exports
 

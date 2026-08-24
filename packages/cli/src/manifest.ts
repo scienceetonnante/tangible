@@ -15,6 +15,10 @@ export interface Manifest {
   defaults: { anticipation: number; ease: string; transition: number };
   tts: TtsConfig;
   player?: { autoplay?: boolean };
+  deployment?: {
+    provider: "huggingface";
+    space: string;
+  };
   assistant?: {
     provider: "huggingface";
     model: string;
@@ -74,6 +78,14 @@ function validateManifest(value: unknown): asserts value is Manifest {
     }
   }
 
+  if (manifest.deployment !== undefined) {
+    const deployment = object(manifest.deployment, 'lesson.yaml field "deployment"');
+    if (deployment.provider !== "huggingface") {
+      throw new Error('lesson.yaml field "deployment.provider" must be "huggingface"');
+    }
+    spaceId(deployment.space, 'lesson.yaml field "deployment.space"');
+  }
+
   if (manifest.assistant !== undefined) {
     const assistant = object(manifest.assistant, 'lesson.yaml field "assistant"');
     if (assistant.provider !== "huggingface") throw new Error('lesson.yaml field "assistant.provider" must be "huggingface"');
@@ -96,6 +108,13 @@ function nonEmptyString(value: unknown, name: string): asserts value is string {
 
 function finiteNumber(value: unknown, name: string): asserts value is number {
   if (typeof value !== "number" || !Number.isFinite(value)) throw new Error(`${name} must be a finite number`);
+}
+
+function spaceId(value: unknown, name: string): asserts value is string {
+  nonEmptyString(value, name);
+  if (!/^[A-Za-z0-9][A-Za-z0-9._-]*\/[A-Za-z0-9][A-Za-z0-9._-]*$/.test(value)) {
+    throw new Error(`${name} must use the "namespace/name" form`);
+  }
 }
 
 function optionalString(value: unknown, name: string): void {
