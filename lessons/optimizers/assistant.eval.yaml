@@ -1,6 +1,6 @@
 cases:
   - id: ravine-follow-up
-    at: 60
+    at: 100
     state:
       kappa: 24
       roughness: 0

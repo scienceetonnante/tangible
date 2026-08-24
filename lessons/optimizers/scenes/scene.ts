@@ -24,10 +24,21 @@ const scriptBoolean = (value: boolean, label: string) => ({
 });
 
 const pathView: OrbitState = { target: [0, 0.4, 0], distance: 7.4, azimuth: -0.15, elevation: 1.22 };
+const spinView = (azimuth: number): OrbitState => ({
+  target: [0, 0.55, 0],
+  distance: 7,
+  azimuth,
+  elevation: 0.48,
+});
 
 export const presets: Record<string, Record<string, ParamValue>> = {
   pathView: { camera: pathView },
-  roundBowlView: { camera: { target: [0, 0.55, 0], distance: 7, azimuth: -0.72, elevation: 0.48 } },
+  spinBaseView: { camera: spinView(-0.72) },
+  spinQuarterView: { camera: spinView(-0.72 + Math.PI / 2) },
+  spinHalfView: { camera: spinView(-0.72 + Math.PI) },
+  spinThreeQuarterView: { camera: spinView(-0.72 + (3 * Math.PI) / 2) },
+  spinFullView: { camera: spinView(-0.72 + 2 * Math.PI) },
+  roundBowlView: { camera: spinView(-0.72) },
   ravineView: { camera: { target: [0, 0.65, 0], distance: 6.8, azimuth: 1.05, elevation: 0.36 } },
   roughnessView: { camera: { target: [0, 0.55, 0], distance: 6.8, azimuth: 0.05, elevation: 0.34 } },
 };
