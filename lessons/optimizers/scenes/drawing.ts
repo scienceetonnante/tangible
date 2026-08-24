@@ -2,11 +2,10 @@ import type { OrbitState, PlainState } from "@narrable/core";
 import { drawControls, drawStep } from "./controls.js";
 import type { OptimizerFrame } from "./frame.js";
 import { MAX_STEPS, type Trajectory } from "./model.js";
-import { landscapeBox, lossPlotBox, SERIES, type View } from "./view.js";
+import { lossPlotBox, SERIES, type View } from "./view.js";
 
 const BACKGROUND = "#050609";
 const FOREGROUND = "#f5f7fa";
-const MUTED = "#9aa3af";
 const CAMERA_READOUT = "#b8bec8";
 
 export function draw(g: CanvasRenderingContext2D, view: View, state: Readonly<PlainState>, frame: OptimizerFrame): void {
@@ -15,9 +14,8 @@ export function draw(g: CanvasRenderingContext2D, view: View, state: Readonly<Pl
   g.fillRect(0, 0, view.width, view.height);
   g.lineJoin = "round";
   g.lineCap = "round";
-  drawLandscapeLabels(g, view);
   drawLossPlot(g, view, frame.trajectories, frame.step);
-  drawControls(g, view, state, frame.trajectories);
+  drawControls(g, view, state);
   drawStep(g, view, frame.step);
   drawCameraReadout(g, view, state);
 }
@@ -33,12 +31,13 @@ function drawCameraReadout(g: CanvasRenderingContext2D, view: View, state: Reado
   g.textBaseline = "middle";
   const y = view.height * (view.height < 360 ? 0.965 : 0.91);
   g.fillText(
-    `target [${target}] · distance ${formatCameraValue(camera.distance)} · ` +
-      `azimuth ${formatCameraValue(toDegrees(camera.azimuth))}° · ` +
-      `elevation ${formatCameraValue(toDegrees(camera.elevation))}°`,
+    `[${target}] · d=${formatCameraValue(camera.distance)} · ` +
+      `az. ${formatAngle(camera.azimuth)}° · el. ${formatAngle(camera.elevation)}°`,
     view.width * 0.015,
     y,
   );
+  g.textAlign = "right";
+  g.fillText("drag to orbit · scroll to zoom", view.width * 0.985, y);
 }
 
 function formatCameraValue(value: number): string {
@@ -49,20 +48,15 @@ function toDegrees(radians: number): number {
   return (radians * 180) / Math.PI;
 }
 
-function drawLandscapeLabels(g: CanvasRenderingContext2D, view: View): void {
-  const box = landscapeBox(view);
-  const unit = Math.min(view.width, view.height);
-  g.fillStyle = MUTED;
-  g.font = `${unit * 0.019}px sans-serif`;
-  g.textAlign = "left";
-  g.textBaseline = "bottom";
-  g.fillText("drag to orbit · scroll to zoom", box.x, box.y - unit * 0.014);
+function formatAngle(radians: number): string {
+  const degrees = Math.round(toDegrees(radians));
+  return String(Object.is(degrees, -0) ? 0 : degrees);
 }
 
 function drawLossPlot(g: CanvasRenderingContext2D, view: View, trajectories: Trajectory[], step: number): void {
   const box = lossPlotBox(view);
   const unit = Math.min(view.width, view.height);
-  const left = box.x + unit * 0.038;
+  const left = box.x;
   const right = box.x + box.width;
   const top = box.y;
   const bottom = box.y + box.height;
@@ -79,6 +73,12 @@ function drawLossPlot(g: CanvasRenderingContext2D, view: View, trajectories: Tra
   g.lineWidth = unit * 0.002;
   for (let exponent = logBottom; exponent <= logTop; exponent++) line(g, left, yAt(10 ** exponent), right, yAt(10 ** exponent));
   line(g, left, top, left, bottom);
+
+  g.strokeStyle = "#454c58";
+  g.lineWidth = unit * 0.0015;
+  for (let gridStep = 5; gridStep <= MAX_STEPS; gridStep += 5) {
+    line(g, xAt(gridStep), top, xAt(gridStep), bottom);
+  }
 
   for (const trajectory of trajectories) {
     const count = Math.min(Math.floor(step), trajectory.points.length - 1);

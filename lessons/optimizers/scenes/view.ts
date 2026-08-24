@@ -42,30 +42,35 @@ export const TOGGLES = [
   { param: "active.adamw", label: "AdamW", optimizer: "adamw" as const },
 ];
 
+const ALGORITHM_X = 0.56;
+const ALGORITHM_WIDTH = 0.2;
+
 export function landscapeBox(view: View) {
-  const size = Math.min(view.width * 0.44, view.height * 0.74);
-  return { x: view.width * 0.015, y: view.height * 0.105, width: size, height: size };
+  const height = Math.min(view.width * 0.44, view.height * 0.74);
+  const width = Math.min(height * 1.3, view.width * 0.545);
+  return { x: view.width * 0.015, y: view.height * 0.105, width, height };
 }
 
 export function lossPlotBox(view: View) {
-  return { x: view.width * 0.48, y: view.height * 0.685, width: view.width * 0.505, height: view.height * 0.115 };
+  return { x: view.width * 0.57, y: view.height * 0.685, width: view.width * 0.415, height: view.height * 0.115 };
 }
 
 export function sliderBox(view: View, definition: SliderDefinition) {
   const problemX = definition.slot === 0 ? [0.015, 0.215] : [0.245, 0.445];
-  const [x0, x1] = definition.section === "problem" ? problemX : [0.49, 0.725];
+  const [x0, x1] = definition.section === "problem" ? problemX : [0.568, 0.756];
   return { x0: view.width * x0, x1: view.width * x1, y: view.height * definition.y };
 }
 
 export function stepBox(view: View) {
-  return { x0: view.width * 0.48, x1: view.width * 0.985, y: view.height * 0.825 };
+  const plot = lossPlotBox(view);
+  return { x0: plot.x, x1: plot.x + plot.width, y: view.height * 0.825 };
 }
 
 export function toggleBox(view: View, index: number) {
   return {
-    x: view.width * (0.49 + index * 0.078),
+    x: view.width * (0.568 + index * 0.0624),
     y: view.height * 0.035,
-    width: view.width * 0.068,
+    width: view.width * 0.0544,
     height: view.height * 0.055,
   };
 }
@@ -76,5 +81,10 @@ export function algorithmGroupBox(view: View, optimizer: OptimizerName) {
     momentum: [0.275, 0.18],
     adamw: [0.49, 0.125],
   }[optimizer]!;
-  return { x: view.width * 0.482, y: view.height * vertical[0], width: view.width * 0.25, height: view.height * vertical[1] };
+  return {
+    x: view.width * ALGORITHM_X,
+    y: view.height * vertical[0],
+    width: view.width * ALGORITHM_WIDTH,
+    height: view.height * vertical[1],
+  };
 }

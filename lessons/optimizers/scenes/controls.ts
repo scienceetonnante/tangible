@@ -1,5 +1,5 @@
 import type { PlainState } from "@narrable/core";
-import { MAX_STEPS, sample, type OptimizerName, type Trajectory } from "./model.js";
+import { MAX_STEPS, type OptimizerName } from "./model.js";
 import {
   algorithmGroupBox,
   ALGORITHM_SLIDERS,
@@ -14,28 +14,16 @@ import {
 } from "./view.js";
 
 const FOREGROUND = "#f5f7fa";
-const MUTED = "#9aa3af";
 const DISABLED = "#555b66";
 
-export function drawControls(
-  g: CanvasRenderingContext2D,
-  view: View,
-  state: Readonly<PlainState>,
-  trajectories: Trajectory[],
-): void {
+export function drawControls(g: CanvasRenderingContext2D, view: View, state: Readonly<PlainState>): void {
   const unit = Math.min(view.width, view.height);
-  drawAlgorithmGroups(g, view, state, trajectories, unit);
+  drawAlgorithmGroups(g, view, state, unit);
   drawToggles(g, view, state, unit);
 
   for (const definition of [...PROBLEM_SLIDERS, ...ALGORITHM_SLIDERS]) {
     drawSlider(g, view, state, definition, unit);
   }
-
-  const threshold = 2 / number(state, "sgd.lr");
-  g.fillStyle = MUTED;
-  g.font = `${unit * 0.015}px sans-serif`;
-  g.textAlign = "left";
-  g.fillText(`stable while κ < ${threshold.toFixed(1)}`, view.width * 0.49, view.height * 0.237);
 }
 
 export function drawStep(g: CanvasRenderingContext2D, view: View, step: number): void {
@@ -57,17 +45,15 @@ export function drawStep(g: CanvasRenderingContext2D, view: View, step: number):
   g.font = `${unit * 0.017}px sans-serif`;
   g.textAlign = "left";
   g.textBaseline = "top";
-  g.fillText(`matched step ${Math.round(step)}`, box.x0, box.y + unit * 0.018);
+  g.fillText(`step ${Math.round(step)}`, box.x0, box.y + unit * 0.018);
 }
 
 function drawAlgorithmGroups(
   g: CanvasRenderingContext2D,
   view: View,
   state: Readonly<PlainState>,
-  trajectories: Trajectory[],
   unit: number,
 ): void {
-  const currentStep = number(state, "step");
   for (const name of ["sgd", "momentum", "adamw"] as OptimizerName[]) {
     const box = algorithmGroupBox(view, name);
     const active = state[`active.${name}`] as boolean;
@@ -83,17 +69,6 @@ function drawAlgorithmGroups(
     g.textAlign = "left";
     g.textBaseline = "top";
     g.fillText(SERIES[name].label, box.x + unit * 0.012, box.y + unit * 0.009);
-    const trajectory = trajectories.find((candidate) => candidate.name === name);
-    const current = trajectory && sample(trajectory, Math.min(currentStep, trajectory.points.length - 1));
-    const value = trajectory?.divergedAt !== undefined && currentStep >= trajectory.divergedAt
-      ? "diverged"
-      : current
-        ? `L ${current.loss.toExponential(1)}`
-        : "off";
-    g.fillStyle = active ? FOREGROUND : DISABLED;
-    g.font = `${unit * 0.015}px sans-serif`;
-    g.textAlign = "right";
-    g.fillText(value, box.x + box.width - unit * 0.01, box.y + unit * 0.011);
   }
 }
 
@@ -142,7 +117,7 @@ function drawSlider(
   g.fill();
   g.stroke();
   g.fillStyle = active ? FOREGROUND : DISABLED;
-  g.font = `${unit * 0.019}px sans-serif`;
+  g.font = `${unit * 0.016}px sans-serif`;
   g.textAlign = "left";
   g.textBaseline = "bottom";
   g.fillText(definition.label, box.x0, box.y - unit * 0.017);

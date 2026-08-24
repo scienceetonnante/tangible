@@ -6,6 +6,17 @@ import { intersectLossSurface, normalizedLoss, surfacePoint } from "./surface.js
 import { landscapeBox, SERIES, type View } from "./view.js";
 
 const GRID_CELLS = 56;
+const INFERNO_COLORS = [
+  "#000004",
+  "#1b0c41",
+  "#420a68",
+  "#6a176e",
+  "#932667",
+  "#bc3754",
+  "#dd513a",
+  "#f98e09",
+  "#fcffa4",
+].map((value) => new THREE.Color(value));
 
 /** Three.js loss surface drawn over the lesson's left-hand viewport. */
 export class OptimizerThreeView {
@@ -150,7 +161,7 @@ function surfaceGeometry(problem: Problem): THREE.BufferGeometry {
       const point = surfacePoint(x, y, problem);
       positions.push(point.x, point.y, point.z);
       const level = normalizedLoss(x, y, problem);
-      color.setHSL(212 / 360, 0.58, (8 + (1 - level) ** 1.35 * 84) / 100);
+      infernoColor(1 - level, color);
       colors.push(color.r, color.g, color.b);
     }
   }
@@ -172,6 +183,12 @@ function surfaceGeometry(problem: Problem): THREE.BufferGeometry {
   geometry.setIndex(indices);
   geometry.computeVertexNormals();
   return geometry;
+}
+
+function infernoColor(value: number, target: THREE.Color): void {
+  const scaled = clamp(value, 0, 1) * (INFERNO_COLORS.length - 1);
+  const lower = Math.min(Math.floor(scaled), INFERNO_COLORS.length - 2);
+  target.copy(INFERNO_COLORS[lower]!).lerp(INFERNO_COLORS[lower + 1]!, scaled - lower);
 }
 
 function gridLines(problem: Problem): THREE.Line[] {

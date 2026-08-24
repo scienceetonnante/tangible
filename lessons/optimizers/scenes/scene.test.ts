@@ -3,19 +3,25 @@ import { Reconciler } from "../../../packages/player/src/reconciler.js";
 import { StateStore } from "../../../packages/player/src/store.js";
 import { describe, expect, it } from "vitest";
 import { scene, schema } from "./scene.js";
-import { landscapeBox, sliderBox, SLIDERS } from "./view.js";
+import { algorithmGroupBox, landscapeBox, lossPlotBox, sliderBox, SLIDERS, stepBox } from "./view.js";
 
 function recordingContext() {
   const calls: string[] = [];
   const texts: string[] = [];
+  const segments: [number, number, number, number][] = [];
+  let start: [number, number] | undefined;
   const handler: ProxyHandler<Record<string, unknown>> = {
     get: (_target, property) => (...args: unknown[]) => {
       calls.push(String(property));
       if (property === "fillText") texts.push(String(args[0]));
+      if (property === "moveTo") start = [Number(args[0]), Number(args[1])];
+      if (property === "lineTo" && start) {
+        segments.push([start[0], start[1], Number(args[0]), Number(args[1])]);
+      }
     },
     set: () => true,
   };
-  return { context: new Proxy({}, handler) as unknown as CanvasRenderingContext2D, calls, texts };
+  return { context: new Proxy({}, handler) as unknown as CanvasRenderingContext2D, calls, texts, segments };
 }
 
 function defaultState(): PlainState {
@@ -23,10 +29,10 @@ function defaultState(): PlainState {
 }
 
 function instance(width = 1000, height = 600) {
-  const { context, calls, texts } = recordingContext();
+  const { context, calls, texts, segments } = recordingContext();
   const canvas = { getContext: () => context } as unknown as HTMLCanvasElement;
   const created = scene.create({ canvas, overlay: {} as HTMLElement, viewport: () => ({ width, height }) });
-  return { created, calls, texts };
+  return { created, calls, texts, segments };
 }
 
 describe("optimizer scene", () => {
@@ -97,8 +103,27 @@ describe("optimizer scene", () => {
     expect((schema.camera.default as OrbitState).elevation).toBeGreaterThan(1.1);
   });
 
+  it("widens the surface and narrows the algorithm column", () => {
+    const view = { width: 1280, height: 720 };
+    const landscape = landscapeBox(view);
+    const algorithm = algorithmGroupBox(view, "sgd");
+
+    expect(landscape.width / landscape.height).toBeCloseTo(1.3, 6);
+    expect(algorithm.width).toBeCloseTo(view.width * 0.2, 6);
+    expect(algorithm.x).toBeGreaterThan(landscape.x + landscape.width);
+  });
+
+  it("aligns the step slider with the loss graph", () => {
+    const view = { width: 1000, height: 600 };
+    const plot = lossPlotBox(view);
+    const step = stepBox(view);
+
+    expect(step.x0).toBe(plot.x);
+    expect(step.x1).toBe(plot.x + plot.width);
+  });
+
   it("renders the terrain, trajectories, plots, and controls", () => {
-    const { created, calls } = instance();
+    const { created, calls, texts } = instance();
     const state = {
       ...defaultState(),
       step: 24,
@@ -114,6 +139,10 @@ describe("optimizer scene", () => {
     expect(calls).toContain("lineTo");
     expect(calls).toContain("fillText");
     expect(created.handles()).toHaveLength(12);
+    expect(texts).toContain("step 24");
+    expect(texts.some((text) => text.startsWith("matched step"))).toBe(false);
+    expect(texts.some((text) => text.startsWith("stable while"))).toBe(false);
+    expect(texts.some((text) => text.startsWith("L "))).toBe(false);
   });
 
   it("shows script-ready camera values in degrees", () => {
@@ -132,8 +161,26 @@ describe("optimizer scene", () => {
     );
 
     expect(texts).toContain(
-      "target [1.00,-0.50,2.25] · distance 6.80 · azimuth 60.00° · elevation 30.00°",
+      "[1.00,-0.50,2.25] · d=6.80 · az. 60° · el. 30°",
     );
+    expect(texts).toContain("drag to orbit · scroll to zoom");
+  });
+
+  it("draws a vertical loss-plot guide every five steps", () => {
+    const { created, segments } = instance();
+    created.render(defaultState(), 0.016);
+    const plot = lossPlotBox({ width: 1000, height: 600 });
+    const firstGuide = plot.x + (5 / 60) * plot.width;
+
+    expect(
+      segments.some(
+        ([x1, y1, x2, y2]) =>
+          Math.abs(x1 - firstGuide) < 1e-6 &&
+          Math.abs(x2 - firstGuide) < 1e-6 &&
+          y1 === plot.y &&
+          y2 === plot.y + plot.height,
+      ),
+    ).toBe(true);
   });
 
   it("confines camera navigation to the landscape", () => {
