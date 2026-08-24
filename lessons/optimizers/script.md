@@ -4,33 +4,33 @@ title: Why adaptive optimizers exist
 
 @scene(landscape)
 @chapter(The easy bowl)
-@camera(spinBaseView)
+@camera(target: [0, 0.55, 0], distance: 7, azimuth: -41.25°, elevation: 27.5°)
 @cue(step = 0)
 
 This is an interactive lesson about optimizers. You can move around the scene and adjust its controls while I am speaking. You can also pause the lesson to ask me a question.
 
 Training a machine-learning model means adjusting its weights to reduce a loss function. Stochastic gradient descent, or SGD, is the basic approach. Modern adaptive optimizers such as Adam often train models more effectively. What do these methods change, and why can those changes help?
 
-@camera(spinQuarterView, over: 1.8s) Let us examine a simple problem with only two weights.
-@camera(spinHalfView, over: 1.8s) The surface height represents the loss for every pair of weight values.
-@camera(spinThreeQuarterView, over: 1.8s) The white puck marks the pair of values where training starts.
-@camera(spinFullView, over: 1.8s) We want the optimizer to reach the minimum at the center.
+@camera(azimuth: 48.75°, over: 1.8s) Let us examine a simple problem with only two weights.
+@camera(azimuth: 138.75°, over: 1.8s) The surface height represents the loss for every pair of weight values.
+@camera(azimuth: 228.75°, over: 1.8s) The white puck marks the pair of values where training starts.
+@camera(azimuth: 318.75°, over: 1.8s) We want the optimizer to reach the minimum at the center.
 
-@camera(pathView, over: 2s) The orange trail will show ordinary gradient descent, the deterministic update at the core of SGD.
+@camera(target: [0, 0.4, 0], distance: 7.4, azimuth: -8.59°, elevation: 69.9°, over: 2s) The orange trail will show ordinary gradient descent, the deterministic update at the core of SGD.
 @cue(step -> 36, over: 5s) At each iteration, we compute the gradient and take a small step in the opposite direction. I have omitted minibatch noise so that the geometry remains easy to read.
 @board(sgd: $\begin{aligned}\text{SGD: }\Delta w_t&=-\eta g_t\end{aligned}$)
 The size of each step is controlled by the @cue(sgd.lr -> 0.105, over: 1s) learning rate, eta. @cue(sgd.lr -> 0.075, over: 1s) The curve below shows how the loss changes as we take more steps.
 @cue(step -> 60, over: 4s) Step by step, gradient descent takes a clean route into the center.
 
-@camera(roundBowlView, over: 2.5s)
+@camera(target: [0, 0.55, 0], distance: 7, azimuth: -41.25°, elevation: 27.5°, over: 2.5s)
 This first problem is easy because the surface has the same curvature in every direction.
 
 @chapter(Conditioning)
 @cue(step = 0, sgd.lr = 0.075)
-@camera(ravineView, over: 3s) Now I will change the problem without touching the learning rate.
+@camera(target: [0, 0.65, 0], distance: 6.8, azimuth: 60.16°, elevation: 20.63°, over: 3s) Now I will change the problem without touching the learning rate.
 @cue(kappa -> 24, over: 4s) Suppose the loss changes much more sharply with one weight than with the other. The control kappa is the condition number: here, it is the ratio between the steep and shallow curvatures. As kappa rises, the round bowl becomes a narrow ravine and the problem becomes poorly conditioned.
 
-@camera(pathView, over: 1.5s) Now watch the orange path.
+@camera(target: [0, 0.4, 0], distance: 7.4, azimuth: -8.59°, elevation: 69.9°, over: 1.5s) Now watch the orange path.
 @cue(step -> 50, over: 5s) Each step crosses the ravine, overshoots, crosses back, and only slowly makes progress along the floor.
 
 @cue(step = 0, sgd.lr -> 0.04, over: 1.5s) Lowering the learning rate restores stability, @cue(step -> 60, over: 2s) but reaching the minimum now requires more steps.
@@ -59,10 +59,10 @@ Momentum mainly changes how gradients are combined across steps. AdamW also adap
 @clear(adamw)
 
 Conditioning is not the only difficulty for optimizers. @cue(kappa -> 1, roughness = 0, step = 0, over: 2s) First, I make the bowl round again.
-@camera(roughnessView, over: 2.5s) Now look from a lower angle.
+@camera(target: [0, 0.55, 0], distance: 6.8, azimuth: 2.86°, elevation: 19.48°, over: 2.5s) Now look from a lower angle.
 @cue(roughness -> 0.28, over: 3s) I add regular ripples along the route to the minimum. The roughness control changes their amplitude independently of kappa.
 
-@camera(pathView, over: 2s) Now return to the path view.
+@camera(target: [0, 0.4, 0], distance: 7.4, azimuth: -8.59°, elevation: 69.9°, over: 2s) Now return to the path view.
 @cue(step -> 60, over: 5s) Plain gradient descent settles into a local trough. The other paths carry enough history or adaptive scaling to cross this particular bump. These settings do not make either optimizer universally better. They show that a change designed for one failure mode can also affect behavior on another.
 
 Adaptive optimizers exist because real training problems contain many directions with very different curvature and gradient scales, while one global learning rate has to satisfy all of them.

@@ -1,8 +1,8 @@
-import { buildIndex, type PlainState } from "../../../packages/core/src/index.js";
+import { buildIndex, type OrbitState, type PlainState } from "../../../packages/core/src/index.js";
 import { Reconciler } from "../../../packages/player/src/reconciler.js";
 import { StateStore } from "../../../packages/player/src/store.js";
 import { describe, expect, it } from "vitest";
-import { presets, scene, schema } from "./scene.js";
+import { scene, schema } from "./scene.js";
 import { landscapeBox, sliderBox, SLIDERS } from "./view.js";
 
 function recordingContext() {
@@ -64,7 +64,7 @@ describe("optimizer scene", () => {
     const scripted = defaultState();
     const store = new StateStore(schema);
     const reconciler = new Reconciler(store, buildIndex({}, schema), schema, { hold: 3, tau: 0.2 });
-    const moved = presets.ravineView!.camera!;
+    const moved: OrbitState = { target: [0, 0.65, 0], distance: 6.8, azimuth: 1.05, elevation: 0.36 };
 
     store.touch("camera", moved, 0);
     reconciler.reconcile(scripted, 2, 0.016);
@@ -89,14 +89,8 @@ describe("optimizer scene", () => {
     for (const parameter of parameters) expect(schema[parameter]!.ownership).toBe("script");
   });
 
-  it("defines low terrain shots and a near-top path shot", () => {
-    const camera = (name: string) => presets[name]!.camera as { elevation: number };
-
-    expect(camera("pathView").elevation).toBeGreaterThan(1.1);
-    for (const name of ["roundBowlView", "ravineView", "roughnessView"]) {
-      expect(camera(name).elevation).toBeLessThan(0.6);
-    }
-    expect(scene.presets).toBe(presets);
+  it("defines a near-top default camera", () => {
+    expect((schema.camera.default as OrbitState).elevation).toBeGreaterThan(1.1);
   });
 
   it("renders the terrain, trajectories, plots, and controls", () => {
