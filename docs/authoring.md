@@ -273,36 +273,33 @@ assistant:
 
 An empty `commandable` list enables written answers without giving the assistant
 control of the scene. `model` selects the Hugging Face router model used by the
-deployed lesson. Then create `assistant.md` with four short sections:
+deployed lesson. Then create a short `assistant.md` containing only guidance that
+cannot be generated from the scene contract or lesson script:
 
 ```markdown
-# Scene and purpose
+# Concepts and limits
 
-Explain what the lesson teaches and what the learner sees.
+State facts, assumptions, distinctions, and limitations that are important for
+safe answers but are not already clear in the narration.
 
-# Learner controls
+# Visual answer guidance
 
-Explain what the learner can manipulate and what each control changes.
-
-# Concepts and conventions
-
-Define lesson-specific terminology, units, ranges, assumptions, and limitations.
-
-# Answer guidance
-
-State what good answers should emphasize and which claims the assistant must
-avoid.
+Explain how to construct a fair or useful visual demonstration. State what must
+remain fixed and when several visual states are genuinely helpful.
 ```
 
 Write this file as instructions for a teaching assistant that receives a
 semantic scene description and current state, but no screenshot. Include facts
-needed to interpret the scene and state important limitations explicitly. Do not
-put credentials, private information, or unrelated instructions in this file.
-The built context is downloaded by the browser and is not private.
+needed to interpret the scene and state important limitations explicitly. Add a
+short visual-conventions section only when colors, spatial relationships, or
+other meanings are not already established by the narration. Do not repeat
+control names, ranges, defaults, generic response rules, or lesson conclusions.
+Do not put credentials, private information, or unrelated instructions in this
+file. The built context is downloaded by the browser and is not private.
 
-The build adds the lesson title, complete script, spoken narration, scene schema,
-presets, constants, and groups. Authors do not need to repeat those generated
-details in `assistant.md`.
+The generated prompt adds the lesson title, a chapter-organized outline of the
+spoken lesson, useful demonstrated settings, board material, and the scene
+control contract. Authors do not need to repeat those details in `assistant.md`.
 
 ### Understand the assistant request
 
@@ -310,13 +307,13 @@ The server assembles a readable system message containing:
 
 1. The assistant's teaching role, limitations, and scene capabilities.
 2. The complete `assistant.md` guide.
-3. A readable list of every scene value, including its internal name, label,
-   type, range, default, transition behavior, and whether it may be changed.
-4. The lesson's presets, constants, and groups when present.
-5. The complete authored script and an explanation of narration directives. The
-   separately generated narration is omitted because it duplicates the prose.
-6. Instructions for composing written answer beats and returning the required
-   JSON.
+3. A readable lesson outline grouped by chapter. It preserves spoken prose,
+   useful literal scene settings, board equations and notes, and silent activity
+   prompts without exposing authoring directives.
+4. Compact lists of changeable controls and read-only scene values. The current
+   values arrive in the learner message, so defaults are omitted.
+5. Instructions for composing written answer beats. The JSON example is omitted
+   because the provider receives a strict response schema separately.
 
 The current learner message contains the lesson position and visible scene state:
 
@@ -382,12 +379,11 @@ Avoid internal layout values, incidental animation state, and controls that
 could leave the scene misleading. `lesson check` rejects unknown parameters.
 The server rejects values with the wrong type or outside a declared range.
 
-Describe how to use allowed controls in `# Answer guidance`. For example, require
-matched conditions for a fair comparison or discourage changing more than one
-variable at a time. The
-[unit-circle guide](../lessons/unit-circle/assistant.md) is a small example. The
-[optimizers guide](../lessons/optimizers/assistant.md) constrains a larger set of
-controls.
+Describe how to use allowed controls in `# Visual answer guidance`. For example,
+require matched conditions for a fair comparison or discourage changing more
+than one variable at a time. The
+[optimizers guide](../lessons/optimizers/assistant.md) is a concise example for a
+lesson with several commandable controls.
 
 Assistant changes are temporary. They disappear when playback resumes or
 another question begins. If the learner manipulates a parameter during an
