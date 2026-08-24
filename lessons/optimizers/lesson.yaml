@@ -9,7 +9,7 @@ player:
   autoplay: true
 deployment:
   provider: huggingface
-  space: scienceetonnante/optimizers
+  space: dlouapre/optimizers
 tts:
   provider: hf-endpoint
   voice: david_v1
