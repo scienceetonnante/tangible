@@ -195,11 +195,10 @@ const _dirB: [number, number, number] = [0, 0, 0];
 function orbitInto(dst: OrbitState, a: OrbitState, b: OrbitState, u: number): void {
   sphericalTo(_dirA, a.azimuth, a.elevation);
   sphericalTo(_dirB, b.azimuth, b.elevation);
-  const dot = _dirA[0] * _dirB[0] + _dirA[1] * _dirB[1] + _dirA[2] * _dirB[2];
-  const s = dot < 0 ? -1 : 1;
-  let x = _dirA[0] + (s * _dirB[0] - _dirA[0]) * u;
-  let y = _dirA[1] + (s * _dirB[1] - _dirA[1]) * u;
-  let z = _dirA[2] + (s * _dirB[2] - _dirA[2]) * u;
+  // Opposite camera directions are different positions, unlike equivalent q and -q quaternions.
+  let x = _dirA[0] + (_dirB[0] - _dirA[0]) * u;
+  let y = _dirA[1] + (_dirB[1] - _dirA[1]) * u;
+  let z = _dirA[2] + (_dirB[2] - _dirA[2]) * u;
   const mag = Math.sqrt(x * x + y * y + z * z) || 1;
   x /= mag;
   y /= mag;

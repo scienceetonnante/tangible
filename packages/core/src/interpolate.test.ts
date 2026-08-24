@@ -134,6 +134,30 @@ describe("nlerp — quaternion shortest path", () => {
   });
 });
 
+describe("orbit — camera direction", () => {
+  it("moves toward the actual camera direction when the direction dot product is negative", () => {
+    const degrees = Math.PI / 180;
+    const a = {
+      target: [0, 0.55, 0] as [number, number, number],
+      distance: 6.2,
+      azimuth: -35 * degrees,
+      elevation: 42 * degrees,
+    };
+    const b = { ...a, target: [...a.target] as [number, number, number], azimuth: 135 * degrees };
+    const schema: Schema = {
+      cam: { type: { kind: "orbit" }, default: a, interpolate: "orbit", ownership: "viewer" },
+    };
+    const idx = buildIndex({ cam: [{ t: 0, v: a }, { t: 1, v: b, ease: "linear" }] }, schema);
+
+    const midpoint = evaluate(idx, 0.5).cam as typeof a;
+    expect(midpoint.elevation / degrees).toBeGreaterThan(80);
+
+    const nearEnd = evaluate(idx, 0.999).cam as typeof a;
+    expect(Math.abs(nearEnd.azimuth - b.azimuth) / degrees).toBeLessThan(0.1);
+    expect(Math.abs(nearEnd.elevation - b.elevation) / degrees).toBeLessThan(0.1);
+  });
+});
+
 describe("orbit — never crosses the target", () => {
   it("distance stays strictly positive and between endpoints; direction stays unit", () => {
     const a = { target: [0, 0, 0] as [number, number, number], distance: 2, azimuth: 0, elevation: 0.1 };
