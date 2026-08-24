@@ -81,6 +81,7 @@ Compiled lesson files go to `build/lesson/`. The deployable site goes to
 | `state --at <t>` | Print the computed scene state at a lesson time in seconds. |
 | `frame --at <t> -o <file>` | Render a PNG of the built lesson at a chosen time. |
 | `serve` | Serve an existing bundle without rebuilding or watching source files. |
+| `deploy` | Build real narration and publish the lesson to its configured Hugging Face Space. |
 | `assistant-eval` | Inspect or run tracked assistant questions against a built lesson. |
 
 ### Options
@@ -88,6 +89,8 @@ Compiled lesson files go to `build/lesson/`. The deployable site goes to
 - `--lesson <dir>` selects the lesson directory.
 - `--offline` prevents provider calls and uses deterministic local substitutes.
 - `--bundle` asks `build` to create the deployable site.
+- `deploy --create` creates the configured Space privately before the first deployment.
+- `deploy --dry-run` performs local release checks and builds without contacting Hugging Face.
 - `--port <number>` and `--host <address>` set the local server address.
 - `state --drag <param>=<value>` simulates learner interaction and
   reconciliation.

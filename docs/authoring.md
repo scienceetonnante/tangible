@@ -485,40 +485,118 @@ Before release, confirm that:
 ## Deploy to Hugging Face Spaces
 
 Deployment changes external state and should happen only after the author has
-requested it. Build and review the real-voice lesson locally first:
+requested it. Install the current `hf` CLI, authenticate it with a token that may
+write to the target namespace, and review the real-voice lesson locally first:
 
 ```bash
-pnpm lesson check --lesson lessons/my-lesson
-pnpm lesson build --bundle --lesson lessons/my-lesson
+hf auth login
+pnpm lesson preview --lesson lessons/my-lesson
 ```
 
 Use `--offline` only for structural review. A release bundle must contain the
 intended narration.
 
-### Release artifact
+### Configure the deployment target
 
-Publish only `lessons/my-lesson/build/site/` plus a Space `README.md` and
-`.gitattributes`. Do not publish the monorepo, caches, `.env` files, or source
-credentials.
+Record only the stable remote Space identifier in `lesson.yaml`:
 
-The repository convention uses an artifact-only orphan branch such as
-`release/my-lesson` with one root commit. Record the source commit in its message.
-For a later release, replace the artifact, amend that commit, and push it to the
-Space's `main` with `--force-with-lease`.
+```yaml
+deployment:
+  provider: huggingface
+  space: namespace/space-name
+```
 
-Static lessons may use a static Space. Assistant-enabled lessons use the
-generated Docker bundle and these Space card settings:
+Use the exact `namespace/name` form rather than a URL. Do not put tokens,
+visibility, hardware, or deployment status in the lesson manifest. Those are
+mutable remote settings, and deployment never changes them on an existing
+Space.
+
+Create `space/README.md` with the Space card and keep `space/.gitattributes`
+beside it. A lesson with an assistant must declare:
 
 ```yaml
 sdk: docker
 app_port: 7860
 ```
 
+A lesson without an assistant uses a static Space and must declare:
+
+```yaml
+sdk: static
+app_file: index.html
+```
+
+The other Space card fields, including `fullWidth` and `header`, also belong in
+this README.
+
+### Validate without changing Hugging Face
+
+Run a dry deployment before the first release:
+
+```bash
+pnpm lesson deploy --lesson lessons/my-lesson --dry-run --create
+```
+
+The dry run requires a clean Git worktree, runs `lesson check`, builds or reuses
+the configured real voice, creates the deployable bundle, stages the exact
+release, and scans it for local credential values. It makes no Hugging Face API
+or upload calls. Run the repository's lesson-specific tests separately before a
+release.
+
+### Create the private Space
+
+The first remote operation requires an explicit flag:
+
+```bash
+pnpm lesson deploy --lesson lessons/my-lesson --create
+```
+
+The command creates the Space privately. If the lesson has an assistant, it then
+checks for a Space secret named `HF_TOKEN`. A new Space will not have this
+secret, so the command stops before uploading lesson files and gives an
+actionable message. Add a dedicated fine-grained inference token through the
+Space settings or the CLI, for example:
+
+```bash
+hf spaces secrets add namespace/space-name --secrets-file <secure-file>
+```
+
+The secure file must remain outside version control. After the secret exists,
+deploy without `--create`:
+
+```bash
+pnpm lesson deploy --lesson lessons/my-lesson
+```
+
+Later updates use that same command. Without `--create`, deployment refuses to
+create a missing or inaccessible Space.
+
+### Release artifact and remote update
+
+Deployment builds `lessons/my-lesson/build/site/`, then creates a temporary
+release containing only that generated site plus `space/README.md` and
+`space/.gitattributes`. It rejects symbolic links, environment files, caches,
+Git metadata, and any generated file containing a loaded provider credential.
+It never publishes the monorepo or the lesson source.
+
+The command uses `hf upload` to replace obsolete remote files in one normal
+Space commit. The commit message records the clean Narrable source revision, so
+the Space history remains a useful deployment and rollback history. No local
+release branch or force push is needed.
+
+After upload, the command waits up to ten minutes for the Space to reach the
+`RUNNING` state. If the build or runtime fails, it prints the latest build and
+runtime logs. On success, it prints the deployed revision and Space URL.
+
+The command never makes an existing Space public or private, changes its
+hardware, or replaces secrets. Make visibility changes separately and only
+after reviewing the deployed lesson.
+
 ### Credentials and limits
 
 Store a dedicated fine-grained inference token as the Space secret `HF_TOKEN`.
 Keep build-only credentials such as `HF_TTS_TOKEN`, `TTS_ENDPOINT_URL`, and
-`ELEVENLABS_API_KEY` local or in CI. They must not appear in the release branch
+`ELEVENLABS_API_KEY` local or in CI. They must not appear in the release artifact
 or Space variables.
 
 The public assistant API has global hourly, per-browser ten-minute, and

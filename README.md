@@ -54,19 +54,26 @@ pnpm lesson preview --lesson lessons/my-lesson
 
 ### Deploy your lesson
 
-Check the lesson and build its release bundle with the configured voice:
+Add a deployment target to `lesson.yaml` and keep the Space card in
+`space/README.md`:
 
-```bash
-pnpm lesson check --lesson lessons/my-lesson
-pnpm lesson build --bundle --lesson lessons/my-lesson
+```yaml
+deployment:
+  provider: huggingface
+  space: namespace/space-name
 ```
 
-The release is written to `lessons/my-lesson/build/site/`. Publish only this
-directory, plus a Space `README.md` and `.gitattributes`, to a private Hugging
-Face Space. A lesson without an assistant can use a static Space. A lesson with
-an assistant uses the generated Docker bundle and needs a dedicated `HF_TOKEN`
-Space secret. Keep speech provider credentials and local `.env` files out of
-the release.
+After reviewing the real narration locally, create the private Space with:
+
+```bash
+pnpm lesson deploy --lesson lessons/my-lesson --create
+```
+
+Assistant-enabled lessons stop before their first upload until the new Space has
+a dedicated `HF_TOKEN` secret. Add the secret, then rerun without `--create`.
+The same command without `--create` publishes later updates. It builds the real
+voice, uploads only the release artifact and Space card, waits for startup, and
+shows logs when the Space fails.
 
 Test playback, interaction, captions, and the assistant when enabled before
 making the Space public. The complete process is described in

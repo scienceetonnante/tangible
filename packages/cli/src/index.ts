@@ -2,7 +2,7 @@
 // @narrable/cli — the `lesson` command. Wires authoring, compilation, TTS,
 // inspection, preview, and static bundling.
 
-import { readFile } from "node:fs/promises";
+import { readFile, rm } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join, resolve as resolvePath } from "node:path";
 import { createHash } from "node:crypto";
@@ -25,6 +25,7 @@ import { createAssistantApi, serveLesson } from "./assistant-server.js";
 import { bundleScenePreview } from "./scene-preview-bundle.js";
 import { runAssistantEval } from "./assistant-eval.js";
 import { writeAssistantPromptLog } from "./assistant-prompt-log.js";
+import { deployLessonToSpace } from "./deploy.js";
 
 async function main() {
   const argv = process.argv.slice(2);
@@ -55,6 +56,9 @@ async function main() {
     case "serve":
       await cmdServe(flags);
       return;
+    case "deploy":
+      await cmdDeploy(flags);
+      return;
     case "assistant-eval":
       await runAssistantEval({
         lessonDir: flags.lesson ?? process.cwd(),
@@ -70,7 +74,7 @@ async function main() {
       await cmdRef(flags);
       return;
     default:
-      die(`unknown command "${cmd ?? ""}"\nusage: lesson <new|check|build|frame|preview|scene|serve|assistant-eval|state|ref> [--lesson dir] [--at t] [--drag p=v] [--bundle] [-o file] [--size WxH] [--port n] [--host address] [--offline] [--real] [--variant legacy|structured|both]`);
+      die(`unknown command "${cmd ?? ""}"\nusage: lesson <new|check|build|frame|preview|scene|serve|deploy|assistant-eval|state|ref> [--lesson dir] [--at t] [--drag p=v] [--bundle] [-o file] [--size WxH] [--port n] [--host address] [--offline] [--real] [--create] [--dry-run] [--variant legacy|structured|both]`);
   }
 }
 
@@ -133,7 +137,7 @@ function selectTts(config: TtsConfig, fake: boolean): { adapter: TtsAdapter; voi
   return { adapter: new FakeTtsAdapter(), voice: config.voice };
 }
 
-async function buildLesson(lessonDir: string, manifest: Manifest, scene: SceneInfo, fake: boolean) {
+async function buildLesson(lessonDir: string, manifest: Manifest, scene: SceneInfo, fake: boolean, requireReal = false) {
   const file = "script.md";
   const script = await readFile(join(lessonDir, file), "utf8");
   const parsed = parseScript(script, file);
@@ -145,6 +149,9 @@ async function buildLesson(lessonDir: string, manifest: Manifest, scene: SceneIn
   }
 
   const { adapter, voice } = selectTts(manifest.tts, fake);
+  if (requireReal && adapter.id === "fake") {
+    throw new Error("lesson deploy requires real narration; configure credentials for the selected TTS provider");
+  }
   const result = await synthesize(adapter, parsed.narration, {
     voice,
     cacheDir: join(lessonDir, ".cache", "tts"),
@@ -238,6 +245,29 @@ async function cmdServe(flags: Flags): Promise<void> {
     onProviderRequest: async (request) => {
       const path = await writeAssistantPromptLog(lessonDir, request);
       console.error(`assistant prompt → ${path}`);
+    },
+  });
+}
+
+async function cmdDeploy(flags: Flags): Promise<void> {
+  if (flags.offline) die("lesson deploy does not support --offline because a release must contain real narration");
+  const lessonDir = flags.lesson ?? process.cwd();
+  const manifest = await loadManifest(lessonDir);
+  await deployLessonToSpace({
+    lessonDir,
+    manifest,
+    create: flags.create,
+    dryRun: flags.dryRun,
+    check: async () => {
+      if (await cmdCheck({ lesson: lessonDir })) throw new Error("lesson deploy stopped because lesson check failed");
+    },
+    build: async () => {
+      const scene = await loadScene(join(lessonDir, manifest.scene));
+      await buildLesson(lessonDir, manifest, scene, false, true);
+      console.error(`built ${manifest.id} with real narration → build/lesson/`);
+      await rm(join(lessonDir, "build", "site"), { recursive: true, force: true });
+      const out = await bundleSite(lessonDir, manifest, join(lessonDir, manifest.scene));
+      console.error(`bundled release site → ${out}`);
     },
   });
 }
@@ -340,6 +370,8 @@ interface Flags {
   port?: number;
   host?: string;
   real?: boolean;
+  create?: boolean;
+  dryRun?: boolean;
   variant?: "legacy" | "structured" | "both";
 }
 
@@ -356,6 +388,8 @@ function parseFlags(args: string[]): Flags {
     else if (args[i] === "--port") f.port = Number(args[++i]);
     else if (args[i] === "--host") f.host = args[++i];
     else if (args[i] === "--real") f.real = true;
+    else if (args[i] === "--create") f.create = true;
+    else if (args[i] === "--dry-run") f.dryRun = true;
     else if (args[i] === "--fake") die('the --fake option was renamed to --offline');
     else if (args[i] === "--variant") {
       const variant = args[++i];
