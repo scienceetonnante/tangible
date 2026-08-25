@@ -17,6 +17,7 @@ import { parseDevParams } from "./url.js";
 import { AnswerTimeline, timeAnswerBeats } from "./answer-timeline.js";
 import { AssistantPanel } from "./assistant-panel.js";
 import { lessonPositionAt } from "./lesson-position.js";
+import { ParameterActivityTracker } from "./parameter-activity.js";
 
 declare global {
   interface Window {
@@ -77,6 +78,8 @@ export class Player {
   private tracks: LessonTracks;
   private autoplay: boolean;
   private startOverlay?: HTMLButtonElement;
+  private activityTracker: ParameterActivityTracker;
+  private assistantActivity: Record<string, number> = {};
 
   constructor(opts: PlayerOptions) {
     this.tracks = opts.tracks;
@@ -85,6 +88,7 @@ export class Player {
     this.index = buildIndex(opts.tracks.tracks, schema);
     this.store = new StateStore(schema);
     this.displayStore = new StateStore(schema);
+    this.activityTracker = new ParameterActivityTracker(opts.tracks.tracks);
 
     // DOM layers, bottom to top.
     this.shell = el("div", opts.assistant ? "xv-shell xv-with-assistant" : "xv-shell");
@@ -122,6 +126,7 @@ export class Player {
       write: (param, value) => this.writeSceneParam(param, value, schema),
       reset: (param) => {
         this.store.resetInteraction(param);
+        this.activityTracker.noteUser(param);
         this.activeAnswer?.claimed.add(param);
       },
       pause: () => this.clock.pause(),
@@ -134,7 +139,10 @@ export class Player {
       this.store,
       this.clock,
       () => this.displayStore.plain,
-      (param) => this.activeAnswer?.claimed.add(param),
+      (param) => {
+        this.activityTracker.noteUser(param);
+        this.activeAnswer?.claimed.add(param);
+      },
     );
 
     const dev = parseDevParams(typeof location !== "undefined" ? location.search : "");
@@ -214,9 +222,17 @@ export class Player {
   private frame(t: number): void {
     const dt = Math.max(0, t - this.lastFrameT);
     this.lastFrameT = t;
+    const answerElapsed = this.activeAnswer ? (performance.now() - this.activeAnswer.startedAt) / 1000 : undefined;
     for (const key of this.store.keys()) this.displayStore.set(key, this.store.plain[key]!);
-    for (const [param, value] of Object.entries(this.temporaryAnswerState())) this.displayStore.set(param, value);
-    this.host.render(this.displayStore.plain, dt);
+    for (const [param, value] of Object.entries(this.temporaryAnswerState(answerElapsed))) this.displayStore.set(param, value);
+    const assistantActivity =
+      answerElapsed === undefined
+        ? {}
+        : this.activeAnswer!.timeline.activity(answerElapsed, 0.55, this.assistantActivity);
+    this.host.render(this.displayStore.plain, {
+      dt,
+      activity: this.activityTracker.evaluate(t, this.store.meta, assistantActivity),
+    });
     this.pauseGate.update(t);
     if (this.pauseGate.activePrompt === null) this.captions.update(t);
     this.chrome?.update(t);
@@ -226,6 +242,7 @@ export class Player {
   private writeSceneParam(param: string, value: PlainState[string], schema: Schema): void {
     if (!(param in schema)) throw new Error(`scene wrote unknown parameter: ${param}`);
     this.store.touch(param, value, this.clock.t);
+    this.activityTracker.noteUser(param);
     this.activeAnswer?.claimed.add(param);
   }
 
@@ -278,10 +295,11 @@ export class Player {
     this.activeAnswer = undefined;
   }
 
-  private temporaryAnswerState(): PlainState {
+  private temporaryAnswerState(elapsed?: number): PlainState {
     if (!this.activeAnswer) return {};
-    const elapsed = (performance.now() - this.activeAnswer.startedAt) / 1000;
-    const answer = this.activeAnswer.timeline.evaluate(elapsed);
+    const answer = this.activeAnswer.timeline.evaluate(
+      elapsed ?? (performance.now() - this.activeAnswer.startedAt) / 1000,
+    );
     for (const param of this.activeAnswer.claimed) delete answer[param];
     return answer;
   }

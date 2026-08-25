@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { SceneHost, type SceneModule, type SceneContext } from "./scene-host.js";
+import { SceneHost, type SceneModule, type SceneContext, type SceneFrame } from "./scene-host.js";
 import type { PlainState } from "@narrable/core";
 
 function fakeCtx(): SceneContext {
@@ -15,12 +15,12 @@ function fakeCtx(): SceneContext {
 
 describe("SceneHost", () => {
   it("creates the instance and forwards render/handles/dispose", () => {
-    const seen: PlainState[] = [];
+    const seen: { state: PlainState; frame: SceneFrame }[] = [];
     let disposed = false;
     const module: SceneModule = {
       schema: {},
       create: () => ({
-        render: (state) => seen.push({ ...state }),
+        render: (state, frame) => seen.push({ state: { ...state }, frame }),
         handles: () => [],
         dispose: () => {
           disposed = true;
@@ -28,8 +28,9 @@ describe("SceneHost", () => {
       }),
     };
     const host = new SceneHost(module, fakeCtx());
-    host.render({ theta: 1 }, 0.016);
-    expect(seen).toEqual([{ theta: 1 }]);
+    const frame = { dt: 0.016, activity: { theta: { source: "narration" as const, strength: 1 } } };
+    host.render({ theta: 1 }, frame);
+    expect(seen).toEqual([{ state: { theta: 1 }, frame }]);
     expect(host.handles()).toEqual([]);
     host.dispose();
     expect(disposed).toBe(true);

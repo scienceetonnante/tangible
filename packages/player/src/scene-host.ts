@@ -3,6 +3,7 @@
 // mutable state that affects output across frames (that would break value-at-time).
 
 import type { Schema, ParamValue, PlainState, Handle } from "@narrable/core";
+import type { ParameterActivityMap } from "./parameter-activity.js";
 
 export type { Handle };
 
@@ -15,8 +16,13 @@ export interface SceneContext {
   pause(): void;
 }
 
+export interface SceneFrame {
+  dt: number;
+  activity: ParameterActivityMap;
+}
+
 export interface SceneInstance {
-  render(state: Readonly<PlainState>, dt: number): void;
+  render(state: Readonly<PlainState>, frame: SceneFrame): void;
   handles(): Handle[];
   dispose(): void;
 }
@@ -36,8 +42,8 @@ export class SceneHost {
     this.instance = module.create(ctx);
   }
 
-  render(state: Readonly<PlainState>, dt: number): void {
-    this.instance.render(state, dt);
+  render(state: Readonly<PlainState>, frame: SceneFrame): void {
+    this.instance.render(state, frame);
   }
 
   handles(): Handle[] {

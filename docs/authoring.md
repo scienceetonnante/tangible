@@ -74,6 +74,22 @@ The scene must render from the complete current state. Do not accumulate
 authored state frame by frame. Seeking directly to any lesson time must recreate
 the same view.
 
+The scene's `render(state, frame)` function also receives temporary parameter
+activity in `frame.activity`. Each active parameter has a `source` of
+`narration`, `user`, or `assistant` and a `strength` between zero and one. A
+scene may use this information to emphasize the visible control or object that
+represents that parameter. The player reports narration activity throughout an
+animated cue and briefly after an instant cue or completed transition. It
+reports user activity while a handle is being dragged or a DOM control writes a
+value, followed by the same brief fade.
+
+Parameter activity describes what is being manipulated, not how emphasis must
+look. A canvas scene might draw a halo around a knob, a DOM scene might add a
+CSS class to an editor region, and a three-dimensional scene might outline an
+object. Ignore parameters that have no visible representation. Narration
+activity is derived directly from lesson time, so scenes must not compare
+consecutive values to infer it.
+
 ### Reserve a board region
 
 Every scene intended for a narrated lesson must reserve a stable region for the

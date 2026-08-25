@@ -4,6 +4,7 @@ import type { ParamValue } from "@narrable/core";
 import { InteractionManager, type InteractionClock } from "./interaction.js";
 import { SceneHost, type SceneModule } from "./scene-host.js";
 import { StateStore } from "./store.js";
+import { ParameterActivityTracker } from "./parameter-activity.js";
 
 export interface ScenePreviewOptions {
   mount: HTMLElement;
@@ -28,6 +29,7 @@ export class ScenePreview {
   private resizeObserver?: ResizeObserver;
   private animationFrame = 0;
   private lastNow?: number;
+  private activityTracker = new ParameterActivityTracker();
 
   constructor(opts: ScenePreviewOptions) {
     this.shell = element("div", "xv-shell");
@@ -54,7 +56,10 @@ export class ScenePreview {
       this.store,
       FIXED_CLOCK,
       () => this.store.plain,
-      (param) => this.commitInteraction(param),
+      (param) => {
+        this.activityTracker.noteUser(param);
+        this.commitInteraction(param);
+      },
     );
 
     if (typeof ResizeObserver !== "undefined") {
@@ -80,7 +85,10 @@ export class ScenePreview {
   render(now = performance.now()): void {
     const dt = this.lastNow === undefined ? 0 : Math.max(0, (now - this.lastNow) / 1000);
     this.lastNow = now;
-    this.host.render(this.store.plain, dt);
+    this.host.render(this.store.plain, {
+      dt,
+      activity: this.activityTracker.evaluate(0, this.store.meta),
+    });
   }
 
   dispose(): void {
@@ -94,6 +102,7 @@ export class ScenePreview {
   private write(param: string, value: ParamValue, scene: SceneModule): void {
     if (!(param in scene.schema)) throw new Error(`scene wrote unknown parameter: ${param}`);
     this.store.set(param, value);
+    this.activityTracker.noteUser(param);
   }
 
   private reset(param: string, scene: SceneModule): void {
@@ -101,6 +110,7 @@ export class ScenePreview {
     if (!spec) throw new Error(`scene reset unknown parameter: ${param}`);
     this.store.resetInteraction(param);
     this.store.set(param, spec.default);
+    this.activityTracker.noteUser(param);
   }
 
   private commitInteraction(param: string): void {

@@ -3,7 +3,7 @@
 import { describe, expect, it } from "vitest";
 import type { Handle, PlainState } from "@narrable/core";
 import { ScenePreview } from "./scene-preview.js";
-import type { SceneContext, SceneModule } from "./scene-host.js";
+import type { SceneContext, SceneModule, SceneFrame } from "./scene-host.js";
 
 function pointer(type: string, x: number, y: number): PointerEvent {
   return new MouseEvent(type, { clientX: x, clientY: y }) as unknown as PointerEvent;
@@ -11,6 +11,7 @@ function pointer(type: string, x: number, y: number): PointerEvent {
 
 function fixture() {
   const rendered: PlainState[] = [];
+  const frames: SceneFrame[] = [];
   let context: SceneContext | undefined;
   let disposed = false;
   const handle: Handle = {
@@ -26,7 +27,10 @@ function fixture() {
     create: (ctx) => {
       context = ctx;
       return {
-        render: (state) => rendered.push({ ...state }),
+        render: (state, frame) => {
+          rendered.push({ ...state });
+          frames.push(frame);
+        },
         handles: () => [handle],
         dispose: () => {
           disposed = true;
@@ -34,7 +38,7 @@ function fixture() {
       };
     },
   };
-  return { scene, rendered, context: () => context!, disposed: () => disposed };
+  return { scene, rendered, frames, context: () => context!, disposed: () => disposed };
 }
 
 describe("ScenePreview", () => {
@@ -63,6 +67,9 @@ describe("ScenePreview", () => {
     canvas.dispatchEvent(pointer("pointerdown", 200, 100));
     canvas.dispatchEvent(pointer("pointerup", 200, 100));
     expect(preview.store.plain.theta).toBe(2);
+    preview.render();
+    expect(data.frames.at(-1)!.activity.theta!.source).toBe("user");
+    expect(data.frames.at(-1)!.activity.theta!.strength).toBeGreaterThan(0.99);
 
     data.context().write("theta", 7);
     expect(preview.store.plain.theta).toBe(7);

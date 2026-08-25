@@ -1,4 +1,5 @@
 import type { OrbitState, PlainState } from "@narrable/core";
+import type { ParameterActivityMap } from "@narrable/player";
 import { drawControls, drawStep } from "./controls.js";
 import type { OptimizerFrame } from "./frame.js";
 import { MAX_STEPS, type Trajectory } from "./model.js";
@@ -8,15 +9,21 @@ const BACKGROUND = "#050609";
 const FOREGROUND = "#f5f7fa";
 const CAMERA_READOUT = "#b8bec8";
 
-export function draw(g: CanvasRenderingContext2D, view: View, state: Readonly<PlainState>, frame: OptimizerFrame): void {
+export function draw(
+  g: CanvasRenderingContext2D,
+  view: View,
+  state: Readonly<PlainState>,
+  frame: OptimizerFrame,
+  activity: ParameterActivityMap,
+): void {
   g.clearRect(0, 0, view.width, view.height);
   g.fillStyle = BACKGROUND;
   g.fillRect(0, 0, view.width, view.height);
   g.lineJoin = "round";
   g.lineCap = "round";
   drawLossPlot(g, view, frame.trajectories, frame.step);
-  drawControls(g, view, state);
-  drawStep(g, view, frame.step);
+  drawControls(g, view, state, activity);
+  drawStep(g, view, frame.step, activity);
   drawCameraReadout(g, view, state);
 }
 

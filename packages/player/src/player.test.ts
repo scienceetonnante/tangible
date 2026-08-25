@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi } from "vitest";
 import { Player } from "./player.js";
-import type { SceneModule, SceneContext } from "./scene-host.js";
+import type { SceneModule, SceneContext, SceneFrame } from "./scene-host.js";
 import type { AssistantContext, LessonTracks, PlainState } from "@narrable/core";
 import { AnswerTimeline } from "./answer-timeline.js";
 
@@ -70,6 +70,24 @@ describe("Player composition", () => {
     // Scene received scripted state; board param (not in scene schema) is tracked too.
     expect(seen.at(-1)!.theta).toBeCloseTo(50, 6);
     expect(player.store.plain["board.note"]).toBe("shown");
+    player.dispose();
+  });
+
+  it("reports narration activity to the scene from the current lesson time", () => {
+    const mount = document.createElement("div");
+    const frames: SceneFrame[] = [];
+    const scene = stubScene([]);
+    scene.create = () => ({
+      render: (_state, frame) => frames.push(frame),
+      handles: () => [],
+      dispose: () => {},
+    });
+    const player = new Player({ mount, scene, tracks });
+
+    player.audio.currentTime = 5;
+    player.driver.tick();
+
+    expect(frames.at(-1)!.activity.theta).toEqual({ source: "narration", strength: 1 });
     player.dispose();
   });
 
@@ -249,13 +267,14 @@ After the pause.
   it("routes DOM scene writes and resets through normal reconciliation", () => {
     const mount = document.createElement("div");
     let ctx: SceneContext | undefined;
+    const frames: SceneFrame[] = [];
     const scene: SceneModule = {
       schema: {
         code: { type: { kind: "text" }, default: "scripted", interpolate: "typewriter", ownership: "shared" },
       },
       create: (sceneContext) => {
         ctx = sceneContext;
-        return { render: () => {}, handles: () => [], dispose: () => {} };
+        return { render: (_state, frame) => frames.push(frame), handles: () => [], dispose: () => {} };
       },
     };
     const codeTracks: LessonTracks = {
@@ -268,6 +287,8 @@ After the pause.
     ctx!.write("code", "learner edit");
     player.driver.tick();
     expect(player.store.plain.code).toBe("learner edit");
+    expect(frames.at(-1)!.activity.code!.source).toBe("user");
+    expect(frames.at(-1)!.activity.code!.strength).toBeGreaterThan(0.99);
 
     ctx!.reset("code");
     player.driver.tick();

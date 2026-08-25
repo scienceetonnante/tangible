@@ -36,4 +36,16 @@ describe("AnswerTimeline", () => {
     expect(timeline.evaluate(1.5).theta).toBeCloseTo(2.5);
     expect(timeline.evaluate(3).theta).toBe(0);
   });
+
+  it("reports activity during an answer transition and briefly after it", () => {
+    const timeline = new AnswerTimeline(schema, { theta: 0, visible: false }, [
+      { t: 1, set: { theta: 6, visible: true }, over: 2 },
+    ]);
+
+    expect(timeline.activity(0)).toEqual({});
+    expect(timeline.activity(2)).toEqual({ theta: 1 });
+    expect(timeline.activity(1.25).visible).toBeCloseTo(1 - 0.25 / 0.55);
+    expect(timeline.activity(3.275).theta).toBeCloseTo(0.5);
+    expect(timeline.activity(4)).toEqual({});
+  });
 });

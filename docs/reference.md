@@ -215,6 +215,24 @@ remote Space settings.
 
 Run `pnpm lesson ref --lesson <dir>` for the exact lesson-specific contract.
 
+The runtime scene instance renders with `render(state, frame)`. `state` is the
+complete visible parameter state. `frame.dt` is the elapsed rendering time, and
+`frame.activity` maps currently manipulated parameter names to:
+
+```ts
+{
+  source: "narration" | "user" | "assistant";
+  strength: number; // zero to one
+}
+```
+
+Animated narration tracks remain active for their complete transition. Instant
+changes and completed transitions fade for a short period. User activity remains
+active during a drag or scene-control write and then fades. Assistant activity
+follows the temporary answer timeline. Scenes choose whether and how to render
+this information; the player does not assume that a parameter is represented by
+a slider or any other particular interface.
+
 ### Optional assistant
 
 ```yaml

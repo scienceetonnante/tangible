@@ -63,10 +63,10 @@ export const scene: SceneModule = {
     const threeView = ctx.canvas.ownerDocument ? new OptimizerThreeView(ctx.canvas, ctx.overlay) : undefined;
     const removeTheme = applyNightTheme(ctx);
     return {
-      render(state) {
+      render(state, { activity }) {
         const view = ctx.viewport();
         const frame = buildFrame(state);
-        draw(g, view, state, frame);
+        draw(g, view, state, frame, activity);
         threeView?.render(frame, state, view);
       },
       handles: () => handles(ctx.viewport, threeView),

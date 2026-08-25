@@ -1,6 +1,7 @@
 import { buildIndex, type OrbitState, type PlainState } from "../../../packages/core/src/index.js";
 import { Reconciler } from "../../../packages/player/src/reconciler.js";
 import { StateStore } from "../../../packages/player/src/store.js";
+import type { ParameterActivityMap, SceneFrame } from "../../../packages/player/src/index.js";
 import { describe, expect, it } from "vitest";
 import { scene, schema } from "./scene.js";
 import { algorithmGroupBox, landscapeBox, lossPlotBox, sliderBox, SLIDERS, stepBox } from "./view.js";
@@ -11,6 +12,7 @@ function recordingContext() {
   const textPositions: { text: string; x: number; y: number }[] = [];
   const segments: [number, number, number, number][] = [];
   const arcs: number[] = [];
+  const assignments: { property: string; value: unknown }[] = [];
   let start: [number, number] | undefined;
   const handler: ProxyHandler<Record<string, unknown>> = {
     get: (_target, property) => (...args: unknown[]) => {
@@ -26,7 +28,10 @@ function recordingContext() {
       }
       if (property === "arc") arcs.push(Number(args[2]));
     },
-    set: () => true,
+    set: (_target, property, value) => {
+      assignments.push({ property: String(property), value });
+      return true;
+    },
   };
   return {
     context: new Proxy({}, handler) as unknown as CanvasRenderingContext2D,
@@ -35,6 +40,7 @@ function recordingContext() {
     textPositions,
     segments,
     arcs,
+    assignments,
   };
 }
 
@@ -42,11 +48,15 @@ function defaultState(): PlainState {
   return Object.fromEntries(Object.entries(schema).map(([key, spec]) => [key, structuredClone(spec.default)]));
 }
 
+function sceneFrame(activity: ParameterActivityMap = {}): SceneFrame {
+  return { dt: 0.016, activity };
+}
+
 function instance(width = 1000, height = 600) {
-  const { context, calls, texts, textPositions, segments, arcs } = recordingContext();
+  const { context, calls, texts, textPositions, segments, arcs, assignments } = recordingContext();
   const canvas = { getContext: () => context } as unknown as HTMLCanvasElement;
   const created = scene.create({ canvas, overlay: {} as HTMLElement, viewport: () => ({ width, height }) });
-  return { created, calls, texts, textPositions, segments, arcs };
+  return { created, calls, texts, textPositions, segments, arcs, assignments };
 }
 
 describe("optimizer scene", () => {
@@ -151,7 +161,7 @@ describe("optimizer scene", () => {
       "active.adamw": true,
     };
 
-    created.render(state, 0.016);
+    created.render(state, sceneFrame());
 
     expect(calls).toContain("clearRect");
     expect(calls).toContain("fillRect");
@@ -180,7 +190,7 @@ describe("optimizer scene", () => {
           elevation: Math.PI / 6,
         },
       },
-      0.016,
+      sceneFrame(),
     );
 
     expect(texts).toContain(
@@ -196,7 +206,7 @@ describe("optimizer scene", () => {
 
   it("separates the camera and interaction text in a compact viewport", () => {
     const { created, textPositions } = instance(390, 219);
-    created.render(defaultState(), 0.016);
+    created.render(defaultState(), sceneFrame());
     const hint = textPositions.find((entry) => entry.text === "drag to orbit · scroll to zoom")!;
     const readout = textPositions.find((entry) => entry.text.startsWith("["))!;
 
@@ -205,7 +215,7 @@ describe("optimizer scene", () => {
 
   it("draws a vertical loss-plot guide every five steps", () => {
     const { created, segments } = instance();
-    created.render(defaultState(), 0.016);
+    created.render(defaultState(), sceneFrame());
     const plot = lossPlotBox({ width: 1000, height: 600 });
     const firstGuide = plot.x + (5 / 60) * plot.width;
 
@@ -218,6 +228,15 @@ describe("optimizer scene", () => {
           y2 === plot.y + plot.height,
       ),
     ).toBe(true);
+  });
+
+  it("draws a glow around an active slider knob", () => {
+    const { created, assignments } = instance();
+
+    created.render(defaultState(), sceneFrame({ kappa: { source: "narration", strength: 1 } }));
+
+    expect(assignments).toContainEqual({ property: "shadowColor", value: "#f5f7fa" });
+    expect(assignments.some(({ property, value }) => property === "shadowBlur" && Number(value) > 0)).toBe(true);
   });
 
   it("confines camera navigation to the landscape", () => {

@@ -1,4 +1,5 @@
 import type { PlainState } from "@narrable/core";
+import type { ParameterActivityMap } from "@narrable/player";
 import { MAX_STEPS, type OptimizerName } from "./model.js";
 import {
   algorithmGroupBox,
@@ -16,20 +17,31 @@ import {
 const FOREGROUND = "#f5f7fa";
 const DISABLED = "#555b66";
 
-export function drawControls(g: CanvasRenderingContext2D, view: View, state: Readonly<PlainState>): void {
+export function drawControls(
+  g: CanvasRenderingContext2D,
+  view: View,
+  state: Readonly<PlainState>,
+  activity: ParameterActivityMap,
+): void {
   const unit = Math.min(view.width, view.height);
   drawAlgorithmGroups(g, view, state, unit);
   drawToggles(g, view, state, unit);
 
   for (const definition of [...PROBLEM_SLIDERS, ...ALGORITHM_SLIDERS]) {
-    drawSlider(g, view, state, definition, unit);
+    drawSlider(g, view, state, definition, unit, activity[definition.param]?.strength ?? 0);
   }
 }
 
-export function drawStep(g: CanvasRenderingContext2D, view: View, step: number): void {
+export function drawStep(
+  g: CanvasRenderingContext2D,
+  view: View,
+  step: number,
+  activity: ParameterActivityMap,
+): void {
   const box = stepBox(view);
   const unit = Math.min(view.width, view.height);
   const x = box.x0 + (step / MAX_STEPS) * (box.x1 - box.x0);
+  drawKnobGlow(g, x, box.y, unit, FOREGROUND, activity.step?.strength ?? 0);
   g.strokeStyle = "#343943";
   g.lineWidth = unit * 0.009;
   line(g, box.x0, box.y, box.x1, box.y);
@@ -96,6 +108,7 @@ function drawSlider(
   state: Readonly<PlainState>,
   definition: SliderDefinition,
   unit: number,
+  glow: number,
 ): void {
   const box = sliderBox(view, definition);
   const value = number(state, definition.param);
@@ -105,6 +118,7 @@ function drawSlider(
   const color = definition.optimizer ? SERIES[definition.optimizer].color : FOREGROUND;
   const liveColor = active ? color : DISABLED;
 
+  drawKnobGlow(g, knobX, box.y, unit, color, glow);
   g.strokeStyle = active ? "#343943" : "#202329";
   g.lineWidth = unit * 0.008;
   line(g, box.x0, box.y, box.x1, box.y);
@@ -123,6 +137,26 @@ function drawSlider(
   g.fillText(definition.label, box.x0, box.y - unit * 0.017);
   g.textAlign = "right";
   g.fillText(value.toFixed(definition.digits), box.x1, box.y - unit * 0.017);
+}
+
+function drawKnobGlow(
+  g: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  unit: number,
+  color: string,
+  strength: number,
+): void {
+  if (strength <= 0) return;
+  g.save();
+  g.globalAlpha = 0.35 + 0.5 * strength;
+  g.strokeStyle = color;
+  g.lineWidth = unit * 0.005;
+  g.shadowColor = color;
+  g.shadowBlur = unit * (0.018 + 0.012 * strength);
+  disc(g, x, y, unit * (0.018 + 0.004 * strength));
+  g.stroke();
+  g.restore();
 }
 
 function number(state: Readonly<PlainState>, key: string): number {

@@ -51,6 +51,26 @@ export class AnswerTimeline {
     return out;
   }
 
+  /** Reports answer-driven transitions and a short tail after each command. */
+  activity(t: number, fadeSeconds = 0.55, out: Record<string, number> = {}): Readonly<Record<string, number>> {
+    for (const param of Object.keys(out)) delete out[param];
+    for (const [param, segments] of this.tracks) {
+      let active: Segment | undefined;
+      for (const segment of segments) {
+        if (t < segment.start) break;
+        active = segment;
+      }
+      if (!active) continue;
+      if (active.end > active.start && t < active.end) {
+        out[param] = 1;
+        continue;
+      }
+      const age = t - active.end;
+      if (age >= 0 && age < fadeSeconds) out[param] = 1 - age / fadeSeconds;
+    }
+    return out;
+  }
+
   private valueFromSegments(
     segments: Segment[],
     t: number,

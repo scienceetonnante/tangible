@@ -39,7 +39,7 @@ scenes/scene.ts ───┘                         │
                     player: audio clock ► state ◄ learner interaction
                                                     │
                                                     ▼
-                                          scene render = f(state)
+                                     scene render = f(state, activity)
 ```
 
 The authoring format and scene schema are compiler inputs. The compiler validates
@@ -83,6 +83,12 @@ Violations of these rules are bugs:
    provider calls and reports useful source locations.
 5. **Framework-free hot path.** The animation loop works on plain state. Signals
    are used at DOM boundaries, not as a per-frame rendering framework.
+
+Narration parameter activity is also evaluated directly at lesson time. It does
+not depend on differences between consecutive frames, so seeking into a
+transition reproduces the same emphasis and seeking past one does not create a
+false change. Scenes own the visual treatment and may ignore activity for
+parameters that have no visible representation.
 
 ## Parameter ownership
 

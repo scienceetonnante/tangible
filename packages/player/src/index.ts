@@ -1,6 +1,7 @@
 // @narrable/player — Browser runtime: clock, store, timeline, reconciler, scene host.
 export * from "./clock.js";
 export * from "./store.js";
+export * from "./parameter-activity.js";
 export * from "./timeline.js";
 export * from "./scene-host.js";
 export * from "./scene-preview.js";
