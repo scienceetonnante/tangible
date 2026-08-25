@@ -5,6 +5,26 @@ async function ready(page: import("@playwright/test").Page) {
   await page.waitForFunction(() => (window as any).__player?.clock.duration > 0, null, { timeout: 20000 });
 }
 
+test("scene fits the viewport while keeping the question field visible", async ({ page }) => {
+  await page.setViewportSize({ width: 800, height: 400 });
+  await ready(page);
+
+  const appBox = (await page.locator("#app").boundingBox())!;
+  const sceneBox = (await page.locator(".xv-player").boundingBox())!;
+  const formBefore = (await page.locator(".xv-assistant-form").boundingBox())!;
+  expect(sceneBox.width).toBeLessThan(640);
+  expect(sceneBox.width / sceneBox.height).toBeCloseTo(16 / 9, 2);
+  expect(sceneBox.x - appBox.x).toBeCloseTo(appBox.x + appBox.width - sceneBox.x - sceneBox.width, 1);
+  expect(formBefore.y + formBefore.height).toBeLessThanOrEqual(400);
+
+  await page.evaluate(() => {
+    const assistant = (window as any).__player.assistant;
+    for (let i = 0; i < 8; i++) assistant.addTurn(`Question ${i}`, "A sufficiently long answer that grows the conversation panel.", []);
+  });
+  const formAfter = (await page.locator(".xv-assistant-form").boundingBox())!;
+  expect(formAfter.y + formAfter.height).toBeLessThanOrEqual(400);
+});
+
 test("paused question writes, demonstrates, yields to interaction, and resumes", async ({ page }) => {
   await ready(page);
   const input = page.locator(".xv-assistant-input");

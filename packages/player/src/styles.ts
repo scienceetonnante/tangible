@@ -2,7 +2,10 @@
 // page or the preview server can inject them without a separate CSS asset.
 
 export const PLAYER_CSS = `
-.xv-shell { width: 100%; }
+.xv-shell { width: min(100%, 177.7778vh); width: min(100%, 177.7778dvh); margin-inline: auto; }
+/* The resting assistant is about 91px tall. Reserve 100px, then convert the
+   remaining 16:9 scene height into a width so the question field stays visible. */
+.xv-shell.xv-with-assistant { width: min(100%, max(0px, calc(177.7778vh - 177.7778px))); width: min(100%, max(0px, calc(177.7778dvh - 177.7778px))); }
 .xv-player { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #fafafa; overflow: hidden; user-select: none; }
 .xv-player > canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; }
 .xv-overlay { position: absolute; inset: 0; pointer-events: none; }

@@ -87,7 +87,7 @@ export class Player {
     this.displayStore = new StateStore(schema);
 
     // DOM layers, bottom to top.
-    this.shell = el("div", "xv-shell");
+    this.shell = el("div", opts.assistant ? "xv-shell xv-with-assistant" : "xv-shell");
     this.container = el("div", "xv-player");
     this.canvas = el("canvas", "") as HTMLCanvasElement;
     const overlay = el("div", "xv-overlay");

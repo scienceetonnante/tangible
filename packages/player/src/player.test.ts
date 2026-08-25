@@ -59,6 +59,7 @@ describe("Player composition", () => {
     const player = new Player({ mount, scene: stubScene(seen), tracks });
 
     expect(mount.querySelector(".xv-player")).toBeTruthy();
+    expect(mount.querySelector(".xv-shell")!.classList.contains("xv-with-assistant")).toBe(false);
     expect(mount.querySelector("canvas")).toBeTruthy();
     expect(mount.querySelector(".xv-chrome")).toBeTruthy();
     expect(mount.querySelector(".xv-gate")).toBeNull();
@@ -153,6 +154,7 @@ After the pause.
     const mount = document.createElement("div");
     const player = new Player({ mount, scene: stubScene([]), tracks, assistant: { context: assistantContext } });
     const input = mount.querySelector(".xv-assistant-input") as HTMLInputElement;
+    expect(mount.querySelector(".xv-shell")!.classList.contains("xv-with-assistant")).toBe(true);
     expect(input.disabled).toBe(true);
 
     player.audio.dispatchEvent(new Event("play"));
