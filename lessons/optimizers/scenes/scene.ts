@@ -180,7 +180,7 @@ function clamp(value: number, lo: number, hi: number): number {
 const NIGHT_CSS = `
 .xv-player.optimizers-night { background: #050609; color: #f5f7fa; }
 .xv-player.optimizers-night .xv-board { top: 2%; right: 1.5%; width: 23%; height: 63%; padding: 4px; color: #f5f7fa; font-size: 16px; }
-.xv-player.optimizers-night .xv-board-inner { gap: 16px; }
+.xv-player.optimizers-night .xv-board-inner { gap: 30px; }
 .xv-player.optimizers-night .xv-board-item { width: 100%; text-align: center; }
 .xv-player.optimizers-night .xv-captions { color: #fff; text-shadow: 0 1px 3px #000; }
 .xv-player.optimizers-night .xv-chrome { background: rgba(5, 6, 9, 0.9); }
@@ -191,7 +191,7 @@ const NIGHT_CSS = `
 body.optimizers-night-page { background: #050609; }
 @media (max-width: 700px) {
   .xv-player.optimizers-night .xv-board { font-size: 6px; }
-  .xv-player.optimizers-night .xv-board-inner { gap: 6px; }
+  .xv-player.optimizers-night .xv-board-inner { gap: 10px; }
 }
 `;
 
