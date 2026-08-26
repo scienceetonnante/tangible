@@ -52,11 +52,13 @@ Press play when you are ready to continue.")
 
 @cue(problem -> [25, 0], start -> [-1.65, 1.15], step -> 40, active -> [true, false, false], sgd.lr -> 0.075, momentum.lr -> 0.075, momentum.beta = 0.05, adamw.lr -> 0.075, over: 2s) 
 Let us return to the same ravine and compare every optimizer.
+@camera(target: [0, 0.4, 0], distance: 7, azimuth: 32°, elevation: 60°, over: 5s)
 First, add momentum. @cue(active.momentum = true) The blue path smooths the wall-to-wall motion, and the parameter beta controls how much history the optimizer retains.
 @board(momentum: $\begin{aligned}\text{Momentum: }u_t&=\beta u_{t-1}+(1-\beta)g_t\\\Delta w_t&=-\eta u_t\end{aligned}$)
 
 @cue(momentum.beta -> 0.65, over: 4s) As beta rises, the optimizer averages gradients over a longer history. In this ravine, alternating gradients across the steep direction cancel, while gradients that point along the floor reinforce one another.
 
+@camera(target: [0, 0.4, 0], distance: 7.4, azimuth: 20°, elevation: 64°, over: 6s)
 Now consider AdamW, a widely used variant of Adam. Adam stands for adaptive moment estimation, and AdamW adds decoupled weight decay.
 @cue(active.adamw = true) The green path tracks running averages of the gradient and its square for each coordinate. 
 
