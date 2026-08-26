@@ -280,6 +280,11 @@ voice:
 pnpm lesson preview --lesson lessons/my-lesson
 ```
 
+For a Hugging Face voice endpoint, Tangible waits up to ten minutes for an
+endpoint that has scaled to zero to become ready. The build reports this wait
+and then prints progress for every narration segment. Cached narration does not
+contact or wake the endpoint.
+
 Tune cue offsets against the real prosody without changing the teaching
 argument. Provider results are cached, so changing cues without changing spoken
 prose does not synthesize the narration again.

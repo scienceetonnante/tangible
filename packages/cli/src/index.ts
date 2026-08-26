@@ -136,7 +136,13 @@ function selectTts(config: TtsConfig, mode: NarrationMode): { adapter: TtsAdapte
     };
   }
   if (config.provider === "hf-endpoint") {
-    return { adapter: new HuggingFaceVoiceAdapter({ speaker: config.voice }), voice: config.voice };
+    return {
+      adapter: new HuggingFaceVoiceAdapter({
+        speaker: config.voice,
+        onStatus: (message) => console.error(message),
+      }),
+      voice: config.voice,
+    };
   }
   if (process.env.ELEVENLABS_API_KEY) {
     return { adapter: new ElevenLabsAdapter({ modelId: config.model }), voice: config.voice };

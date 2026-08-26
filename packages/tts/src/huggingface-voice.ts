@@ -9,8 +9,11 @@ export interface HuggingFaceVoiceOptions {
   token?: string; // defaults to process.env.HF_TTS_TOKEN, then HF_TOKEN
   speaker?: string; // default david_v1
   seed?: number; // default 20260717
+  onStatus?: (message: string) => void;
   fetchImpl?: typeof fetch;
 }
+
+const SCALE_UP_WAIT_SECONDS = 600;
 
 export class HuggingFaceVoiceAdapter implements TtsAdapter {
   id = "hf-endpoint";
@@ -19,18 +22,23 @@ export class HuggingFaceVoiceAdapter implements TtsAdapter {
   private token: string;
   private speaker: string;
   private seed: number;
+  private onStatus?: (message: string) => void;
   private fetchImpl: typeof fetch;
+  private ready: Promise<void> | undefined;
 
   constructor(opts: HuggingFaceVoiceOptions = {}) {
     this.endpointUrl = (opts.endpointUrl ?? process.env.TTS_ENDPOINT_URL ?? "").replace(/\/$/, "");
     this.token = opts.token ?? process.env.HF_TTS_TOKEN ?? process.env.HF_TOKEN ?? "";
     this.speaker = opts.speaker ?? "david_v1";
     this.seed = opts.seed ?? 20260717;
+    this.onStatus = opts.onStatus;
     this.fetchImpl = opts.fetchImpl ?? fetch;
     this.modelId = `qwen3-tts:${this.speaker}`;
   }
 
   async synthesize(req: TtsRequest): Promise<TtsResult> {
+    await this.ensureReady();
+    this.onStatus?.("Tangible is generating narration.");
     const audio = await this.generate(req.text, req.voice || this.speaker, this.seed);
     const wav = parsePcmWav(audio);
     return { audio, format: "wav", wordTimes: [], duration: wav.duration };
@@ -38,11 +46,13 @@ export class HuggingFaceVoiceAdapter implements TtsAdapter {
 
   async synthesizeSegments(req: SegmentedTtsRequest): Promise<SegmentedTtsResult> {
     if (req.segments.length === 0) throw new Error("voice synthesis requires at least one segment");
+    await this.ensureReady();
     const clips: ParsedWav[] = [];
     const segmentStarts: number[] = [];
     let duration = 0;
 
     for (const [i, text] of req.segments.entries()) {
+      this.onStatus?.(`Tangible is generating narration segment ${i + 1} of ${req.segments.length}.`);
       segmentStarts.push(duration);
       const audio = await this.generate(text, req.voice || this.speaker, this.seed + i);
       const clip = parsePcmWav(audio);
@@ -59,21 +69,52 @@ export class HuggingFaceVoiceAdapter implements TtsAdapter {
     };
   }
 
-  private async generate(text: string, speaker: string, seed: number): Promise<Uint8Array> {
+  private async ensureReady(): Promise<void> {
     if (!this.endpointUrl) throw new Error("TTS_ENDPOINT_URL is not set");
     if (!this.token) throw new Error("HF_TTS_TOKEN or HF_TOKEN is not set");
+    if (!this.ready) this.ready = this.waitUntilReady();
+    try {
+      await this.ready;
+    } catch (error) {
+      this.ready = undefined;
+      throw error;
+    }
+  }
 
+  private async waitUntilReady(): Promise<void> {
+    this.onStatus?.("Tangible is waiting for the Hugging Face voice endpoint; a cold start can take several minutes.");
+    const reminder = this.onStatus
+      ? setInterval(() => this.onStatus?.("Tangible is still waiting for the Hugging Face voice endpoint."), 30_000)
+      : undefined;
+    try {
+      const response = await this.fetchImpl(`${this.endpointUrl}/health`, {
+        headers: this.headers(),
+        signal: AbortSignal.timeout((SCALE_UP_WAIT_SECONDS + 30) * 1000),
+      });
+      if (!response.ok) throw new Error(`Hugging Face voice endpoint ${response.status}: ${await response.text()}`);
+    } finally {
+      if (reminder) clearInterval(reminder);
+    }
+    this.onStatus?.("The Hugging Face voice endpoint is ready.");
+  }
+
+  private async generate(text: string, speaker: string, seed: number): Promise<Uint8Array> {
     const response = await this.fetchImpl(`${this.endpointUrl}/generate`, {
       method: "POST",
-      headers: {
-        authorization: `Bearer ${this.token}`,
-        accept: "audio/wav",
-        "content-type": "application/json",
-      },
+      headers: this.headers({ accept: "audio/wav", "content-type": "application/json" }),
       body: JSON.stringify({ text, language: "English", speaker, seed, temperature: 0.9, top_p: 0.95 }),
+      signal: AbortSignal.timeout((SCALE_UP_WAIT_SECONDS + 30) * 1000),
     });
     if (!response.ok) throw new Error(`Hugging Face voice endpoint ${response.status}: ${await response.text()}`);
     return new Uint8Array(await response.arrayBuffer());
+  }
+
+  private headers(extra: Record<string, string> = {}): Record<string, string> {
+    return {
+      authorization: `Bearer ${this.token}`,
+      "x-scale-up-timeout": String(SCALE_UP_WAIT_SECONDS),
+      ...extra,
+    };
   }
 }
 

@@ -3,15 +3,19 @@ import { HuggingFaceVoiceAdapter } from "./huggingface-voice.js";
 
 describe("HuggingFaceVoiceAdapter", () => {
   it("generates each answer beat and joins PCM WAV audio with exact start times", async () => {
-    const requests: { url: string; authorization: string; body: Record<string, unknown> }[] = [];
+    const requests: { url: string; authorization: string; scaleUpTimeout: string; body?: Record<string, unknown> }[] = [];
+    const statuses: string[] = [];
     const clips = [pcmWav(0.25), pcmWav(0.5)];
     const fetchImpl: typeof fetch = async (input, init) => {
-      const clip = clips[requests.length]!;
+      const headers = new Headers(init!.headers);
       requests.push({
         url: String(input),
-        authorization: new Headers(init!.headers).get("authorization") ?? "",
-        body: JSON.parse(String(init!.body)),
+        authorization: headers.get("authorization") ?? "",
+        scaleUpTimeout: headers.get("x-scale-up-timeout") ?? "",
+        body: init!.body ? JSON.parse(String(init!.body)) : undefined,
       });
+      if (String(input).endsWith("/health")) return { ok: true, status: 200, text: async () => "" } as Response;
+      const clip = clips[requests.length - 2]!;
       return {
         ok: true,
         status: 200,
@@ -19,7 +23,12 @@ describe("HuggingFaceVoiceAdapter", () => {
         text: async () => "",
       } as Response;
     };
-    const adapter = new HuggingFaceVoiceAdapter({ endpointUrl: "https://voice.example/", token: "secret", fetchImpl });
+    const adapter = new HuggingFaceVoiceAdapter({
+      endpointUrl: "https://voice.example/",
+      token: "secret",
+      onStatus: (message) => statuses.push(message),
+      fetchImpl,
+    });
 
     const result = await adapter.synthesizeSegments!({
       segments: ["First.", "Second."],
@@ -31,12 +40,20 @@ describe("HuggingFaceVoiceAdapter", () => {
     expect(result.format).toBe("wav");
     expect(new DataView(result.audio.buffer).getUint32(40, true)).toBe(12_000);
     expect(requests.map((request) => request.url)).toEqual([
+      "https://voice.example/health",
       "https://voice.example/generate",
       "https://voice.example/generate",
     ]);
-    expect(requests[0]!.authorization).toBe("Bearer secret");
-    expect(requests[0]!.body).toMatchObject({ text: "First.", language: "English", speaker: "david_v1", seed: 20260717 });
-    expect(requests[1]!.body.seed).toBe(20260718);
+    expect(requests.every((request) => request.authorization === "Bearer secret")).toBe(true);
+    expect(requests.every((request) => request.scaleUpTimeout === "600")).toBe(true);
+    expect(requests[1]!.body).toMatchObject({ text: "First.", language: "English", speaker: "david_v1", seed: 20260717 });
+    expect(requests[2]!.body!.seed).toBe(20260718);
+    expect(statuses).toEqual([
+      "Tangible is waiting for the Hugging Face voice endpoint; a cold start can take several minutes.",
+      "The Hugging Face voice endpoint is ready.",
+      "Tangible is generating narration segment 1 of 2.",
+      "Tangible is generating narration segment 2 of 2.",
+    ]);
   });
 });
 
