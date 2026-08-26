@@ -155,6 +155,37 @@ Follow these design rules:
 - Test scientific or mathematical logic when an error would undermine the
   lesson.
 
+### Design responsive scene layouts
+
+Design against the scene rectangle inside the player, not only against the
+browser window. The playback controls and assistant drawer reduce the height
+available to the scene, and the player may center a fixed-aspect-ratio scene
+inside a wider window. Measure the scene rectangle after the complete player has
+laid itself out.
+
+Use these principles for future lessons:
+
+- Treat width and height as independent constraints. A phone in landscape is
+  wide but short, so a width breakpoint alone does not describe it.
+- Give text a readable minimum size in CSS pixels. Once text reaches that
+  minimum, do not keep shrinking its row spacing as a percentage of the scene.
+- Lay out each panel from its own bounds. Reserve space for the heading first,
+  allocate the remaining height to its control rows, and keep an explicit gap
+  between text, controls, and panel edges.
+- Use spare padding before reducing text size. If the content still does not
+  fit, simplify it or change its arrangement instead of allowing labels to
+  overlap.
+- Keep touch targets at least 44 by 44 CSS pixels. Separate repeated controls by
+  enough distance that their touch regions do not compete.
+- Test a dense, post-Start lesson state with the board, captions, playback
+  controls, and collapsed assistant present. The landing card can hide scene
+  layout failures.
+
+For the current player, include 844 × 390 and 896 × 414 phone landscape windows
+in the review set, alongside a desktop and a tablet. Capture screenshots at the
+same meaningful lesson time so that comparisons exercise the same controls and
+board content.
+
 The exact file format and scene exports are described in
 [the reference](./reference.md#lesson-files-and-manifest).
 

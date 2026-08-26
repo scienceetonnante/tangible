@@ -12,6 +12,7 @@ export interface SliderDefinition {
   range: [number, number];
   digits: number;
   y: number;
+  compactY?: number;
   section: "problem" | "algorithm";
   optimizer?: OptimizerName;
   slot?: 0 | 1;
@@ -29,10 +30,10 @@ export const PROBLEM_SLIDERS: SliderDefinition[] = [
 ];
 
 export const ALGORITHM_SLIDERS: SliderDefinition[] = [
-  { param: "sgd.lr", label: "learning rate η", range: [0.02, 0.12], digits: 3, y: 0.19, section: "algorithm", optimizer: "sgd" },
-  { param: "momentum.lr", label: "learning rate η", range: [0.02, 0.25], digits: 3, y: 0.33, section: "algorithm", optimizer: "momentum" },
-  { param: "momentum.beta", label: "smoothing β", range: [0, 0.95], digits: 2, y: 0.43, section: "algorithm", optimizer: "momentum" },
-  { param: "adamw.lr", label: "learning rate η", range: [0.02, 0.16], digits: 3, y: 0.56, section: "algorithm", optimizer: "adamw" },
+  { param: "sgd.lr", label: "learning rate η", range: [0.02, 0.12], digits: 3, y: 0.19, compactY: 0.225, section: "algorithm", optimizer: "sgd" },
+  { param: "momentum.lr", label: "learning rate η", range: [0.02, 0.25], digits: 3, y: 0.33, compactY: 0.37, section: "algorithm", optimizer: "momentum" },
+  { param: "momentum.beta", label: "smoothing β", range: [0, 0.95], digits: 2, y: 0.43, compactY: 0.507, section: "algorithm", optimizer: "momentum" },
+  { param: "adamw.lr", label: "learning rate η", range: [0.02, 0.16], digits: 3, y: 0.56, compactY: 0.65, section: "algorithm", optimizer: "adamw" },
 ];
 
 export const SLIDERS = [...PROBLEM_SLIDERS, ...ALGORITHM_SLIDERS];
@@ -59,7 +60,8 @@ export function lossPlotBox(view: View) {
 export function sliderBox(view: View, definition: SliderDefinition) {
   const problemX = definition.slot === 0 ? [0.015, 0.215] : [0.245, 0.445];
   const [x0, x1] = definition.section === "problem" ? problemX : [0.568, 0.756];
-  return { x0: view.width * x0, x1: view.width * x1, y: view.height * definition.y };
+  const y = isCompactHeight(view) ? (definition.compactY ?? definition.y) : definition.y;
+  return { x0: view.width * x0, x1: view.width * x1, y: view.height * y };
 }
 
 export function stepBox(view: View) {
@@ -77,11 +79,17 @@ export function toggleBox(view: View, index: number) {
 }
 
 export function algorithmGroupBox(view: View, optimizer: OptimizerName) {
-  const vertical = {
-    sgd: [0.115, 0.13],
-    momentum: [0.265, 0.21],
-    adamw: [0.49, 0.125],
-  }[optimizer]!;
+  const vertical = (isCompactHeight(view)
+    ? {
+        sgd: [0.115, 0.14],
+        momentum: [0.265, 0.27],
+        adamw: [0.545, 0.13],
+      }
+    : {
+        sgd: [0.115, 0.13],
+        momentum: [0.265, 0.21],
+        adamw: [0.49, 0.125],
+      })[optimizer]!;
   return {
     x: view.width * ALGORITHM_X,
     y: view.height * vertical[0],
@@ -96,4 +104,8 @@ export function cssPixels(view: View, value: number): number {
 
 export function cssWidth(view: View): number {
   return view.width / (view.pixelRatio ?? 1);
+}
+
+function isCompactHeight(view: View): boolean {
+  return view.height / (view.pixelRatio ?? 1) < 440;
 }

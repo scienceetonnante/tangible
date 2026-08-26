@@ -8,7 +8,8 @@ async function ready(page: import("@playwright/test").Page) {
 for (const viewport of [
   { name: "desktop", width: 1280, height: 720 },
   { name: "tablet", width: 768, height: 1024 },
-  { name: "phone landscape", width: 844, height: 390 },
+  { name: "phone landscape 844 × 390", width: 844, height: 390 },
+  { name: "phone landscape 896 × 414", width: 896, height: 414 },
 ]) {
   test(`${viewport.name} keeps the lesson controls separate and usable`, async ({ page }) => {
     await page.setViewportSize({ width: viewport.width, height: viewport.height });

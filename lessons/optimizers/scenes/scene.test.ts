@@ -146,7 +146,37 @@ describe("optimizer scene", () => {
 
     expect(landscape.width / landscape.height).toBeCloseTo(1.3, 6);
     expect(algorithm.width).toBeCloseTo(view.width * 0.2, 6);
+    expect(algorithm.height).toBeCloseTo(view.height * 0.13, 6);
     expect(algorithm.x).toBeGreaterThan(landscape.x + landscape.width);
+  });
+
+  it.each([
+    ["844 × 390 phone", { width: 577, height: 325 }],
+    ["896 × 414 phone", { width: 620, height: 349 }],
+  ])("keeps optimizer labels and controls separate in the %s scene", (_name, view) => {
+    const unit = Math.min(view.width, view.height);
+    const titleFont = Math.max(12, unit * 0.018);
+    const sliderFont = Math.max(11, unit * 0.016);
+
+    for (const optimizer of ["sgd", "momentum", "adamw"] as const) {
+      const group = algorithmGroupBox(view, optimizer);
+      const titleBottom = group.y + unit * 0.009 + titleFont;
+      const sliders = SLIDERS.filter((definition) => definition.optimizer === optimizer).map((definition) =>
+        sliderBox(view, definition),
+      );
+
+      for (const slider of sliders) {
+        const labelTop = slider.y - unit * 0.017 - sliderFont;
+        const knobBottom = slider.y + unit * 0.0112;
+        expect(labelTop).toBeGreaterThanOrEqual(titleBottom + 2);
+        expect(knobBottom).toBeLessThanOrEqual(group.y + group.height);
+      }
+    }
+
+    const momentum = SLIDERS.filter((definition) => definition.optimizer === "momentum").map((definition) =>
+      sliderBox(view, definition),
+    );
+    expect(momentum[1]!.y - momentum[0]!.y).toBeGreaterThanOrEqual(44);
   });
 
   it("aligns the step slider with the loss graph", () => {
