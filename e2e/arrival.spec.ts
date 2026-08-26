@@ -24,6 +24,15 @@ test("loading becomes a deliberate start and never autoplays", async ({ page }, 
   await expect.poll(() => page.evaluate(() => (window as any).__player.clock.playing)).toBe(true);
 });
 
+test("static-style blob narration remains playable", async ({ page }) => {
+  await page.goto("/?arrival=blob");
+  const screen = page.locator(".xv-start-screen");
+  await expect(screen).toHaveAttribute("data-state", "ready");
+  await page.locator(".xv-start-button").click();
+  await expect(screen).toHaveCount(0);
+  await expect.poll(() => page.evaluate(() => (window as any).__player.clock.playing)).toBe(true);
+});
+
 test("portrait phones receive an orientation notice", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/?arrival");

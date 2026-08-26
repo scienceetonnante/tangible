@@ -19,7 +19,8 @@ style.textContent = PLAYER_CSS;
 document.head.append(style);
 
 const mount = document.getElementById("app")!;
-const arrival = new URLSearchParams(location.search).has("arrival");
+const arrivalMode = new URLSearchParams(location.search).get("arrival");
+const arrival = arrivalMode !== null;
 const audio = preferredAudioSource(data.audio);
 const player = new Player({
   mount,
@@ -30,10 +31,13 @@ const player = new Player({
   audioLoader: arrival
     ? async () => {
         await new Promise((resolve) => setTimeout(resolve, 400));
-        const response = await fetch(audio);
-        if (!response.ok) throw new Error(`narration returned ${response.status}`);
-        const buffer = await response.arrayBuffer();
-        return [URL.createObjectURL(new Blob([buffer], { type: mimeForAudio(audio) }))];
+        if (arrivalMode === "blob") {
+          const response = await fetch(audio);
+          if (!response.ok) throw new Error(`narration returned ${response.status}`);
+          const buffer = await response.arrayBuffer();
+          return [URL.createObjectURL(new Blob([buffer], { type: mimeForAudio(audio) }))];
+        }
+        return [audio];
       }
     : undefined,
   introduction: arrival

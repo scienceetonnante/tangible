@@ -52,10 +52,13 @@ async function main() {
     captionsVtt: vtt,
     introduction: INTRODUCTION,
     audioLoader: async () => {
+      const src = preferredAudioSource(tracks.audio.src);
+      // Assistant-enabled releases use Tangible's own range-capable server, so
+      // the media element can load the selected file directly.
+      if (HAS_ASSISTANT) return [src];
       // Static Hugging Face Spaces may redirect large media through a signed CDN
       // URL that Safari cannot range-load. Fetch one supported encoding ourselves
       // and use a blob URL, which has no redirect or range negotiation.
-      const src = preferredAudioSource(tracks.audio.src);
       const buffer = await (await required("./" + src)).arrayBuffer();
       return [URL.createObjectURL(new Blob([buffer], { type: mimeForAudio(src) }))];
     },
