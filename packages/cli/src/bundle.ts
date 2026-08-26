@@ -92,7 +92,7 @@ main().catch((error) => {
   return outDir;
 }
 
-async function bundleAssistantServer(outDir: string): Promise<void> {
+export async function bundleAssistantServer(outDir: string): Promise<void> {
   const serverPath = join(dirname(fileURLToPath(import.meta.url)), "assistant-server.js");
   await build({
     stdin: {
@@ -105,6 +105,9 @@ async function bundleAssistantServer(outDir: string): Promise<void> {
     format: "esm",
     platform: "node",
     target: "node22",
+    banner: {
+      js: 'import { createRequire as __tangibleCreateRequire } from "node:module"; const require = __tangibleCreateRequire(import.meta.url);',
+    },
     logLevel: "silent",
   });
   await writeFile(
