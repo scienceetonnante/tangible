@@ -1,9 +1,9 @@
 ---
-name: create-narrable-lesson
-description: Create, continue, review, or deploy a Narrable interactive lesson from a human-built scene and narration. Use for work in lessons/, including scene design, natural-language scene hints, formal narration cues, offline or real-voice builds, visual and interaction review, assistant context, and Hugging Face Space releases.
+name: create-tangible-lesson
+description: Create, continue, review, or deploy a Tangible interactive lesson from a human-built scene and narration. Use for work in lessons/, including scene design, natural-language scene hints, formal narration cues, offline or real-voice builds, visual and interaction review, assistant context, and Hugging Face Space releases.
 ---
 
-# Create a Narrable lesson
+# Create a Tangible lesson
 
 Treat lesson production as a staged collaboration. The human owns pedagogical
 intent and spoken prose. Own the technical scene, formal choreography,

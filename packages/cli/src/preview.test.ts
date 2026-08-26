@@ -17,7 +17,7 @@ afterEach(async () => {
 
 describe("preview networking", () => {
   it("binds to loopback by default", async () => {
-    const siteDir = await mkdtemp(join(tmpdir(), "narrable-preview-"));
+    const siteDir = await mkdtemp(join(tmpdir(), "tangible-preview-"));
     await writeFile(join(siteDir, "index.html"), "<main>preview</main>");
     server = preview({ siteDir, watchPaths: [], rebuild: async () => {}, port: 0 });
     await once(server, "listening");

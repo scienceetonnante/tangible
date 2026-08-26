@@ -1,5 +1,5 @@
 {
-  "name": "@narrable/core",
+  "name": "@tangible/core",
   "version": "0.1.0",
   "description": "Shared types, schema, easing, interpolation, time math.",
   "type": "module",

@@ -6,7 +6,7 @@ import { writeAssistantPromptLog } from "./assistant-prompt-log.js";
 
 describe("local assistant prompt log", () => {
   it("writes the system prompt and current user message as plain text", async () => {
-    const lessonDir = await mkdtemp(join(tmpdir(), "narrable-prompt-log-"));
+    const lessonDir = await mkdtemp(join(tmpdir(), "tangible-prompt-log-"));
     const request = {
       model: "test/model",
       messages: [
@@ -27,7 +27,7 @@ describe("local assistant prompt log", () => {
   });
 
   it("fails when the provider request has no system or user text", async () => {
-    const lessonDir = await mkdtemp(join(tmpdir(), "narrable-prompt-log-"));
+    const lessonDir = await mkdtemp(join(tmpdir(), "tangible-prompt-log-"));
 
     await expect(writeAssistantPromptLog(lessonDir, { messages: [] })).rejects.toThrow(
       "must contain system and user text messages",

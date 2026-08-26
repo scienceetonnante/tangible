@@ -1,5 +1,5 @@
-import type { PlainState } from "@narrable/core";
-import type { ParameterActivityMap } from "@narrable/player";
+import type { PlainState } from "@tangible/core";
+import type { ParameterActivityMap } from "@tangible/player";
 import { MAX_STEPS, type OptimizerName } from "./model.js";
 import {
   algorithmGroupBox,

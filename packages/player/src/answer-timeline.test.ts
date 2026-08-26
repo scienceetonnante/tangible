@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Schema } from "@narrable/core";
+import type { Schema } from "@tangible/core";
 import { AnswerTimeline, timeAnswerBeats } from "./answer-timeline.js";
 
 const schema: Schema = {

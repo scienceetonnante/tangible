@@ -11,7 +11,7 @@ import { tmpdir } from "node:os";
 
 /** MP3 bytes → AAC/MP4 (.m4a) bytes. Throws (with ffmpeg's stderr) if ffmpeg is missing or fails. */
 export function transcodeToM4a(mp3: Uint8Array): Uint8Array {
-  const dir = mkdtempSync(join(tmpdir(), "narrable-"));
+  const dir = mkdtempSync(join(tmpdir(), "tangible-"));
   try {
     const inp = join(dir, "in.mp3");
     const out = join(dir, "out.m4a");

@@ -1,7 +1,7 @@
 // Deterministic placeholder speech: 60 ms per character and silent audio. The
 // --silent path uses it for automated tests and other hermetic builds.
 
-import type { TtsAdapter, TtsRequest, TtsResult, WordTime } from "@narrable/core";
+import type { TtsAdapter, TtsRequest, TtsResult, WordTime } from "@tangible/core";
 
 const SEC_PER_CHAR = 0.06;
 

@@ -4,8 +4,8 @@
 // truncated at the new cue's start (conflict rule) with a warning. Recorded tracks
 // are merged verbatim. All easing/timing is baked here so the runtime stays dumb.
 
-import type { Keyframe, ParamValue, ParamSpec, BoardItem, OrbitState } from "@narrable/core";
-import { buildIndex, evaluate } from "@narrable/core";
+import type { Keyframe, ParamValue, ParamSpec, BoardItem, OrbitState } from "@tangible/core";
+import { buildIndex, evaluate } from "@tangible/core";
 import { applyCameraPatch } from "./camera.js";
 import type { ResolvedCue } from "./resolve.js";
 import type { SceneInfo } from "./check.js";

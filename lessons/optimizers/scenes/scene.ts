@@ -1,6 +1,6 @@
-import type { Handle, OrbitState, PlainState, Schema } from "@narrable/core";
-import { orbitHandle } from "@narrable/ingredients";
-import type { SceneContext, SceneInstance, SceneModule } from "@narrable/player";
+import type { Handle, OrbitState, PlainState, Schema } from "@tangible/core";
+import { orbitHandle } from "@tangible/ingredients";
+import type { SceneContext, SceneInstance, SceneModule } from "@tangible/player";
 import { draw } from "./drawing.js";
 import { buildFrame } from "./frame.js";
 import { DOMAIN, MAX_STEPS } from "./model.js";

@@ -1,7 +1,7 @@
 // Question box and written conversation transcript. Provider orchestration stays
 // outside this DOM component so the player can use fake or real endpoints.
 
-import type { AnswerBeat, AssistantHistoryTurn } from "@narrable/core";
+import type { AnswerBeat, AssistantHistoryTurn } from "@tangible/core";
 
 export interface AssistantPanelOptions {
   onAsk(question: string): void;

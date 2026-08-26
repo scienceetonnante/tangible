@@ -4,7 +4,7 @@
 // `shared` holds until the script's next keyframe, then glides. On seek, all
 // interaction clears and the display rejoins the narration.
 
-import { blend, converged, holdActive, approachU, type TrackIndex, type Schema, type ParamValue, type PlainState } from "@narrable/core";
+import { blend, converged, holdActive, approachU, type TrackIndex, type Schema, type ParamValue, type PlainState } from "@tangible/core";
 import type { StateStore } from "./store.js";
 
 const EPS = 1e-3; // convergence epsilon to snap-and-clear a gliding parameter

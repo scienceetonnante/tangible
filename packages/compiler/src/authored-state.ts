@@ -2,8 +2,8 @@
 // order for both `check` and `compile`; audio timing only places its computed steps.
 
 import { isDeepStrictEqual } from "node:util";
-import type { BakerDefinition, OrbitState, ParamValue } from "@narrable/core";
-import { validateValue } from "@narrable/core";
+import type { BakerDefinition, OrbitState, ParamValue } from "@tangible/core";
+import { validateValue } from "@tangible/core";
 import { applyCameraPatch } from "./camera.js";
 import type { SceneInfo } from "./check.js";
 import type { Directive, ParsedScript } from "./parse.js";

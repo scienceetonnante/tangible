@@ -1,7 +1,7 @@
 // Chrome — the controls bar: play/pause, elapsed/remaining, scrubber with chapter
 // and pause-checkpoint ticks, captions toggle, fullscreen, keyboard shortcuts.
 
-import type { LessonTracks } from "@narrable/core";
+import type { LessonTracks } from "@tangible/core";
 import type { AudioClock } from "./clock.js";
 import { pauseTime } from "./pause-gate.js";
 

@@ -1,6 +1,6 @@
 // Narration-free browser composition for developing a scene from schema defaults.
 
-import type { ParamValue } from "@narrable/core";
+import type { ParamValue } from "@tangible/core";
 import { InteractionManager, type InteractionClock } from "./interaction.js";
 import { SceneHost, type SceneModule } from "./scene-host.js";
 import { StateStore } from "./store.js";

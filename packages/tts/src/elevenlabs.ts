@@ -2,7 +2,7 @@
 // -level times. Long scripts are chunked at paragraph boundaries (never inside a
 // word) and times re-offset. The API key comes from the environment, never files.
 
-import type { TtsAdapter, TtsRequest, TtsResult, WordTime } from "@narrable/core";
+import type { TtsAdapter, TtsRequest, TtsResult, WordTime } from "@tangible/core";
 
 interface Alignment {
   characters: string[];

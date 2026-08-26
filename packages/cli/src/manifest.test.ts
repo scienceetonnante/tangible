@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { loadManifest } from "./manifest.js";
 
 async function manifest(text: string) {
-  const dir = await mkdtemp(join(tmpdir(), "narrable-manifest-"));
+  const dir = await mkdtemp(join(tmpdir(), "tangible-manifest-"));
   await writeFile(join(dir, "lesson.yaml"), text);
   return loadManifest(dir);
 }

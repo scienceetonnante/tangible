@@ -1,7 +1,7 @@
 // Camera-orbit handle: a background drag that rotates an orbit camera's azimuth
 // and elevation. Provided by ingredients so any 3D scene gets orbit for free.
 
-import type { Handle, OrbitState } from "@narrable/core";
+import type { Handle, OrbitState } from "@tangible/core";
 
 export interface OrbitHandleOptions {
   param?: string; // orbit parameter to drive; default "camera"

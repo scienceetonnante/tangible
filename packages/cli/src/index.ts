@@ -1,17 +1,17 @@
 #!/usr/bin/env node
-// @narrable/cli — the `lesson` command. Wires authoring, compilation, TTS,
+// @tangible/cli — the `lesson` command. Wires authoring, compilation, TTS,
 // inspection, preview, and static bundling.
 
 import { readFile, rm } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join, resolve as resolvePath } from "node:path";
 import { createHash } from "node:crypto";
-import { parseScript, check, compile, emit, synthesize, narrationSegmentOffsets, formatDiagnostic, ParseError } from "@narrable/compiler";
-import type { SceneInfo } from "@narrable/compiler";
-import { buildIndex, evaluate, validateSchema } from "@narrable/core";
-import type { Schema, Keyframe, TtsAdapter, ParamSpec, ParamValue } from "@narrable/core";
-import { StateStore, Reconciler } from "@narrable/player";
-import { FakeTtsAdapter, ElevenLabsAdapter, HuggingFaceVoiceAdapter, SupertonicTtsAdapter } from "@narrable/tts";
+import { parseScript, check, compile, emit, synthesize, narrationSegmentOffsets, formatDiagnostic, ParseError } from "@tangible/compiler";
+import type { SceneInfo } from "@tangible/compiler";
+import { buildIndex, evaluate, validateSchema } from "@tangible/core";
+import type { Schema, Keyframe, TtsAdapter, ParamSpec, ParamValue } from "@tangible/core";
+import { StateStore, Reconciler } from "@tangible/player";
+import { FakeTtsAdapter, ElevenLabsAdapter, HuggingFaceVoiceAdapter, SupertonicTtsAdapter } from "@tangible/tts";
 import { loadScene } from "./scene-loader.js";
 import { loadManifest, loadSceneManifest, type Manifest, type TtsConfig } from "./manifest.js";
 import { refSheet } from "./ref.js";

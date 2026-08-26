@@ -18,7 +18,7 @@ conditioned and rough 3D loss surfaces. Play the explanation, orbit the
 landscape, move the starting point, and change optimizer settings while every
 path recomputes live.
 
-Built with [narrable](https://github.com/scienceetonnante/narrable), a platform
+Built with [Tangible](https://github.com/scienceetonnante/tangible), a platform
 for narrated explorables authored from text.
 
 The lesson assets are a self-contained bundle. A small same-origin Node server

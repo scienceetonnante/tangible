@@ -113,7 +113,7 @@ export async function deployLessonToSpace(options: DeployOptions): Promise<Deplo
         "--commit-message",
         `Deploy ${options.manifest.id} from ${shortCommit}`,
         "--commit-description",
-        `Narrable source commit ${sourceCommit}`,
+        `Tangible source commit ${sourceCommit}`,
         "--quiet",
       ],
       options.lessonDir,

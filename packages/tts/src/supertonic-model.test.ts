@@ -60,7 +60,7 @@ describe("ensureSupertonicModel", () => {
 });
 
 async function temporaryDir(): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), "narrable-supertonic-test-"));
+  const dir = await mkdtemp(join(tmpdir(), "tangible-supertonic-test-"));
   tempDirs.push(dir);
   return dir;
 }

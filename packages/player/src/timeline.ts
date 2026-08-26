@@ -1,7 +1,7 @@
 // TimelineDriver — the per-frame loop. Reads the clock, evaluates scripted
 // value-at-time state, reconciles interaction, and writes the display state.
 
-import { evaluate, type TrackIndex, type PlainState } from "@narrable/core";
+import { evaluate, type TrackIndex, type PlainState } from "@tangible/core";
 import type { AudioClock } from "./clock.js";
 import type { StateStore } from "./store.js";
 import type { Reconciler } from "./reconciler.js";

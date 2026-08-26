@@ -1,4 +1,4 @@
-import type { Keyframe } from "@narrable/core";
+import type { Keyframe } from "@tangible/core";
 import type { InteractionMeta } from "./store.js";
 
 export type ParameterActivitySource = "narration" | "user" | "assistant";

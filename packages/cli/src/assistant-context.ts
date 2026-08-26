@@ -3,8 +3,8 @@
 
 import { readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { parseScript, type SceneInfo } from "@narrable/compiler";
-import type { AssistantContext } from "@narrable/core";
+import { parseScript, type SceneInfo } from "@tangible/compiler";
+import type { AssistantContext } from "@tangible/core";
 import type { Manifest } from "./manifest.js";
 
 export async function emitAssistantContext(

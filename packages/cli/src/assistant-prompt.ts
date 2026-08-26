@@ -1,7 +1,7 @@
 // Human-readable prompt assembly from the validated assistant build artifact.
 
-import type { AssistantContext, ParamSpec } from "@narrable/core";
-import { parseScript, type Directive } from "@narrable/compiler";
+import type { AssistantContext, ParamSpec } from "@tangible/core";
+import { parseScript, type Directive } from "@tangible/compiler";
 
 export type AssistantPromptStyle = "legacy" | "structured";
 

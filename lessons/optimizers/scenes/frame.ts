@@ -1,4 +1,4 @@
-import type { PlainState } from "@narrable/core";
+import type { PlainState } from "@tangible/core";
 import { simulate, type OptimizerName, type OptimizerSettings, type Problem, type Trajectory } from "./model.js";
 
 const OPTIMIZERS: OptimizerName[] = ["sgd", "momentum", "adamw"];

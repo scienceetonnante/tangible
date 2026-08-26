@@ -2,7 +2,7 @@
 // a pure function of state — it may cache expensive geometry but must not keep
 // mutable state that affects output across frames (that would break value-at-time).
 
-import type { Schema, ParamValue, PlainState, Handle } from "@narrable/core";
+import type { Schema, ParamValue, PlainState, Handle } from "@tangible/core";
 import type { ParameterActivityMap } from "./parameter-activity.js";
 
 export type { Handle };

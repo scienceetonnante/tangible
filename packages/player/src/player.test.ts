@@ -2,7 +2,7 @@
 import { afterEach, describe, it, expect, vi } from "vitest";
 import { Player } from "./player.js";
 import type { SceneModule, SceneContext, SceneFrame } from "./scene-host.js";
-import type { AssistantContext, LessonTracks, PlainState } from "@narrable/core";
+import type { AssistantContext, LessonTracks, PlainState } from "@tangible/core";
 import { AnswerTimeline } from "./answer-timeline.js";
 
 const tracks: LessonTracks = {
@@ -221,8 +221,8 @@ After the pause.
     mount.querySelector(".xv-assistant-form")!.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
     await vi.waitFor(() => expect(requestHeaders).toBeDefined());
 
-    expect(requestHeaders!.get("x-narrable-client-id")).toMatch(/^[a-f0-9]{32}$/);
-    expect(localStorage.getItem("narrable.assistantClientId")).toBe(requestHeaders!.get("x-narrable-client-id"));
+    expect(requestHeaders!.get("x-tangible-client-id")).toMatch(/^[a-f0-9]{32}$/);
+    expect(localStorage.getItem("tangible.assistantClientId")).toBe(requestHeaders!.get("x-tangible-client-id"));
     expect(requestBody).toMatchObject({
       position: { chapter: "Intro", narrationJustHeard: "Visible caption.", pausePrompt: null },
       temporaryAssistantState: {},

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { AssistantContext } from "@narrable/core";
+import type { AssistantContext } from "@tangible/core";
 import { formatAssistantSystemPrompt } from "./assistant-prompt.js";
 
 const context: AssistantContext = {

@@ -1,4 +1,4 @@
-import type { OrbitState, PlainState } from "@narrable/core";
+import type { OrbitState, PlainState } from "@tangible/core";
 import * as THREE from "three";
 import type { OptimizerFrame } from "./frame.js";
 import { DOMAIN, sample, type OptimizerName, type Problem, type Trajectory } from "./model.js";

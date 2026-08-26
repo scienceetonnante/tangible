@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { parseScript } from "./parse.js";
 import { resolve } from "./resolve.js";
 import { expand } from "./expand.js";
-import { buildIndex, evaluate, type ParamValue } from "@narrable/core";
+import { buildIndex, evaluate, type ParamValue } from "@tangible/core";
 import { SCRIPT, SCENE } from "./fixtures.js";
 import { evaluateAuthoredState } from "./authored-state.js";
 

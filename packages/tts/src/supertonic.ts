@@ -3,7 +3,7 @@
 import { createRequire } from "node:module";
 import { access } from "node:fs/promises";
 import { join, resolve } from "node:path";
-import type { TtsAdapter, TtsRequest, TtsResult, WordTime } from "@narrable/core";
+import type { TtsAdapter, TtsRequest, TtsResult, WordTime } from "@tangible/core";
 import {
   ensureSupertonicModel,
   SUPERTONIC_MODEL_FILES,
@@ -105,7 +105,7 @@ export class SupertonicTtsAdapter implements TtsAdapter {
 
   private async getEngine(): Promise<{ engine: OfflineTts; runtime: SherpaRuntime }> {
     if (this.engine && this.runtime) return { engine: this.engine, runtime: this.runtime };
-    const configuredDir = this.options.modelDir ?? process.env.NARRABLE_SUPERTONIC_MODEL_DIR;
+    const configuredDir = this.options.modelDir ?? process.env.TANGIBLE_SUPERTONIC_MODEL_DIR;
     const modelDir = configuredDir
       ? resolve(configuredDir)
       : await ensureSupertonicModel(this.options);
@@ -137,7 +137,7 @@ async function validateModelDir(modelDir: string): Promise<void> {
   try {
     await Promise.all(SUPERTONIC_MODEL_FILES.map((file) => access(join(modelDir, file))));
   } catch {
-    throw new Error(`NARRABLE_SUPERTONIC_MODEL_DIR does not contain a complete model: ${modelDir}`);
+    throw new Error(`TANGIBLE_SUPERTONIC_MODEL_DIR does not contain a complete model: ${modelDir}`);
   }
 }
 

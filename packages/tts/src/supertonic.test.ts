@@ -7,7 +7,7 @@ import { SUPERTONIC_MODEL_FILES } from "./supertonic-model.js";
 
 describe("SupertonicTtsAdapter", () => {
   it("synthesizes deterministic sentence chunks with approximate character timing", async () => {
-    const modelDir = await mkdtemp(join(tmpdir(), "narrable-supertonic-adapter-test-"));
+    const modelDir = await mkdtemp(join(tmpdir(), "tangible-supertonic-adapter-test-"));
     await mkdir(modelDir, { recursive: true });
     await Promise.all(SUPERTONIC_MODEL_FILES.map((file) => writeFile(join(modelDir, file), file)));
     const generatedTexts: string[] = [];

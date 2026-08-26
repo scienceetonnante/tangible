@@ -1,4 +1,4 @@
-import type { LessonPosition } from "@narrable/core";
+import type { LessonPosition } from "@tangible/core";
 
 interface Chapter {
   t: number;

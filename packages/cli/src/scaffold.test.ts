@@ -6,7 +6,7 @@ import { scaffold } from "./scaffold.js";
 
 describe("scaffold", () => {
   it("creates a lesson skeleton", async () => {
-    const root = await mkdtemp(join(tmpdir(), "narrable-scaffold-"));
+    const root = await mkdtemp(join(tmpdir(), "tangible-scaffold-"));
     const dir = join(root, "my-lesson");
     try {
       await scaffold("my-lesson", { dir });

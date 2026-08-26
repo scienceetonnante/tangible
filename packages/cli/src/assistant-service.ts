@@ -1,7 +1,7 @@
 // Provider orchestration for lesson questions: Hugging Face produces a small,
 // declarative written answer plan.
 
-import { validateValue, type AnswerBeat, type AssistantContext, type AssistantRequest, type AssistantResponse, type ParamType, type ParamValue } from "@narrable/core";
+import { validateValue, type AnswerBeat, type AssistantContext, type AssistantRequest, type AssistantResponse, type ParamType, type ParamValue } from "@tangible/core";
 import { formatAssistantSystemPrompt, type AssistantPromptStyle } from "./assistant-prompt.js";
 
 export class AssistantProviderError extends Error {

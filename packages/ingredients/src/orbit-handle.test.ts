@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { orbitHandle } from "./orbit-handle.js";
-import type { OrbitState, PlainState } from "@narrable/core";
+import type { OrbitState, PlainState } from "@tangible/core";
 
 const start: OrbitState = { target: [0, 0, 0], distance: 5, azimuth: 0, elevation: 0 };
 

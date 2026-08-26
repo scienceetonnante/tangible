@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from "vitest";
-import type { LessonTracks } from "@narrable/core";
+import type { LessonTracks } from "@tangible/core";
 import { AudioClock, type MediaClockSource } from "./clock.js";
 import { Chrome } from "./chrome.js";
 

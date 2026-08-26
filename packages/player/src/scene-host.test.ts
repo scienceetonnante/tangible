@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { SceneHost, type SceneModule, type SceneContext, type SceneFrame } from "./scene-host.js";
-import type { PlainState } from "@narrable/core";
+import type { PlainState } from "@tangible/core";
 
 function fakeCtx(): SceneContext {
   return {

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect } from "vitest";
-import type { Schema, BoardItem } from "@narrable/core";
+import type { Schema, BoardItem } from "@tangible/core";
 import { StateStore } from "./store.js";
 import { Board } from "./board.js";
 

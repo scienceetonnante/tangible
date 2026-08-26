@@ -31,7 +31,7 @@ tts:
   model: eleven_multilingual_v2
 `;
 
-const SCENE = `import type { Schema } from "@narrable/core";
+const SCENE = `import type { Schema } from "@tangible/core";
 
 export const schema: Schema = {
   scene: { type: { kind: "enum", values: ["main"] }, default: "main", interpolate: "snap", ownership: "script" },

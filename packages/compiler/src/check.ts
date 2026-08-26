@@ -2,8 +2,8 @@
 // constants, and board items. No network. Produces precise, actionable diagnostics
 // (the agent's feedback loop).
 
-import type { Schema, ParamValue, Bakers } from "@narrable/core";
-import { isEasing } from "@narrable/core";
+import type { Schema, ParamValue, Bakers } from "@tangible/core";
+import { isEasing } from "@tangible/core";
 import type { ParsedScript, Options } from "./parse.js";
 import { parseValue, parseGroup, type Constants } from "./value.js";
 import { type Diagnostic, type SourceLoc, suggest } from "./diagnostics.js";

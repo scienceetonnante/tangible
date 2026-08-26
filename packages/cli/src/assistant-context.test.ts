@@ -30,7 +30,7 @@ const scene = {
 
 describe("assistant context", () => {
   it("combines authored guidance with the full script and scene contract", async () => {
-    const dir = await mkdtemp(join(tmpdir(), "narrable-assistant-"));
+    const dir = await mkdtemp(join(tmpdir(), "tangible-assistant-"));
     await mkdir(join(dir, "build/lesson"), { recursive: true });
     await writeFile(join(dir, "assistant.md"), "The red point controls the angle.\n");
     const script = "The angle is @cue(theta = 3.14) half a turn.";
@@ -47,7 +47,7 @@ describe("assistant context", () => {
   });
 
   it("rejects an unknown commandable parameter", async () => {
-    const dir = await mkdtemp(join(tmpdir(), "narrable-assistant-"));
+    const dir = await mkdtemp(join(tmpdir(), "tangible-assistant-"));
     await mkdir(join(dir, "build/lesson"), { recursive: true });
     await writeFile(join(dir, "assistant.md"), "x");
     const bad = { ...manifest, assistant: { ...manifest.assistant!, commandable: ["missing"] } };

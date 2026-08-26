@@ -2,8 +2,8 @@
 // lesson (tracks/captions/audio inlined by prepare.mjs) and expose it on window
 // for Playwright to drive.
 
-import { Player, PLAYER_CSS } from "@narrable/player";
-import type { AssistantContext, LessonTracks } from "@narrable/core";
+import { Player, PLAYER_CSS } from "@tangible/player";
+import type { AssistantContext, LessonTracks } from "@tangible/core";
 import { scene } from "../../lessons/unit-circle/scenes/scene";
 
 declare global {

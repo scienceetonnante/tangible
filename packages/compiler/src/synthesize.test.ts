@@ -2,10 +2,10 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { SegmentedTtsRequest, TtsAdapter, TtsRequest, TtsResult } from "@narrable/core";
+import type { SegmentedTtsRequest, TtsAdapter, TtsRequest, TtsResult } from "@tangible/core";
 import { synthesize, cacheKey, narrationSegmentOffsets } from "./synthesize.js";
 
-// Minimal deterministic adapter (compiler depends on core only, not @narrable/tts).
+// Minimal deterministic adapter (compiler depends on core only, not @tangible/tts).
 // Counts how many times the network path (synthesize) is actually hit.
 class CountingAdapter implements TtsAdapter {
   id = "fake";

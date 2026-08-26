@@ -45,7 +45,7 @@ export async function readSpaceCard(lessonDir: string, manifest: Manifest): Prom
 
 export async function stageRelease(lessonDir: string): Promise<StagedRelease> {
   const siteDir = join(lessonDir, "build", "site");
-  const root = await mkdtemp(join(tmpdir(), "narrable-space-"));
+  const root = await mkdtemp(join(tmpdir(), "tangible-space-"));
   const path = join(root, "release");
   await mkdir(path);
   try {

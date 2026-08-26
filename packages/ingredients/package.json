@@ -1,5 +1,5 @@
 {
-  "name": "@narrable/ingredients",
+  "name": "@tangible/ingredients",
   "version": "0.1.0",
   "description": "Reusable scene interaction helpers.",
   "type": "module",
@@ -12,6 +12,6 @@
     }
   },
   "dependencies": {
-    "@narrable/core": "workspace:*"
+    "@tangible/core": "workspace:*"
   }
 }

@@ -1,7 +1,7 @@
 {
-  "name": "@narrable/tts",
+  "name": "@tangible/tts",
   "version": "0.1.0",
-  "description": "Local and hosted TTS provider adapters for Narrable.",
+  "description": "Local and hosted TTS provider adapters for Tangible.",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -12,7 +12,7 @@
     }
   },
   "dependencies": {
-    "@narrable/core": "workspace:*",
+    "@tangible/core": "workspace:*",
     "sherpa-onnx-node": "1.13.6"
   }
 }

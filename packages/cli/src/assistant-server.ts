@@ -5,7 +5,7 @@ import { createServer, type IncomingMessage, type Server, type ServerResponse } 
 import { randomUUID } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { AssistantContext, AssistantRequest } from "@narrable/core";
+import type { AssistantContext, AssistantRequest } from "@tangible/core";
 import { AssistantProviderError, answerQuestion, validateAssistantRequest } from "./assistant-service.js";
 import { serveFromDir } from "./static-server.js";
 
@@ -159,7 +159,7 @@ function validateLimits(limits: AssistantLimits): void {
 }
 
 function clientId(req: IncomingMessage): string {
-  const raw = req.headers["x-narrable-client-id"];
+  const raw = req.headers["x-tangible-client-id"];
   const value = Array.isArray(raw) ? raw[0] : raw;
   if (value && /^[a-zA-Z0-9_-]{16,64}$/.test(value)) return `client:${value}`;
   return `address:${req.socket.remoteAddress ?? "unknown"}`;

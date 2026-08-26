@@ -4,13 +4,13 @@
 
 import { writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
-import type { LessonTracks, TtsResult } from "@narrable/core";
-import { schemaHash } from "@narrable/core";
+import type { LessonTracks, TtsResult } from "@tangible/core";
+import { schemaHash } from "@tangible/core";
 import { parseScript } from "./parse.js";
 import { resolve } from "./resolve.js";
 import { expand } from "./expand.js";
 import type { SceneInfo } from "./check.js";
-import type { Keyframe } from "@narrable/core";
+import type { Keyframe } from "@tangible/core";
 import type { Diagnostic } from "./diagnostics.js";
 import { formatDiagnostic } from "./diagnostics.js";
 import { evaluateAuthoredState } from "./authored-state.js";

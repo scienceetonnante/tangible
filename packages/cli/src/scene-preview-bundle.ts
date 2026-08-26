@@ -22,10 +22,10 @@ export async function bundleScenePreview(
   const scenePath = resolve(lessonDir, sceneFile);
   await mkdir(siteDir, { recursive: true });
 
-  const playerPath = require.resolve("@narrable/player");
-  const corePath = require.resolve("@narrable/core");
+  const playerPath = require.resolve("@tangible/player");
+  const corePath = require.resolve("@tangible/core");
   const entry = `
-import { ScenePreview, PLAYER_CSS } from "@narrable/player";
+import { ScenePreview, PLAYER_CSS } from "@tangible/player";
 import { scene } from ${JSON.stringify(scenePath)};
 const style = document.createElement("style");
 style.textContent = PLAYER_CSS;
@@ -42,7 +42,7 @@ preview.start();
     bundle: true,
     format: "iife",
     platform: "browser",
-    alias: { "@narrable/player": playerPath, "@narrable/core": corePath },
+    alias: { "@tangible/player": playerPath, "@tangible/core": corePath },
     metafile: true,
     logLevel: "silent",
   });

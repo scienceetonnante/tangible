@@ -13,7 +13,7 @@ afterEach(async () => {
 });
 
 async function fixture() {
-  const root = await mkdtemp(join(tmpdir(), "narrable-static-"));
+  const root = await mkdtemp(join(tmpdir(), "tangible-static-"));
   const site = join(root, "site");
   const outside = join(root, "outside.txt");
   await mkdir(site);

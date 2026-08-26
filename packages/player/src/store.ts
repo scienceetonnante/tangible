@@ -3,7 +3,7 @@
 // avoid churn. Also holds per-parameter interaction metadata for reconciliation.
 
 import { signal, type Signal } from "@preact/signals-core";
-import type { Schema, ParamValue, PlainState, OrbitState } from "@narrable/core";
+import type { Schema, ParamValue, PlainState, OrbitState } from "@tangible/core";
 
 export interface InteractionMeta {
   userValue?: ParamValue;

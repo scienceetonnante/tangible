@@ -14,9 +14,9 @@ import {
   type LessonTracks,
   type ParamValue,
   type PlainState,
-} from "@narrable/core";
+} from "@tangible/core";
 import { parse as parseYaml } from "yaml";
-import { lessonPositionAt, latestCue, parseVtt } from "@narrable/player";
+import { lessonPositionAt, latestCue, parseVtt } from "@tangible/player";
 import { loadScene } from "./scene-loader.js";
 import { loadManifest } from "./manifest.js";
 import { answerQuestion, buildAssistantProviderRequest } from "./assistant-service.js";

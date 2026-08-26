@@ -2,7 +2,7 @@
 // PCM WAV without alignment, so answer beats are generated separately and
 // concatenated to recover exact segment boundaries from their sample counts.
 
-import type { SegmentedTtsRequest, SegmentedTtsResult, TtsAdapter, TtsRequest, TtsResult } from "@narrable/core";
+import type { SegmentedTtsRequest, SegmentedTtsResult, TtsAdapter, TtsRequest, TtsResult } from "@tangible/core";
 
 export interface HuggingFaceVoiceOptions {
   endpointUrl?: string; // defaults to process.env.TTS_ENDPOINT_URL

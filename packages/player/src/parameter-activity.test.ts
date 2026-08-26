@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Keyframe } from "@narrable/core";
+import type { Keyframe } from "@tangible/core";
 import { ParameterActivityTracker, narrationActivityAt } from "./parameter-activity.js";
 import type { InteractionMeta } from "./store.js";
 

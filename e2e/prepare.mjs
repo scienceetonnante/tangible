@@ -53,8 +53,8 @@ export default async function prepare() {
     platform: "browser",
     logLevel: "silent",
     alias: {
-      "@narrable/player": join(root, "packages/player/dist/index.js"),
-      "@narrable/core": join(root, "packages/core/dist/index.js"),
+      "@tangible/player": join(root, "packages/player/dist/index.js"),
+      "@tangible/core": join(root, "packages/core/dist/index.js"),
     },
   });
 

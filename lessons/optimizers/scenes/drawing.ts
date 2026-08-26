@@ -1,5 +1,5 @@
-import type { OrbitState, PlainState } from "@narrable/core";
-import type { ParameterActivityMap } from "@narrable/player";
+import type { OrbitState, PlainState } from "@tangible/core";
+import type { ParameterActivityMap } from "@tangible/player";
 import { drawControls, drawStep } from "./controls.js";
 import type { OptimizerFrame } from "./frame.js";
 import { MAX_STEPS, type Trajectory } from "./model.js";

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it } from "vitest";
-import type { Handle, PlainState } from "@narrable/core";
+import type { Handle, PlainState } from "@tangible/core";
 import { ScenePreview } from "./scene-preview.js";
 import type { SceneContext, SceneModule, SceneFrame } from "./scene-host.js";
 

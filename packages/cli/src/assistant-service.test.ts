@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { AssistantContext, AssistantRequest } from "@narrable/core";
+import type { AssistantContext, AssistantRequest } from "@tangible/core";
 import { AssistantProviderError, answerQuestion, validateAnswer, validateAssistantRequest } from "./assistant-service.js";
 
 const context: AssistantContext = {

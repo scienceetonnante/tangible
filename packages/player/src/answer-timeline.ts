@@ -1,7 +1,7 @@
 // A model answer is a second, temporary value-at-time timeline. It is composed
 // over the paused lesson state and never enters the lesson reconciler.
 
-import { blend, type AnswerBeat, type ParamValue, type PlainState, type Schema, type TimedAnswerBeat } from "@narrable/core";
+import { blend, type AnswerBeat, type ParamValue, type PlainState, type Schema, type TimedAnswerBeat } from "@tangible/core";
 
 interface Segment {
   start: number;

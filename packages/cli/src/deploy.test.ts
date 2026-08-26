@@ -179,7 +179,7 @@ describe("Hugging Face Space deployment", () => {
 });
 
 async function fixture(assistant = true): Promise<string> {
-  const lessonDir = await mkdtemp(join(tmpdir(), "narrable-deploy-"));
+  const lessonDir = await mkdtemp(join(tmpdir(), "tangible-deploy-"));
   await mkdir(join(lessonDir, "space"));
   const card = assistant
     ? "---\nsdk: docker\napp_port: 7860\n---\n\n# Circle\n"

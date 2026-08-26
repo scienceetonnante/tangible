@@ -3,7 +3,7 @@ import { parseScript } from "./parse.js";
 import { check, type SceneInfo } from "./check.js";
 import { formatDiagnostic } from "./diagnostics.js";
 import { SCRIPT, SCENE } from "./fixtures.js";
-import type { BakerDefinition } from "@narrable/core";
+import type { BakerDefinition } from "@tangible/core";
 
 function diagnose(src: string) {
   return check(parseScript(src, "script.md"), SCENE).map(formatDiagnostic);

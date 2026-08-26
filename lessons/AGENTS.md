@@ -13,7 +13,7 @@ review, and deployment.
   cannot be implemented faithfully instead of silently changing its meaning.
 
 For a new lesson or a substantial lesson-production task, use the repo-local
-`create-narrable-lesson` skill in `.agents/skills/` and follow
+`create-tangible-lesson` skill in `.agents/skills/` and follow
 `docs/authoring.md`.
 
 ## Production sequence

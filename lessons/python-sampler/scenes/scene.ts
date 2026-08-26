@@ -1,5 +1,5 @@
-import type { ParamValue, Schema } from "@narrable/core";
-import type { SceneContext, SceneInstance, SceneModule } from "@narrable/player";
+import type { ParamValue, Schema } from "@tangible/core";
+import type { SceneContext, SceneInstance, SceneModule } from "@tangible/player";
 import { PythonEditor } from "./editor.js";
 import {
   COLD_OUTPUT,

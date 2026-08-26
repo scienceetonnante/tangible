@@ -7,7 +7,7 @@ import { loadSceneManifest } from "./manifest.js";
 
 describe("scene preview bundle", () => {
   it("builds from a minimal manifest and scene without narration files", async () => {
-    const lessonDir = await mkdtemp(join(tmpdir(), "narrable-scene-preview-"));
+    const lessonDir = await mkdtemp(join(tmpdir(), "tangible-scene-preview-"));
     await mkdir(join(lessonDir, "scenes"));
     await writeFile(join(lessonDir, "lesson.yaml"), "id: bare-scene\nscene: ./scenes/scene.ts\n");
     await writeFile(

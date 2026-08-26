@@ -8,7 +8,7 @@ import { join } from "node:path";
 const CLI = "packages/cli/dist/index.js";
 
 test("scene preview runs and reloads without narration files", async ({ page }) => {
-  const lessonDir = mkdtempSync(join(tmpdir(), "narrable-scene-e2e-"));
+  const lessonDir = mkdtempSync(join(tmpdir(), "tangible-scene-e2e-"));
   const scenesDir = join(lessonDir, "scenes");
   const helper = join(scenesDir, "value.ts");
   mkdirSync(scenesDir);

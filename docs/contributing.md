@@ -1,4 +1,4 @@
-# Contributing to Narrable
+# Contributing to Tangible
 
 This guide covers framework code under `packages/`, shared tooling, and browser
 integration tests. Lesson production follows [the authoring guide](./authoring.md).
@@ -29,7 +29,7 @@ e2e/         browser integration tests
 
 ## Architecture
 
-Narrable has three layers:
+Tangible has three layers:
 
 ```text
 script.md ─────────┐

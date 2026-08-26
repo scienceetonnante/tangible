@@ -8,7 +8,7 @@ importers:
 
   .:
     dependencies:
-      '@narrable/ingredients':
+      '@tangible/ingredients':
         specifier: workspace:*
         version: link:packages/ingredients
       three:
@@ -45,19 +45,19 @@ importers:
 
   packages/cli:
     dependencies:
-      '@narrable/compiler':
+      '@tangible/compiler':
         specifier: workspace:*
         version: link:../compiler
-      '@narrable/core':
+      '@tangible/core':
         specifier: workspace:*
         version: link:../core
-      '@narrable/ingredients':
+      '@tangible/ingredients':
         specifier: workspace:*
         version: link:../ingredients
-      '@narrable/player':
+      '@tangible/player':
         specifier: workspace:*
         version: link:../player
-      '@narrable/tts':
+      '@tangible/tts':
         specifier: workspace:*
         version: link:../tts
       esbuild:
@@ -72,7 +72,7 @@ importers:
 
   packages/compiler:
     dependencies:
-      '@narrable/core':
+      '@tangible/core':
         specifier: workspace:*
         version: link:../core
       yaml:
@@ -83,18 +83,18 @@ importers:
 
   packages/ingredients:
     dependencies:
-      '@narrable/core':
+      '@tangible/core':
         specifier: workspace:*
         version: link:../core
 
   packages/player:
     dependencies:
-      '@narrable/core':
-        specifier: workspace:*
-        version: link:../core
       '@preact/signals-core':
         specifier: ^1.8.0
         version: 1.14.4
+      '@tangible/core':
+        specifier: workspace:*
+        version: link:../core
       katex:
         specifier: ^0.16.11
         version: 0.16.47
@@ -105,7 +105,7 @@ importers:
 
   packages/tts:
     dependencies:
-      '@narrable/core':
+      '@tangible/core':
         specifier: workspace:*
         version: link:../core
       sherpa-onnx-node:

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from "vitest";
-import type { ParamValue } from "@narrable/core";
-import type { SceneContext } from "@narrable/player";
+import type { ParamValue } from "@tangible/core";
+import type { SceneContext } from "@tangible/player";
 import { highlightPython } from "./editor.js";
 import { COLD_PROGRAM } from "./programs.js";
 import { scene } from "./scene.js";

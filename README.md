@@ -1,12 +1,14 @@
-# Narrable
+# Tangible
 
-Narrable is a new format of interactive lessons involving an animated and interactable scene, a narrated voice-over build from a TTS model, and optionnaly an LLM that can answer questions and manipulate the scene. 
+Tangible is a format for interactive lessons with an animated, manipulable
+scene, narration generated from a text-to-speech model, and an optional language
+model that can answer questions and manipulate the scene.
 
-Narrable lessons can be deployed on 🤗·HuggingFace Space.
+Tangible lessons can be deployed on Hugging Face Spaces.
 
 ## Installation
 
-Narrable currently requires Node 22 or newer and pnpm. After cloning the
+Tangible currently requires Node 22 or newer and pnpm. After cloning the
 repository, install and build it once:
 
 ```bash

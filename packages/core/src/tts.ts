@@ -1,6 +1,6 @@
 // TTS adapter contract. The interface lives in core (a cross-module contract) so
 // the compiler can depend on core only; concrete adapters (fake, elevenlabs, align)
-// live in @narrable/tts and are injected by the CLI.
+// live in @tangible/tts and are injected by the CLI.
 
 export interface TtsRequest {
   text: string; // stripped narration, verbatim

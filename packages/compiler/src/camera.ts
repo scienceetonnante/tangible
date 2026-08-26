@@ -1,4 +1,4 @@
-import type { OrbitState } from "@narrable/core";
+import type { OrbitState } from "@tangible/core";
 
 export type CameraPatch = Partial<OrbitState>;
 

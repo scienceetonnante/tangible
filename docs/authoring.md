@@ -1,6 +1,6 @@
 # Authoring a lesson
 
-Narrable's production model starts after the author has decided what to teach.
+Tangible's production model starts after the author has decided what to teach.
 There is no required planning document. The work begins with an interactive
 scene, followed by narration and integration:
 
@@ -39,7 +39,7 @@ assets/              optional authored assets
 ```
 
 The generated `build/` and `.cache/` directories must not be edited or
-committed. Narrable currently assumes that every lesson is in English.
+committed. Tangible currently assumes that every lesson is in English.
 
 Each lesson has one scene entry module, selected by the `scene` field in
 `lesson.yaml`. Narration chapters are sections on the lesson timeline; they do
@@ -223,12 +223,12 @@ pnpm lesson preview --offline --lesson lessons/my-lesson
 Offline mode does not call a speech or answer provider. It synthesizes the
 narration locally with the quantized Supertonic 3 model and uses a local
 substitute for assistant answers. The first offline build downloads a pinned
-123 MB model archive; subsequent builds use the shared local copy. Narrable also
+123 MB model archive; subsequent builds use the shared local copy. Tangible also
 caches the generated audio inside the lesson, so cue-only edits do not run the
 model again.
 
 The local voice is fast enough for prose and cue iteration, but it does not
-provide word alignment. Narrable estimates character timing within each
+provide word alignment. Tangible estimates character timing within each
 sentence. Treat this timing as a useful draft and make the final timing pass
 against the production voice. Use `--silent` when an automated test or a
 strictly hermetic build needs the former predictable silent clock instead.
@@ -435,7 +435,7 @@ pnpm lesson preview --offline --lesson lessons/my-lesson
 The offline answer is deterministic and generic. It checks the interface and
 request path, but it does not measure the quality of `assistant.md`.
 Whenever a learner asks a question in a local `preview` or `serve` session,
-Narrable writes `build/assistant-prompt.txt`. This file shows only the system
+Tangible writes `build/assistant-prompt.txt`. This file shows only the system
 prompt and the current user message, exactly as they are sent to the model. It
 renders line breaks as normal line breaks instead of JSON escape sequences. It
 does not include model settings, earlier conversation messages, the response
@@ -607,7 +607,7 @@ Git metadata, and any generated file containing a loaded provider credential.
 It never publishes the monorepo or the lesson source.
 
 The command uses `hf upload` to replace obsolete remote files in one normal
-Space commit. The commit message records the clean Narrable source revision, so
+Space commit. The commit message records the clean Tangible source revision, so
 the Space history remains a useful deployment and rollback history. No local
 release branch or force push is needed.
 

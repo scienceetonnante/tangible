@@ -1,5 +1,5 @@
 {
-  "name": "@narrable/cli",
+  "name": "@tangible/cli",
   "version": "0.1.0",
   "description": "The `lesson` command.",
   "type": "module",
@@ -15,11 +15,11 @@
     }
   },
   "dependencies": {
-    "@narrable/core": "workspace:*",
-    "@narrable/compiler": "workspace:*",
-    "@narrable/tts": "workspace:*",
-    "@narrable/player": "workspace:*",
-    "@narrable/ingredients": "workspace:*",
+    "@tangible/core": "workspace:*",
+    "@tangible/compiler": "workspace:*",
+    "@tangible/tts": "workspace:*",
+    "@tangible/player": "workspace:*",
+    "@tangible/ingredients": "workspace:*",
     "esbuild": "^0.28.2",
     "playwright": "^1.49.1",
     "yaml": "^2.6.1"

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Create Tangible Lesson"
+  short_description: "Build and publish a Tangible lesson"
+  default_prompt: "Use $create-tangible-lesson to turn my interactive scene and narration into a reviewed Tangible lesson."

@@ -36,16 +36,16 @@ export interface SupertonicModelOptions {
   archiveSha256?: string;
 }
 
-/** Return the shared Narrable cache, respecting common platform conventions. */
-export function defaultNarrableCacheDir(): string {
-  if (process.env.NARRABLE_CACHE_DIR) return resolve(process.env.NARRABLE_CACHE_DIR);
-  if (process.platform === "darwin") return join(homedir(), "Library", "Caches", "narrable");
-  if (process.platform === "win32" && process.env.LOCALAPPDATA) return join(process.env.LOCALAPPDATA, "narrable");
-  if (process.env.XDG_CACHE_HOME) return join(process.env.XDG_CACHE_HOME, "narrable");
-  return join(homedir(), ".cache", "narrable");
+/** Return the shared Tangible cache, respecting common platform conventions. */
+export function defaultTangibleCacheDir(): string {
+  if (process.env.TANGIBLE_CACHE_DIR) return resolve(process.env.TANGIBLE_CACHE_DIR);
+  if (process.platform === "darwin") return join(homedir(), "Library", "Caches", "tangible");
+  if (process.platform === "win32" && process.env.LOCALAPPDATA) return join(process.env.LOCALAPPDATA, "tangible");
+  if (process.env.XDG_CACHE_HOME) return join(process.env.XDG_CACHE_HOME, "tangible");
+  return join(homedir(), ".cache", "tangible");
 }
 
-export function supertonicModelDir(cacheDir = defaultNarrableCacheDir()): string {
+export function supertonicModelDir(cacheDir = defaultTangibleCacheDir()): string {
   return join(cacheDir, "tts", SUPERTONIC_MODEL_NAME);
 }
 
@@ -91,7 +91,7 @@ export async function ensureSupertonicModel(options: SupertonicModelOptions = {}
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(
       `could not install the local Supertonic model: ${message}. ` +
-      "Connect once to download it, or set NARRABLE_SUPERTONIC_MODEL_DIR to an extracted model directory.",
+      "Connect once to download it, or set TANGIBLE_SUPERTONIC_MODEL_DIR to an extracted model directory.",
     );
   } finally {
     await rm(tempDir, { recursive: true, force: true });

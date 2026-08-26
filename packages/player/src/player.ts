@@ -2,7 +2,7 @@
 // host, reconciler, interaction, board, captions, pause gates, and chrome. One
 // Player for one lesson page.
 
-import { buildIndex, type AssistantContext, type AssistantRequest, type AssistantResponse, type LessonTracks, type Schema, type PlainState, type TrackIndex } from "@narrable/core";
+import { buildIndex, type AssistantContext, type AssistantRequest, type AssistantResponse, type LessonTracks, type Schema, type PlainState, type TrackIndex } from "@tangible/core";
 import { AudioClock } from "./clock.js";
 import { StateStore } from "./store.js";
 import { TimelineDriver } from "./timeline.js";
@@ -264,7 +264,7 @@ export class Player {
     try {
       const response = await this.assistantFetch!(this.assistantEndpoint, {
         method: "POST",
-        headers: { "content-type": "application/json", "x-narrable-client-id": this.assistantClientId! },
+        headers: { "content-type": "application/json", "x-tangible-client-id": this.assistantClientId! },
         body: JSON.stringify(body),
         signal: this.answerAbort.signal,
       });
@@ -348,7 +348,7 @@ function mimeForAudio(src: string): string {
   return "audio/wav";
 }
 
-const CLIENT_ID_KEY = "narrable.assistantClientId";
+const CLIENT_ID_KEY = "tangible.assistantClientId";
 
 function persistentClientId(): string {
   try {

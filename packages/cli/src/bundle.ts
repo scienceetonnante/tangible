@@ -10,7 +10,7 @@ import { join } from "node:path";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Manifest } from "./manifest.js";
-import type { LessonTracks } from "@narrable/core";
+import type { LessonTracks } from "@tangible/core";
 
 const require = createRequire(import.meta.url);
 
@@ -18,12 +18,12 @@ export async function bundleSite(lessonDir: string, manifest: Manifest, scenePat
   const outDir = join(lessonDir, "build", "site");
   await mkdir(outDir, { recursive: true });
 
-  const playerPath = require.resolve("@narrable/player");
-  const corePath = require.resolve("@narrable/core");
+  const playerPath = require.resolve("@tangible/player");
+  const corePath = require.resolve("@tangible/core");
   const katexCss = createRequire(playerPath).resolve("katex/dist/katex.min.css");
 
   const entry = `
-import { Player, PLAYER_CSS } from "@narrable/player";
+import { Player, PLAYER_CSS } from "@tangible/player";
 import { scene } from ${JSON.stringify(scenePath)};
 const HAS_ASSISTANT = ${JSON.stringify(Boolean(manifest.assistant))};
 const mimeForAudio = (s) => s.endsWith(".m4a") ? "audio/mp4" : s.endsWith(".mp3") ? "audio/mpeg" : s.endsWith(".webm") ? "audio/webm" : "audio/wav";
@@ -54,7 +54,7 @@ main();
     bundle: true,
     format: "iife",
     platform: "browser",
-    alias: { "@narrable/player": playerPath, "@narrable/core": corePath },
+    alias: { "@tangible/player": playerPath, "@tangible/core": corePath },
     logLevel: "silent",
   });
 

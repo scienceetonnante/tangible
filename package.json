@@ -1,5 +1,5 @@
 {
-  "name": "narrable",
+  "name": "tangible",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -30,7 +30,7 @@
     "vitest": "^3.2.7"
   },
   "dependencies": {
-    "@narrable/ingredients": "workspace:*",
+    "@tangible/ingredients": "workspace:*",
     "three": "^0.185.1"
   }
 }

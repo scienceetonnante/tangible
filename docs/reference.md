@@ -1,7 +1,7 @@
 # Reference
 
 This document collects the command-line, lesson-format, and narration-directive
-reference for Narrable. Start with [the authoring guide](./authoring.md) if you
+reference for Tangible. Start with [the authoring guide](./authoring.md) if you
 are creating your first lesson.
 
 ## Command line
@@ -146,7 +146,7 @@ scenes/
 assets/                 optional authored assets
 ```
 
-`build/` and `.cache/` are generated and gitignored. Narrable currently assumes
+`build/` and `.cache/` are generated and gitignored. Tangible currently assumes
 that every lesson is in English. A lesson has one script, one voice, one set of
 captions, one assistant guide, and one scene entry module.
 
@@ -189,14 +189,14 @@ with the fixed local Supertonic voice, independently of the manifest voice.
 `.env` files from both the invocation directory and the lesson directory.
 
 The local model is stored in the operating system's user cache and shared by
-all lessons. Set `NARRABLE_CACHE_DIR` to choose another Narrable cache root, or
-set `NARRABLE_SUPERTONIC_MODEL_DIR` to an already extracted model directory for
-an air-gapped installation. Narrable verifies the archive checksum before
+all lessons. Set `TANGIBLE_CACHE_DIR` to choose another Tangible cache root, or
+set `TANGIBLE_SUPERTONIC_MODEL_DIR` to an already extracted model directory for
+an air-gapped installation. Tangible verifies the archive checksum before
 installing it and keeps the model's license file. The Supertonic model uses the
 [OpenRAIL-M license](https://huggingface.co/Supertone/supertonic-3/blob/main/LICENSE).
 
 `player.autoplay` asks the browser to start the narrated lesson when it loads.
-Browsers may reject audible autoplay; when that happens, Narrable shows a
+Browsers may reject audible autoplay; when that happens, Tangible shows a
 `Start Lesson` overlay whose click supplies the required learner interaction.
 
 `deployment.space` records the stable Hugging Face Space identifier in

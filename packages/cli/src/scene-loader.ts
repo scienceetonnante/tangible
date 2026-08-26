@@ -7,7 +7,7 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
-import type { SceneInfo } from "@narrable/compiler";
+import type { SceneInfo } from "@tangible/compiler";
 
 export async function loadScene(scenePath: string, options: { requireRuntime?: boolean } = {}): Promise<SceneInfo> {
   const dir = await mkdtemp(join(tmpdir(), "xv-scene-"));
@@ -21,7 +21,7 @@ export async function loadScene(scenePath: string, options: { requireRuntime?: b
       platform: "node",
       // Scene runtime dependencies must be bundled because the temporary module
       // lives outside the workspace and cannot resolve its node_modules.
-      external: ["@narrable/core", "@narrable/player"],
+      external: ["@tangible/core", "@tangible/player"],
       logLevel: "silent",
     });
     const mod = (await import(pathToFileURL(outfile).href)) as {

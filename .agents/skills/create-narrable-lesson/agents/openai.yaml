@@ -1,4 +1,0 @@
-interface:
-  display_name: "Create Narrable Lesson"
-  short_description: "Build and publish a Narrable lesson"
-  default_prompt: "Use $create-narrable-lesson to turn my interactive scene and narration into a reviewed Narrable lesson."

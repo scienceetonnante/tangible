@@ -4,7 +4,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { AssistantContext, AssistantRequest, AssistantResponse } from "@narrable/core";
+import type { AssistantContext, AssistantRequest, AssistantResponse } from "@tangible/core";
 import { AssistantProviderError } from "./assistant-service.js";
 import { createAssistantApi, type AssistantApiHandler, type AssistantLimits } from "./assistant-server.js";
 
@@ -39,7 +39,7 @@ const DEFAULT_LIMITS: AssistantLimits = { hourly: 120, perClient: 8, concurrent:
 const quiet = () => {};
 
 async function siteDir(): Promise<string> {
-  const dir = await mkdtemp(join(tmpdir(), "narrable-site-"));
+  const dir = await mkdtemp(join(tmpdir(), "tangible-site-"));
   await writeFile(join(dir, "index.html"), "<h1>Lesson</h1>");
   await writeFile(join(dir, "assistant.json"), JSON.stringify(CONTEXT));
   return dir;
@@ -56,7 +56,7 @@ async function call(
     method: options.method ?? "POST",
     headers: {
       "content-type": options.contentType ?? "application/json",
-      ...(options.client ? { "x-narrable-client-id": options.client } : {}),
+      ...(options.client ? { "x-tangible-client-id": options.client } : {}),
     },
     socket: { remoteAddress: options.address ?? "test" },
   });

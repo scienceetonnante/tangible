@@ -1,5 +1,5 @@
-import type { PlainState } from "@narrable/core";
-import type { SceneContext } from "@narrable/player";
+import type { PlainState } from "@tangible/core";
+import type { SceneContext } from "@tangible/player";
 import { PythonRunner } from "./python-runner.js";
 
 export class PythonEditor {

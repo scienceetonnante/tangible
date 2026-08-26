@@ -1,4 +1,4 @@
-# Narrable roadmap
+# Tangible roadmap
 
 This file contains future work only. Current capabilities belong in
 [README.md](./README.md), and durable constraints belong in the architecture
