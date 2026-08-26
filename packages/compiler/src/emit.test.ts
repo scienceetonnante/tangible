@@ -1,5 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { compile, toVtt } from "./emit.js";
+import { mkdtemp, readFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { compile, emit, toVtt } from "./emit.js";
 import { SCRIPT, SCENE } from "./fixtures.js";
 import { parseScript } from "./parse.js";
 import type { SceneInfo } from "./check.js";
@@ -66,6 +69,25 @@ describe("compile — determinism", () => {
 
     expect(JSON.stringify(a.tracks)).toBe(JSON.stringify(b.tracks));
     expect(a.tracks.tracks.x!.filter((keyframe) => keyframe.ease).map((keyframe) => keyframe.v)).toEqual([1, 2, 3]);
+  });
+});
+
+describe("emit — audio artifacts", () => {
+  it("writes each encoded fallback and rejects a missing artifact", async () => {
+    const timing = fakeTiming(parseScript(SCRIPT).narration);
+    const compiled = compile(SCRIPT, timing, SCENE, {
+      ...OPTS,
+      audioSrc: ["audio.webm", "audio.m4a"],
+    });
+    const dir = await mkdtemp(join(tmpdir(), "tangible-emit-"));
+    await emit(dir, compiled, {
+      "audio.webm": new Uint8Array([1, 2]),
+      "audio.m4a": new Uint8Array([3, 4]),
+    });
+    expect([...await readFile(join(dir, "audio.webm"))]).toEqual([1, 2]);
+    expect([...await readFile(join(dir, "audio.m4a"))]).toEqual([3, 4]);
+
+    await expect(emit(dir, compiled, { "audio.webm": new Uint8Array([1]) })).rejects.toThrow("missing audio artifact: audio.m4a");
   });
 });
 

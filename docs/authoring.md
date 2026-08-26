@@ -232,6 +232,14 @@ substitute for assistant answers. The first offline build downloads a pinned
 caches the generated audio inside the lesson, so cue-only edits do not run the
 model again.
 
+Install ffmpeg before an offline or provider-backed narration build. Tangible
+automatically converts the TTS provider's WAV or MP3 result into WebM/Opus at
+64 kbps and M4A/AAC-LC at 96 kbps. A browser checks both formats and downloads
+only one supported file. This keeps a five-minute narration near 2.4 MB with
+Opus or 3.6 MB with AAC instead of shipping the source WAV. The conversion does
+not change the compiler's timing. `--silent` keeps its deterministic WAV and
+does not require ffmpeg.
+
 The local voice is fast enough for prose and cue iteration, but it does not
 provide word alignment. Tangible estimates character timing within each
 sentence. Treat this timing as a useful draft and make the final timing pass

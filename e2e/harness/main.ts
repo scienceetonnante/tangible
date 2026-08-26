@@ -2,13 +2,13 @@
 // lesson (tracks/captions/audio inlined by prepare.mjs) and expose it on window
 // for Playwright to drive.
 
-import { Player, PLAYER_CSS } from "@tangible/player";
+import { Player, PLAYER_CSS, preferredAudioSource } from "@tangible/player";
 import type { AssistantContext, LessonTracks } from "@tangible/core";
 import { scene } from "../../lessons/unit-circle/scenes/scene";
 
 declare global {
   interface Window {
-    __XV_DATA: { tracks: LessonTracks; vtt: string; audio: string; assistant: AssistantContext };
+    __XV_DATA: { tracks: LessonTracks; vtt: string; audio: string[]; assistant: AssistantContext };
     __player: Player;
   }
 }
@@ -20,16 +20,17 @@ document.head.append(style);
 
 const mount = document.getElementById("app")!;
 const arrival = new URLSearchParams(location.search).has("arrival");
+const audio = preferredAudioSource(data.audio);
 const player = new Player({
   mount,
   scene,
   tracks: data.tracks,
   captionsVtt: data.vtt,
-  audioSrc: arrival ? [] : [data.audio],
+  audioSrc: arrival ? [] : [audio],
   audioLoader: arrival
     ? async () => {
         await new Promise((resolve) => setTimeout(resolve, 400));
-        return [data.audio];
+        return [audio];
       }
     : undefined,
   introduction: arrival

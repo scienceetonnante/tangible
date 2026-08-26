@@ -81,3 +81,24 @@ test("catch-up: a paused edit freezes, then holds and glides after resume", asyn
   });
   expect(Math.abs(back.theta - scriptedTheta(back.t))).toBeLessThan(Math.abs(0.123 - scriptedTheta(back.t)));
 });
+
+test("captions remain readable and playback can restart after ending", async ({ page }) => {
+  await ready(page);
+  await page.locator(".xv-captions-toggle").click();
+  await page.evaluate(() => {
+    const player = (window as any).__player;
+    player.clock.seek(0.2);
+    player.driver.tick();
+  });
+  await expect(page.locator(".xv-captions")).not.toBeEmpty();
+
+  await page.evaluate(() => {
+    const player = (window as any).__player;
+    player.clock.seek(player.clock.duration - 0.15);
+    player.clock.play();
+  });
+  await page.waitForFunction(() => (window as any).__player.clock.playing === false);
+  await page.locator(".xv-play").click();
+  await page.waitForFunction(() => (window as any).__player.clock.playing === true);
+  expect(await page.evaluate(() => (window as any).__player.clock.t as number)).toBeLessThan(1);
+});

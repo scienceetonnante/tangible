@@ -6,7 +6,7 @@ import { createReadStream } from "node:fs";
 import { join, extname } from "node:path";
 
 const dir = join(process.cwd(), "e2e/dist");
-const types = { ".html": "text/html", ".js": "text/javascript", ".json": "application/json", ".vtt": "text/vtt", ".wav": "audio/wav" };
+const types = { ".html": "text/html", ".js": "text/javascript", ".json": "application/json", ".vtt": "text/vtt", ".wav": "audio/wav", ".webm": "audio/webm", ".m4a": "audio/mp4" };
 
 createServer(async (req, res) => {
   if (req.url === "/api/answer" && req.method === "POST") {

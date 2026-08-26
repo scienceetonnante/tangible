@@ -15,6 +15,8 @@ const TYPES: Record<string, string> = {
   ".wav": "audio/wav",
   ".mp3": "audio/mpeg",
   ".webm": "audio/webm",
+  ".m4a": "audio/mp4",
+  ".ogg": "audio/ogg",
 };
 
 /** Serve `req` from `dir`. `transformHtml` (optional) rewrites index.html (e.g. to

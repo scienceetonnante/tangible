@@ -5,7 +5,8 @@ integration tests. Lesson production follows [the authoring guide](./authoring.m
 
 ## Setup
 
-Prerequisites are Node 22 or newer and pnpm.
+Prerequisites are Node 22 or newer and pnpm. Install ffmpeg for offline or
+provider-backed narration builds. Hermetic `--silent` builds do not require it.
 
 ```bash
 pnpm install
@@ -77,7 +78,9 @@ Violations of these rules are bugs:
 1. **Value at time.** Every authored parameter can be evaluated directly at
    lesson time `t`. Playback never needs to replay history from zero.
 2. **Text-owned source.** Authored state is stored in readable, diffable text.
-   Generated artifacts are JSON, VTT, JavaScript, HTML, and audio.
+   Generated artifacts are JSON, VTT, JavaScript, HTML, and audio. Real TTS
+   audio is delivered as WebM/Opus with an M4A/AAC-LC fallback; the browser
+   downloads only one supported encoding.
 3. **Deterministic builds.** The same authored inputs and cached provider results
    produce byte-identical outputs.
 4. **Compiler-led feedback.** `lesson check` finds authoring errors without

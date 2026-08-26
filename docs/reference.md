@@ -192,6 +192,12 @@ with the fixed local Supertonic voice, independently of the manifest voice.
 `--silent` selects deterministic silent audio instead. The CLI loads gitignored
 `.env` files from both the invocation directory and the lesson directory.
 
+Offline and provider-backed builds require ffmpeg. Tangible converts provider
+WAV or MP3 output into WebM/Opus and M4A/AAC-LC files, preserving the original
+narration timing. The player asks the browser which format it supports and
+downloads only that file. Hermetic `--silent` builds retain their small WAV and
+do not require ffmpeg.
+
 The local model is stored in the operating system's user cache and shared by
 all lessons. Set `TANGIBLE_CACHE_DIR` to choose another Tangible cache root, or
 set `TANGIBLE_SUPERTONIC_MODEL_DIR` to an already extracted model directory for

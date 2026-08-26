@@ -19,6 +19,7 @@ async function fixture() {
   await mkdir(site);
   await writeFile(join(site, "index.html"), "<h1>safe</h1>");
   await writeFile(join(site, "audio.wav"), "0123456789");
+  await writeFile(join(site, "audio.m4a"), "m4a");
   await writeFile(outside, "secret");
   return { site, outside };
 }
@@ -54,6 +55,9 @@ describe("static server containment", () => {
     const head = await fetch(`${base}/audio.wav`, { method: "HEAD" });
     expect(head.status).toBe(200);
     expect(head.headers.get("content-length")).toBe("10");
+
+    const m4a = await fetch(`${base}/audio.m4a`, { method: "HEAD" });
+    expect(m4a.headers.get("content-type")).toBe("audio/mp4");
     expect(await head.text()).toBe("");
 
     const range = await fetch(`${base}/audio.wav`, { headers: { range: "bytes=-4" } });

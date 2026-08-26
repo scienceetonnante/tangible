@@ -19,7 +19,7 @@ import { scaffold } from "./scaffold.js";
 import { bundleSite } from "./bundle.js";
 import { renderFrame } from "./frame.js";
 import { preview } from "./preview.js";
-import { transcodeToM4a } from "./transcode.js";
+import { browserAudioArtifacts } from "./transcode.js";
 import { buildAssistantContext, emitAssistantContext } from "./assistant-context.js";
 import { createAssistantApi, serveLesson } from "./assistant-server.js";
 import { bundleScenePreview } from "./scene-preview-bundle.js";
@@ -167,25 +167,22 @@ async function buildLesson(lessonDir: string, manifest: Manifest, scene: SceneIn
     segmentOffsets: narrationSegmentOffsets(parsed.narration, parsed.directives.map((directive) => directive.anchorOffset)),
   });
 
-  // Real-voice MP3 seeks imprecisely in browsers (voice drifts from the animation
-  // after scrubbing); transcode to sample-indexed AAC/MP4. Timing is unchanged.
-  let audio = result.audio;
-  let format = result.format;
-  if (format === "mp3") {
-    audio = transcodeToM4a(audio);
-    format = "m4a";
-  }
-
-  const audioHash = createHash("sha256").update(audio).digest("hex").slice(0, 16);
+  // Keep --silent hermetic. Every actual voice is converted to compact indexed
+  // formats so provider WAV and MP3 never become browser delivery artifacts.
+  const audioArtifacts = browserAudioArtifacts(adapter.id, result);
+  const audioHashState = createHash("sha256");
+  for (const artifact of audioArtifacts) audioHashState.update(artifact.format).update(artifact.audio);
+  const audioHash = audioHashState.digest("hex").slice(0, 16);
+  const audioFiles = Object.fromEntries(audioArtifacts.map((artifact) => [`audio.${artifact.format}`, artifact.audio]));
   const compiled = compile(script, result, scene, {
     lessonId: manifest.id,
     file,
     defaults: manifest.defaults,
-    audioSrc: [`audio.${format}`],
+    audioSrc: Object.keys(audioFiles),
     audioHash,
   });
   for (const w of compiled.warnings) console.error(formatDiagnostic(w));
-  await emit(join(lessonDir, "build", "lesson"), compiled, audio);
+  await emit(join(lessonDir, "build", "lesson"), compiled, audioFiles);
   await emitAssistantContext(lessonDir, manifest, scene, script);
 }
 

@@ -2,7 +2,7 @@
 // captions, and write {tracks.json,captions.vtt,audio.*}. Output is a
 // pure function of (script, timing, scene, options) — verified by a repeatability test.
 
-import { writeFile, mkdir } from "node:fs/promises";
+import { writeFile, mkdir, readdir, unlink } from "node:fs/promises";
 import { join } from "node:path";
 import type { LessonTracks, TtsResult } from "@tangible/core";
 import { schemaHash } from "@tangible/core";
@@ -124,9 +124,16 @@ function stamp(t: number): string {
 }
 
 /** Write the compiled artifacts to a build directory. */
-export async function emit(outDir: string, compiled: Compiled, audio: Uint8Array): Promise<void> {
+export async function emit(outDir: string, compiled: Compiled, audioFiles: Record<string, Uint8Array>): Promise<void> {
   await mkdir(outDir, { recursive: true });
+  for (const name of await readdir(outDir)) {
+    if (/^audio\.(wav|mp3|webm|m4a|ogg)$/.test(name)) await unlink(join(outDir, name));
+  }
   await writeFile(join(outDir, "tracks.json"), JSON.stringify(compiled.tracks, null, 2));
   await writeFile(join(outDir, "captions.vtt"), compiled.vtt);
-  for (const src of compiled.tracks.audio.src) await writeFile(join(outDir, src), audio);
+  for (const src of compiled.tracks.audio.src) {
+    const audio = audioFiles[src];
+    if (!audio) throw new Error(`missing audio artifact: ${src}`);
+    await writeFile(join(outDir, src), audio);
+  }
 }

@@ -1,5 +1,5 @@
 // AudioClock — the single source of truth for time. Wraps an <audio> element
-// (webm + mp3 fallback); the driver polls `t` each frame. There is no internal
+// (WebM/Opus + M4A/AAC-LC fallback); the driver polls `t` each frame. There is no internal
 // clock, so nothing can drift.
 
 // Minimal structural subset of HTMLAudioElement we rely on (also lets tests inject a stub).

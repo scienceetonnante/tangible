@@ -4,7 +4,7 @@
 
 import { build } from "esbuild";
 import { createRequire } from "node:module";
-import { mkdir, writeFile, copyFile, readFile } from "node:fs/promises";
+import { mkdir, writeFile, copyFile, readFile, readdir, unlink } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { dirname } from "node:path";
@@ -17,6 +17,9 @@ const require = createRequire(import.meta.url);
 export async function bundleSite(lessonDir: string, manifest: Manifest, scenePath: string): Promise<string> {
   const outDir = join(lessonDir, "build", "site");
   await mkdir(outDir, { recursive: true });
+  for (const name of await readdir(outDir)) {
+    if (/^audio\.(wav|mp3|webm|m4a|ogg)$/.test(name)) await unlink(join(outDir, name));
+  }
 
   const playerPath = require.resolve("@tangible/player");
   const corePath = require.resolve("@tangible/core");
