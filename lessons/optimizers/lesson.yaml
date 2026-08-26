@@ -8,7 +8,7 @@ defaults:
   transition: 1.0
 deployment:
   provider: huggingface
-  space: dlouapre/optimizers
+  space: dlouapre/tangible-optimizers
 tts:
   provider: hf-endpoint
   voice: david_v1
