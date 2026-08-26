@@ -15,6 +15,7 @@ describe("lesson manifest", () => {
     await expect(manifest(`
 id: circle
 title: Circle
+promise: See how a point defines an angle.
 scene: ./scenes/scene.ts
 defaults:
   anticipation: -0.2
@@ -44,6 +45,7 @@ deployment:
     await expect(manifest(`
 id: circle
 title: Circle
+promise: See how a point defines an angle.
 scene: ./scenes/scene.ts
 voice: elevenlabs:voice-id
 defaults:
@@ -57,6 +59,7 @@ defaults:
     await expect(manifest(`
 id: circle
 title: Circle
+promise: See how a point defines an angle.
 scene: ./scenes/scene.ts
 defaults:
   anticipation: -0.2
@@ -73,6 +76,7 @@ tts:
     await expect(manifest(`
 id: circle
 title: Circle
+promise: See how a point defines an angle.
 scene: ./scenes/scene.ts
 defaults:
   anticipation: -0.2

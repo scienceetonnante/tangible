@@ -45,7 +45,8 @@ scenes/scene.ts ───┘                         │
 The authoring format and scene schema are compiler inputs. The compiler validates
 them, resolves narration-relative cues, and emits static tracks. The browser
 player consumes the built artifacts and scene bundle. It does not parse scripts
-or call speech providers.
+or call speech providers. The player also owns the standard loading and start
+experience; lessons contribute only their title and one-sentence promise.
 
 During scene development, the CLI bundles `scenes/scene.ts` directly into a
 browser preview. This path initializes state from schema defaults and uses the

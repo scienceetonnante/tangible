@@ -28,7 +28,7 @@ pnpm lesson new my-lesson --lesson lessons/my-lesson
 The authored files are:
 
 ```text
-lesson.yaml          build and provider configuration
+lesson.yaml          title, visitor promise, build and provider configuration
 script.md            spoken narration, scene hints, and formal cues
 assistant.md         optional lesson-assistant guidance
 assistant.eval.yaml  optional tracked assistant question cases
@@ -40,6 +40,11 @@ assets/              optional authored assets
 
 The generated `build/` and `.cache/` directories must not be edited or
 committed. Tangible currently assumes that every lesson is in English.
+
+Write a concise, one-sentence `promise` in `lesson.yaml`. It appears below the
+lesson title before playback and should tell a visitor what they will see or
+understand. Tangible adds the duration, loading status, Start button, interaction
+guidance, and phone-orientation notice.
 
 Each lesson has one scene entry module, selected by the `scene` field in
 `lesson.yaml`. Narration chapters are sections on the lesson timeline; they do

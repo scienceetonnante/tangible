@@ -199,6 +199,7 @@ function manifest(assistant = true): Manifest {
   const result: Manifest = {
     id: "circle",
     title: "Circle",
+    promise: "See how a point defines an angle.",
     scene: "./scenes/scene.ts",
     defaults: { anticipation: -0.2, ease: "linear", transition: 1 },
     tts: { provider: "hf-endpoint", voice: "test" },

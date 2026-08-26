@@ -17,8 +17,28 @@ export const PLAYER_CSS = `
 .xv-board-item.xv-shown { opacity: 1; }
 .xv-board-item.xv-dimmed { opacity: 0.4; }
 .xv-hl { background: #fff3a0; border-radius: 3px; }
-.xv-start-overlay { position: absolute; inset: 0; z-index: 10; border: 0; background: rgba(0,0,0,0.42); color: #fff; font: 600 24px/1.2 sans-serif; cursor: pointer; }
-.xv-start-overlay:hover { background: rgba(0,0,0,0.5); }
+.xv-start-screen { position: absolute; inset: 0; z-index: 10; display: grid; place-items: center; padding: clamp(20px, 5vw, 64px); box-sizing: border-box; background: linear-gradient(135deg, #172033 0%, #263b52 100%); color: #fff; font-family: system-ui, sans-serif; user-select: text; }
+.xv-start-content { width: min(680px, 100%); }
+.xv-start-kind { margin-bottom: 16px; color: #b9d8ed; font-size: clamp(12px, 1.6vw, 15px); font-weight: 650; letter-spacing: 0.08em; text-transform: uppercase; }
+.xv-start-title { max-width: 16ch; margin: 0; font-size: clamp(30px, 5vw, 58px); line-height: 1.05; letter-spacing: -0.025em; }
+.xv-start-promise { max-width: 40ch; margin: 20px 0 0; font-size: clamp(18px, 2.4vw, 26px); line-height: 1.35; }
+.xv-start-meta { margin: 16px 0 0; color: #cbd8e4; font-size: clamp(14px, 1.8vw, 17px); }
+.xv-start-interactive { margin: 10px 0 0; color: #e5edf3; font-size: clamp(14px, 1.8vw, 17px); }
+.xv-orientation-notice { display: none; margin: 12px 0 0; padding-left: 22px; color: #ffe6a6; font-size: 14px; line-height: 1.4; }
+.xv-orientation-notice::before { content: "↻"; display: inline-block; width: 22px; margin-left: -22px; }
+.xv-start-controls { display: flex; align-items: center; gap: 20px; margin-top: clamp(24px, 4vw, 40px); }
+.xv-start-status { display: flex; flex: 1; align-items: center; gap: 10px; min-width: 0; color: #cbd8e4; font-size: 14px; }
+.xv-start-screen[data-state="failed"] .xv-start-status { color: #ffd0c8; }
+.xv-loading-spinner { width: 16px; height: 16px; flex: 0 0 auto; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: xv-spin 800ms linear infinite; }
+.xv-loading-spinner[hidden] { display: none; }
+.xv-start-button { min-width: 150px; min-height: 48px; padding: 12px 22px; border: 0; border-radius: 999px; background: #fff; color: #172033; font: 700 16px/1.2 system-ui, sans-serif; cursor: pointer; }
+.xv-start-button:hover:not(:disabled) { background: #dff2ff; transform: translateY(-1px); }
+.xv-start-button:focus-visible { outline: 3px solid #78c7ff; outline-offset: 3px; }
+.xv-start-button:disabled { cursor: wait; opacity: 0.55; }
+@keyframes xv-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .xv-loading-spinner { animation-duration: 1600ms; } .xv-start-button { transform: none !important; } }
+@media (max-width: 700px) { .xv-orientation-notice { display: block; } }
+@media (max-width: 520px) { .xv-start-screen { align-items: start; overflow: auto; padding: 22px 20px; } .xv-start-kind { margin-bottom: 10px; } .xv-start-promise { margin-top: 12px; } .xv-start-controls { align-items: stretch; flex-direction: column-reverse; gap: 12px; margin-top: 20px; } .xv-start-button { width: 100%; } }
 .xv-chrome { position: absolute; left: 0; right: 0; bottom: 0; height: 44px; display: flex; align-items: center; gap: 6px; padding: 0 8px; background: rgba(255,255,255,0.85); box-sizing: border-box; }
 .xv-chrome button { border: none; background: none; cursor: pointer; color: #222; font-size: 18px; height: 34px; min-width: 34px; padding: 0 6px; display: inline-flex; align-items: center; justify-content: center; line-height: 1; border-radius: 4px; }
 .xv-chrome button:hover { background: rgba(0,0,0,0.06); }

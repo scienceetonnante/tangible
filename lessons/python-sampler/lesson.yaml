@@ -1,5 +1,6 @@
 id: python-sampler
 title: Sampling temperature in Python
+promise: See how temperature reshapes token probabilities and changes which tokens Python samples.
 scene: ./scenes/scene.ts
 defaults:
   anticipation: -0.1

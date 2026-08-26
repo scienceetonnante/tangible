@@ -18,6 +18,8 @@ import { AnswerTimeline, timeAnswerBeats } from "./answer-timeline.js";
 import { AssistantPanel } from "./assistant-panel.js";
 import { lessonPositionAt } from "./lesson-position.js";
 import { ParameterActivityTracker } from "./parameter-activity.js";
+import { mimeForAudio } from "./audio-source.js";
+import { StartScreen, type LessonIntroduction } from "./start-screen.js";
 
 declare global {
   interface Window {
@@ -31,9 +33,10 @@ export interface PlayerOptions {
   tracks: LessonTracks;
   captionsVtt?: string;
   audioSrc?: string[];
+  audioLoader?: () => Promise<string[]>;
   baseUrl?: string;
   chrome?: boolean; // default true
-  autoplay?: boolean; // default false; rejected autoplay gets a Start Lesson overlay
+  introduction?: LessonIntroduction;
   assistant?: {
     context: AssistantContext;
     endpoint?: string;
@@ -76,14 +79,16 @@ export class Player {
   private assistantEndpoint = "/api/answer";
   private assistantClientId?: string;
   private tracks: LessonTracks;
-  private autoplay: boolean;
-  private startOverlay?: HTMLButtonElement;
+  private audioLoader?: () => Promise<string[]>;
+  private baseUrl: string;
+  private startScreen?: StartScreen;
   private activityTracker: ParameterActivityTracker;
   private assistantActivity: Record<string, number> = {};
 
   constructor(opts: PlayerOptions) {
     this.tracks = opts.tracks;
-    this.autoplay = opts.autoplay ?? false;
+    this.audioLoader = opts.audioLoader;
+    this.baseUrl = opts.baseUrl ?? "";
     const schema: Schema = { ...opts.scene.schema, ...boardSchema(opts.tracks.tracks) };
     this.index = buildIndex(opts.tracks.tracks, schema);
     this.store = new StateStore(schema);
@@ -99,14 +104,7 @@ export class Player {
 
     this.audio = document.createElement("audio");
     this.audio.preload = "auto";
-    for (const src of opts.audioSrc ?? []) {
-      const s = document.createElement("source");
-      s.src = (opts.baseUrl ?? "") + src;
-      // A blob: URL carries its own MIME (set at creation); a guessed type would
-      // override it. Otherwise set the type — Safari won't select a typeless source.
-      if (!s.src.startsWith("blob:")) s.type = mimeForAudio(src);
-      this.audio.append(s);
-    }
+    this.setAudioSources(opts.audioSrc ?? []);
     this.clock = new AudioClock(this.audio);
 
     this.board = new Board(this.displayStore, opts.tracks.boardItems);
@@ -149,7 +147,7 @@ export class Player {
     if (opts.chrome !== false && !dev.nochrome) {
       this.chrome = new Chrome(this.clock, opts.tracks, { onCaptionsToggle: (on) => this.captions.setVisible(on) });
       this.container.append(this.chrome.el);
-      this.unbindKeys = this.chrome.bindKeys();
+      if (!opts.introduction) this.unbindKeys = this.chrome.bindKeys();
     }
     if (opts.assistant) {
       this.assistantFetch = opts.assistant.fetchImpl ?? ((input, init) => fetch(input, init));
@@ -176,6 +174,14 @@ export class Player {
       this.clock.pause();
     }
 
+    if (opts.introduction) {
+      this.startScreen = new StartScreen(opts.introduction, opts.tracks.duration, {
+        onStart: () => void this.beginLesson(),
+        onRetry: () => void this.loadAudio(),
+      });
+      this.container.append(this.startScreen.el);
+    }
+
     // Keep the canvas backing store matched to its display size (handles fullscreen).
     if (typeof ResizeObserver !== "undefined") {
       this.resizeObserver = new ResizeObserver(() => {
@@ -189,7 +195,9 @@ export class Player {
   start(): void {
     this.driver.tick(); // initial paint
     this.driver.start();
-    if (this.autoplay) void this.tryAutoplay();
+    if (!this.startScreen) return;
+    if (this.audioLoader) void this.loadAudio();
+    else this.startScreen.setReady();
   }
 
   dispose(): void {
@@ -200,23 +208,44 @@ export class Player {
     this.board.dispose();
     this.host.dispose();
     this.cancelAnswer();
-    this.startOverlay?.remove();
     this.shell.remove();
   }
 
-  private async tryAutoplay(): Promise<void> {
-    if (await this.clock.play()) return;
-    const button = el("button", "xv-start-overlay") as HTMLButtonElement;
-    button.type = "button";
-    button.textContent = "Start Lesson";
-    button.onclick = async () => {
-      if (await this.clock.play()) {
-        button.remove();
-        this.startOverlay = undefined;
-      }
-    };
-    this.startOverlay = button;
-    this.container.append(button);
+  private async loadAudio(): Promise<void> {
+    if (!this.audioLoader || !this.startScreen) return;
+    this.startScreen.setLoading();
+    try {
+      this.setAudioSources(await this.audioLoader());
+      this.audio.load();
+      this.startScreen.setReady();
+    } catch (error) {
+      console.error("narration loading failed:", error);
+      this.startScreen.setFailed("The narration could not load. Check your connection and try again.");
+    }
+  }
+
+  private async beginLesson(): Promise<void> {
+    if (!this.startScreen) return;
+    this.startScreen.setStarting();
+    if (!(await this.clock.play())) {
+      this.startScreen.setFailed("The narration could not start. Try again.", "start");
+      return;
+    }
+    this.startScreen.el.remove();
+    this.startScreen = undefined;
+    if (this.chrome && !this.unbindKeys) this.unbindKeys = this.chrome.bindKeys();
+  }
+
+  private setAudioSources(sources: string[]): void {
+    this.audio?.replaceChildren();
+    for (const src of sources) {
+      const source = document.createElement("source");
+      source.src = this.baseUrl + src;
+      // A blob URL carries the MIME type assigned when it was created. Safari
+      // needs an explicit type for ordinary URLs before it will select a source.
+      if (!source.src.startsWith("blob:")) source.type = mimeForAudio(src);
+      this.audio.append(source);
+    }
   }
 
   private frame(t: number): void {
@@ -338,14 +367,6 @@ function el(tag: string, className: string): HTMLElement {
   const e = document.createElement(tag);
   if (className) e.className = className;
   return e;
-}
-
-function mimeForAudio(src: string): string {
-  if (src.endsWith(".m4a")) return "audio/mp4";
-  if (src.endsWith(".mp3")) return "audio/mpeg";
-  if (src.endsWith(".webm")) return "audio/webm";
-  if (src.endsWith(".ogg")) return "audio/ogg";
-  return "audio/wav";
 }
 
 const CLIENT_ID_KEY = "tangible.assistantClientId";

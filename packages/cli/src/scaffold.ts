@@ -20,6 +20,7 @@ export async function scaffold(id: string, opts: ScaffoldOptions = {}): Promise<
 
 const MANIFEST = (id: string) => `id: ${id}
 title: ${id}
+promise: Explain what the learner will understand in one sentence.
 scene: ./scenes/scene.ts
 defaults:
   anticipation: -0.2

@@ -1,0 +1,25 @@
+import { expect, test } from "@playwright/test";
+
+test("loading becomes a deliberate start and never autoplays", async ({ page }) => {
+  await page.goto("/?arrival");
+
+  const screen = page.locator(".xv-start-screen");
+  await expect(screen).toHaveAttribute("data-state", "loading");
+  await expect(page.locator(".xv-start-title")).toHaveText("The unit circle");
+  await expect(page.locator(".xv-start-promise")).toContainText("determines its sine and cosine");
+  await expect(page.locator(".xv-start-meta")).toHaveText(/About \d+ minutes?/);
+  await expect(page.locator(".xv-start-button")).toBeDisabled();
+  await expect.poll(() => page.evaluate(() => (window as any).__player.clock.playing)).toBe(false);
+
+  await expect(screen).toHaveAttribute("data-state", "ready");
+  await expect(page.locator(".xv-start-status")).toHaveText("Ready");
+  await page.locator(".xv-start-button").click();
+  await expect(screen).toHaveCount(0);
+  await expect.poll(() => page.evaluate(() => (window as any).__player.clock.playing)).toBe(true);
+});
+
+test("portrait phones receive an orientation notice", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/?arrival");
+  await expect(page.locator(".xv-orientation-notice")).toBeVisible();
+});

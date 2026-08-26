@@ -38,7 +38,10 @@ const assistantContext: AssistantContext = {
   commandable: ["theta"],
 };
 
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
 
 function stubScene(seen: PlainState[]): SceneModule {
   return {
@@ -100,16 +103,56 @@ describe("Player composition", () => {
     player.dispose();
   });
 
-  it("shows a Start Lesson overlay when configured autoplay is rejected", async () => {
+  it("shows loading and ready states before a deliberate start", async () => {
     const mount = document.createElement("div");
-    const player = new Player({ mount, scene: stubScene([]), tracks, autoplay: true });
-    player.audio.play = vi.fn().mockRejectedValueOnce(new DOMException("blocked", "NotAllowedError")).mockResolvedValue(undefined);
+    let finishLoading!: (sources: string[]) => void;
+    const audioLoader = vi.fn(() => new Promise<string[]>((resolve) => (finishLoading = resolve)));
+    const player = new Player({
+      mount,
+      scene: stubScene([]),
+      tracks,
+      introduction: { title: "A useful lesson", promise: "See how the example works." },
+      audioLoader,
+    });
+    player.audio.load = vi.fn();
+    player.audio.play = vi.fn().mockResolvedValue(undefined);
 
     player.start();
-    await vi.waitFor(() => expect(mount.querySelector(".xv-start-overlay")).toBeTruthy());
-    (mount.querySelector(".xv-start-overlay") as HTMLButtonElement).click();
-    await vi.waitFor(() => expect(mount.querySelector(".xv-start-overlay")).toBeNull());
-    expect(player.audio.play).toHaveBeenCalledTimes(2);
+    expect(mount.querySelector(".xv-start-screen")?.getAttribute("data-state")).toBe("loading");
+    expect(mount.querySelector(".xv-start-title")?.textContent).toBe("A useful lesson");
+    expect(mount.querySelector(".xv-start-promise")?.textContent).toBe("See how the example works.");
+    expect((mount.querySelector(".xv-start-button") as HTMLButtonElement).disabled).toBe(true);
+    expect(player.audio.play).not.toHaveBeenCalled();
+
+    finishLoading(["audio.wav"]);
+    await vi.waitFor(() => expect(mount.querySelector(".xv-start-screen")?.getAttribute("data-state")).toBe("ready"));
+    expect(mount.querySelector(".xv-start-status")?.textContent).toBe("Ready");
+    (mount.querySelector(".xv-start-button") as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(mount.querySelector(".xv-start-screen")).toBeNull());
+    expect(player.audio.play).toHaveBeenCalledOnce();
+    player.dispose();
+  });
+
+  it("shows a useful audio error and retries loading", async () => {
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    const mount = document.createElement("div");
+    const audioLoader = vi.fn().mockRejectedValueOnce(new Error("network down")).mockResolvedValueOnce(["audio.wav"]);
+    const player = new Player({
+      mount,
+      scene: stubScene([]),
+      tracks,
+      introduction: { title: "A useful lesson", promise: "See how the example works." },
+      audioLoader,
+    });
+    player.audio.load = vi.fn();
+
+    player.start();
+    await vi.waitFor(() => expect(mount.querySelector(".xv-start-screen")?.getAttribute("data-state")).toBe("failed"));
+    expect(mount.querySelector(".xv-start-status")?.textContent).toContain("Check your connection");
+    (mount.querySelector(".xv-start-button") as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(mount.querySelector(".xv-start-screen")?.getAttribute("data-state")).toBe("ready"));
+    expect(audioLoader).toHaveBeenCalledTimes(2);
+    expect(error).toHaveBeenCalledOnce();
     player.dispose();
   });
 

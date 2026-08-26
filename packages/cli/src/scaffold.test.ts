@@ -13,6 +13,7 @@ describe("scaffold", () => {
 
       const manifest = await readFile(join(dir, "lesson.yaml"), "utf8");
       expect(manifest).toContain("title: my-lesson");
+      expect(manifest).toContain("promise: Explain what the learner will understand in one sentence.");
       expect(manifest).toContain("scene: ./scenes/scene.ts");
       expect(manifest).toContain("provider: elevenlabs");
       expect(manifest).toContain("model: eleven_multilingual_v2");

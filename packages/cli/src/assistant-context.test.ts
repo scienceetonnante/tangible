@@ -8,6 +8,7 @@ import type { Manifest } from "./manifest.js";
 const manifest: Manifest = {
   id: "circle",
   title: "Circle",
+  promise: "See how a point defines an angle.",
   scene: "scenes/scene.ts",
   defaults: { anticipation: -0.2, ease: "linear", transition: 1 },
   tts: { provider: "elevenlabs", voice: "voice", speed: 0.9 },

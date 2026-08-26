@@ -19,6 +19,23 @@ style.textContent = PLAYER_CSS;
 document.head.append(style);
 
 const mount = document.getElementById("app")!;
-const player = new Player({ mount, scene, tracks: data.tracks, captionsVtt: data.vtt, audioSrc: [data.audio], assistant: { context: data.assistant } });
+const arrival = new URLSearchParams(location.search).has("arrival");
+const player = new Player({
+  mount,
+  scene,
+  tracks: data.tracks,
+  captionsVtt: data.vtt,
+  audioSrc: arrival ? [] : [data.audio],
+  audioLoader: arrival
+    ? async () => {
+        await new Promise((resolve) => setTimeout(resolve, 400));
+        return [data.audio];
+      }
+    : undefined,
+  introduction: arrival
+    ? { title: "The unit circle", promise: "See how an angle on the unit circle determines its sine and cosine." }
+    : undefined,
+  assistant: { context: data.assistant },
+});
 window.__player = player;
 player.start();

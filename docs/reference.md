@@ -136,7 +136,7 @@ stored in `build/scene-preview/`.
 ### Authored files
 
 ```text
-lesson.yaml             identity, defaults, voice provider, assistant
+lesson.yaml             identity, visitor promise, defaults, voice provider, assistant
 script.md               narration, natural-language hints, and formal directives
 assistant.md            optional semantic assistant context
 assistant.eval.yaml     optional tracked assistant question cases
@@ -163,6 +163,7 @@ A minimal `lesson.yaml` is:
 ```yaml
 id: unit-circle
 title: The unit circle
+promise: See how an angle on the unit circle determines its sine and cosine.
 scene: ./scenes/scene.ts
 defaults:
   anticipation: -0.2
@@ -173,12 +174,15 @@ tts:
   voice: VOICE_ID
   model: eleven_multilingual_v2
   speed: 0.9
-player:
-  autoplay: true
 deployment:
   provider: huggingface
   space: example/lesson-space
 ```
+
+`promise` is the one-sentence explanation shown on the lesson's start screen.
+Tangible supplies the rest of that screen: the title, approximate duration,
+Start button, interaction guidance, loading and failure states, and the
+portrait-phone orientation notice.
 
 `tts.provider` supports `elevenlabs` and `hf-endpoint`. Both providers require a
 `voice`. ElevenLabs also accepts an optional `model` and `speed`. The private
@@ -195,9 +199,8 @@ an air-gapped installation. Tangible verifies the archive checksum before
 installing it and keeps the model's license file. The Supertonic model uses the
 [OpenRAIL-M license](https://huggingface.co/Supertone/supertonic-3/blob/main/LICENSE).
 
-`player.autoplay` asks the browser to start the narrated lesson when it loads.
-Browsers may reject audible autoplay; when that happens, Tangible shows a
-`Start Lesson` overlay whose click supplies the required learner interaction.
+Narration never autoplays. The player waits until its audio is ready and begins
+only after the visitor presses Start.
 
 `deployment.space` records the stable Hugging Face Space identifier in
 `namespace/name` form. It is optional unless `lesson deploy` is used. Do not put

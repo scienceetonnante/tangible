@@ -11,10 +11,10 @@ export type TtsConfig =
 export interface Manifest {
   id: string;
   title: string;
+  promise: string;
   scene: string;
   defaults: { anticipation: number; ease: string; transition: number };
   tts: TtsConfig;
-  player?: { autoplay?: boolean };
   deployment?: {
     provider: "huggingface";
     space: string;
@@ -52,6 +52,7 @@ function validateManifest(value: unknown): asserts value is Manifest {
   const manifest = object(value, "lesson.yaml");
   nonEmptyString(manifest.id, 'lesson.yaml field "id"');
   nonEmptyString(manifest.title, 'lesson.yaml field "title"');
+  nonEmptyString(manifest.promise, 'lesson.yaml field "promise"');
   nonEmptyString(manifest.scene, 'lesson.yaml field "scene"');
 
   const defaults = object(manifest.defaults, 'lesson.yaml field "defaults"');
@@ -69,13 +70,6 @@ function validateManifest(value: unknown): asserts value is Manifest {
     optionalNumber(tts.speed, 'lesson.yaml field "tts.speed"');
   } else if (tts.model !== undefined || tts.speed !== undefined) {
     throw new Error('lesson.yaml fields "tts.model" and "tts.speed" are supported only by ElevenLabs');
-  }
-
-  if (manifest.player !== undefined) {
-    const player = object(manifest.player, 'lesson.yaml field "player"');
-    if (player.autoplay !== undefined && typeof player.autoplay !== "boolean") {
-      throw new Error('lesson.yaml field "player.autoplay" must be true or false');
-    }
   }
 
   if (manifest.deployment !== undefined) {
