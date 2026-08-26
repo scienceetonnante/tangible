@@ -7,6 +7,8 @@ e2e/dist/
 test-results/
 playwright-report/
 
+perso/
+
 # Generated lesson artifacts
 lessons/*/build/
 lessons/*/.cache/

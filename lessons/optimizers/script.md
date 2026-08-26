@@ -9,9 +9,9 @@ title: Why adaptive optimizers exist
 
 @camera(azimuth: 135°, over: 10s, ease: linear)
 This is an interactive lesson about optimizers.
-You can move around the scene and adjust its controls while I am speaking. You can also pause the lesson to ask me a question.
+You can move around the scene and adjust its controls while I am speaking. You can also pause the lesson to ask me a question in the chatbox below.
 
-@camera(azimuth: -35°, over: 2s, ease: linear)
+@camera(azimuth: -35°, over:10s, ease: linear)
 Training a machine-learning model means adjusting its weights to reduce a loss function. Stochastic gradient descent, or SGD, is the basic approach. Modern adaptive optimizers such as Adam often train models more effectively. What do these methods change, and why can those changes help?
 
 @camera(azimuth: 0°, over: 12s, ease: linear)
@@ -29,7 +29,7 @@ The size of each step is controlled by the @cue(sgd.lr -> 0.02, over: 1s) learni
 The curve below shows how the loss changes as we take more steps.
 @cue(step -> 40, over: 4s) Step by step, gradient descent takes a clean route into the center.
 
-@camera(target: [0, 0.65, 0], distance: 7, azimuth: -41.25°, elevation: 27.5°, over: 2.5s)
+@camera(target: [0, 0.65, 0], distance: 7, azimuth: -41.25°, elevation: 34°, over: 2.5s)
 This first problem is easy because the surface has the same curvature in every direction.
 
 @chapter(Conditioning)
