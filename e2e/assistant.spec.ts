@@ -11,10 +11,19 @@ test("scene fits the viewport while keeping the question field visible", async (
 
   const appBox = (await page.locator("#app").boundingBox())!;
   const sceneBox = (await page.locator(".xv-player").boundingBox())!;
-  const formBefore = (await page.locator(".xv-assistant-form").boundingBox())!;
-  expect(sceneBox.width).toBeLessThan(640);
+  const toggle = page.locator(".xv-assistant-toggle");
+  const toggleBox = (await toggle.boundingBox())!;
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  await expect(page.locator(".xv-assistant-body")).toBeHidden();
+  expect(sceneBox.width).toBeLessThan(800);
   expect(sceneBox.width / sceneBox.height).toBeCloseTo(16 / 9, 2);
   expect(sceneBox.x - appBox.x).toBeCloseTo(appBox.x + appBox.width - sceneBox.x - sceneBox.width, 1);
+  expect(toggleBox.y + toggleBox.height).toBeLessThanOrEqual(400);
+
+  await toggle.click();
+  await expect(page.locator(".xv-assistant-body")).toBeVisible();
+  await page.waitForTimeout(50);
+  const formBefore = (await page.locator(".xv-assistant-form").boundingBox())!;
   expect(formBefore.y + formBefore.height).toBeLessThanOrEqual(400);
 
   await page.evaluate(() => {
@@ -27,6 +36,7 @@ test("scene fits the viewport while keeping the question field visible", async (
 
 test("paused question writes, demonstrates, yields to interaction, and resumes", async ({ page }) => {
   await ready(page);
+  await page.locator(".xv-assistant-toggle").click();
   const input = page.locator(".xv-assistant-input");
   await expect(input).toBeDisabled();
 
@@ -50,6 +60,7 @@ test("paused question writes, demonstrates, yields to interaction, and resumes",
   // The learner can grab the assistant-positioned point. Their write wins for
   // theta while the written answer's visual timeline continues.
   const canvas = page.locator("canvas");
+  await canvas.scrollIntoViewIfNeeded();
   const box = (await canvas.boundingBox())!;
   const cx = box.x + box.width / 2;
   const cy = box.y + box.height / 2;

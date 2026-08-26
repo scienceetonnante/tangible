@@ -33,8 +33,7 @@ export class OptimizerThreeView {
 
   constructor(private canvas2d: HTMLCanvasElement, overlay: HTMLElement) {
     const canvas = canvas2d.ownerDocument.createElement("canvas");
-    canvas.setAttribute("role", "img");
-    canvas.setAttribute("aria-label", "Navigable three-dimensional loss surface with optimizer paths");
+    canvas.setAttribute("aria-hidden", "true");
     canvas.style.position = "absolute";
     canvas.style.pointerEvents = "none";
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });

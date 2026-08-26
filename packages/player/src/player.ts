@@ -116,6 +116,7 @@ export class Player {
     this.pauseGate = new PauseGate(this.clock, opts.tracks.pauses);
 
     this.container.append(this.canvas, overlay, boardPanel, this.captions.el, this.audio);
+    this.container.append(portraitMessage());
     this.shell.append(this.container);
     opts.mount.append(this.shell);
     this.resize();
@@ -393,6 +394,17 @@ function el(tag: string, className: string): HTMLElement {
   const e = document.createElement(tag);
   if (className) e.className = className;
   return e;
+}
+
+function portraitMessage(): HTMLElement {
+  const notice = el("div", "xv-portrait-message");
+  notice.setAttribute("role", "note");
+  const title = el("strong", "xv-portrait-title");
+  title.textContent = "This lesson needs a wider screen.";
+  const explanation = el("span", "xv-portrait-explanation");
+  explanation.textContent = "Rotate your phone to landscape, or continue on a tablet or computer.";
+  notice.append(title, explanation);
+  return notice;
 }
 
 const CLIENT_ID_KEY = "tangible.assistantClientId";

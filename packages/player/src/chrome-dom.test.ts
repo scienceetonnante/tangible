@@ -50,9 +50,23 @@ describe("Chrome scrubber", () => {
 
     chrome.update(0);
     expect(playBtn.textContent).toBe("▶");
+    expect(playBtn.getAttribute("aria-label")).toBe("Play lesson");
     media.paused = false; // playing (as if any code/event changed it)
     chrome.update(0);
     expect(playBtn.textContent).toBe("⏸");
+    expect(playBtn.getAttribute("aria-label")).toBe("Pause lesson");
+  });
+
+  it("labels playback controls and reports the captions state", () => {
+    const chrome = new Chrome(new AudioClock(new FakeMedia()), tracks);
+    const captions = chrome.el.querySelector(".xv-captions-toggle") as HTMLButtonElement;
+
+    expect((chrome.el.querySelector(".xv-scrubber") as HTMLInputElement).ariaLabel).toBe("Lesson position");
+    expect((chrome.el.querySelector(".xv-fullscreen") as HTMLButtonElement).ariaLabel).toBe("Enter full screen");
+    expect(captions.getAttribute("aria-pressed")).toBe("false");
+    captions.click();
+    expect(captions.getAttribute("aria-pressed")).toBe("true");
+    expect(captions.ariaLabel).toBe("Hide captions");
   });
 
   it("does not trigger playback shortcuts while the learner types a question", () => {

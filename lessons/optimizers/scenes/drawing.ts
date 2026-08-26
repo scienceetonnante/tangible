@@ -3,7 +3,7 @@ import type { ParameterActivityMap } from "@tangible/player";
 import { drawControls, drawStep } from "./controls.js";
 import type { OptimizerFrame } from "./frame.js";
 import { MAX_STEPS, type Trajectory } from "./model.js";
-import { landscapeBox, lossPlotBox, SERIES, type View } from "./view.js";
+import { cssPixels, cssWidth, landscapeBox, lossPlotBox, SERIES, type View } from "./view.js";
 
 const BACKGROUND = "#050609";
 const FOREGROUND = "#f5f7fa";
@@ -33,10 +33,15 @@ function drawCameraReadout(g: CanvasRenderingContext2D, view: View, state: Reado
   const target = camera.target.map(formatCameraValue).join(",");
 
   g.fillStyle = CAMERA_READOUT;
-  g.font = `${Math.max(7.5, unit * 0.013)}px ui-monospace, SFMono-Regular, Menlo, monospace`;
+  g.font = `${Math.max(cssPixels(view, 10), unit * 0.013)}px ui-monospace, SFMono-Regular, Menlo, monospace`;
   g.textAlign = "left";
   g.textBaseline = "middle";
-  const y = view.height * (view.height < 360 ? 0.965 : 0.91);
+  const y = view.height - cssPixels(view, 64);
+  const landscape = landscapeBox(view);
+  if (cssWidth(view) < 900) {
+    g.fillText("drag to orbit · scroll to zoom", landscape.x, y);
+    return;
+  }
   g.fillText(
     `[${target}] · d=${formatCameraValue(camera.distance)} · ` +
       `az. ${formatAngle(camera.azimuth)}° · el. ${formatAngle(camera.elevation)}°`,
@@ -44,9 +49,7 @@ function drawCameraReadout(g: CanvasRenderingContext2D, view: View, state: Reado
     y,
   );
   g.textAlign = "right";
-  const landscape = landscapeBox(view);
-  const hintY = view.width < 700 ? y - unit * 0.055 : y;
-  g.fillText("drag to orbit · scroll to zoom", landscape.x + landscape.width, hintY);
+  g.fillText("drag to orbit · scroll to zoom", landscape.x + landscape.width, y);
 }
 
 function formatCameraValue(value: number): string {
@@ -93,7 +96,7 @@ function drawLossPlot(g: CanvasRenderingContext2D, view: View, trajectories: Tra
   g.translate(left - unit * 0.012, (top + bottom) / 2);
   g.rotate(-Math.PI / 2);
   g.fillStyle = CAMERA_READOUT;
-  g.font = `${unit * 0.014}px sans-serif`;
+  g.font = `${Math.max(cssPixels(view, 10), unit * 0.014)}px sans-serif`;
   g.textAlign = "center";
   g.textBaseline = "bottom";
   g.fillText("Loss", 0, 0);
@@ -106,9 +109,11 @@ function drawLossPlot(g: CanvasRenderingContext2D, view: View, trajectories: Tra
     for (let index = 1; index <= count; index++) g.lineTo(xAt(index), yAt(trajectory.points[index]!.loss));
     g.strokeStyle = SERIES[trajectory.name].color;
     g.lineWidth = unit * 0.005;
+    g.setLineDash(SERIES[trajectory.name].dash.map((length) => length * unit));
     g.stroke();
   }
 
+  g.setLineDash([]);
   g.strokeStyle = FOREGROUND;
   g.lineWidth = unit * 0.0025;
   line(g, xAt(step), top, xAt(step), bottom);

@@ -3,6 +3,8 @@
 
 import type { AnswerBeat, AssistantHistoryTurn } from "@tangible/core";
 
+let nextPanelId = 0;
+
 export interface AssistantPanelOptions {
   onAsk(question: string): void;
   onCancel(): void;
@@ -13,6 +15,8 @@ export class AssistantPanel {
   readonly history: AssistantHistoryTurn[] = [];
 
   private input: HTMLInputElement;
+  private toggle: HTMLButtonElement;
+  private body: HTMLElement;
   private askButton: HTMLButtonElement;
   private cancelButton: HTMLButtonElement;
   private status: HTMLElement;
@@ -21,7 +25,19 @@ export class AssistantPanel {
   private busy = false;
 
   constructor(opts: AssistantPanelOptions) {
-    this.el = div("xv-assistant");
+    this.el = document.createElement("section");
+    this.el.className = "xv-assistant";
+    this.el.setAttribute("aria-label", "Lesson assistant");
+
+    this.toggle = button("Ask about this lesson", "xv-assistant-toggle");
+    this.toggle.type = "button";
+    this.toggle.setAttribute("aria-expanded", "false");
+    this.body = div("xv-assistant-body");
+    this.body.id = `xv-assistant-body-${++nextPanelId}`;
+    this.body.hidden = true;
+    this.toggle.setAttribute("aria-controls", this.body.id);
+    this.toggle.onclick = () => this.setExpanded(this.body.hidden);
+
     this.transcript = div("xv-assistant-transcript");
     this.transcript.setAttribute("aria-live", "polite");
 
@@ -59,8 +75,17 @@ export class AssistantPanel {
     };
     const footer = div("xv-assistant-footer");
     footer.append(this.status, clear);
-    this.el.append(form, this.transcript, footer);
+    this.body.append(form, this.transcript, footer);
+    this.el.append(this.toggle, this.body);
     this.updateEnabled();
+  }
+
+  setExpanded(expanded: boolean): void {
+    this.body.hidden = !expanded;
+    this.toggle.setAttribute("aria-expanded", String(expanded));
+    if (expanded && typeof requestAnimationFrame !== "undefined") {
+      requestAnimationFrame(() => this.body.scrollIntoView?.({ block: "nearest" }));
+    }
   }
 
   setPauseEnabled(enabled: boolean): void {

@@ -1,11 +1,11 @@
-import type { Handle, OrbitState, PlainState, Schema } from "@tangible/core";
+import type { Handle, OrbitState, ParamValue, PlainState, Schema } from "@tangible/core";
 import { orbitHandle } from "@tangible/ingredients";
 import type { SceneContext, SceneInstance, SceneModule } from "@tangible/player";
 import { draw } from "./drawing.js";
 import { buildFrame } from "./frame.js";
 import { DOMAIN, MAX_STEPS } from "./model.js";
 import { OptimizerThreeView } from "./three-view.js";
-import { landscapeBox, sliderBox, SLIDERS, stepBox, toggleBox, TOGGLES, type View } from "./view.js";
+import { cssPixels, landscapeBox, sliderBox, SLIDERS, stepBox, toggleBox, TOGGLES, type View } from "./view.js";
 
 const scriptScalar = (range: [number, number], value: number, label: string) => ({
   type: { kind: "scalar" as const, range },
@@ -62,14 +62,19 @@ export const scene: SceneModule = {
     const g = ctx.canvas.getContext("2d")!;
     const threeView = ctx.canvas.ownerDocument ? new OptimizerThreeView(ctx.canvas, ctx.overlay) : undefined;
     const removeTheme = applyNightTheme(ctx);
+    ctx.canvas.setAttribute?.("role", "img");
+    ctx.canvas.setAttribute?.(
+      "aria-label",
+      "Interactive 3D loss landscape comparing SGD, momentum, and AdamW. Drag the white starting point or the camera, and use the labeled sliders and optimizer toggles.",
+    );
     return {
       render(state, { activity }) {
-        const view = ctx.viewport();
+        const view = responsiveView(ctx.viewport(), ctx.canvas);
         const frame = buildFrame(state);
         draw(g, view, state, frame, activity);
         threeView?.render(frame, state, view);
       },
-      handles: () => handles(ctx.viewport, threeView),
+      handles: () => handles(ctx.viewport, ctx.canvas, threeView),
       dispose() {
         threeView?.dispose();
         removeTheme();
@@ -78,12 +83,13 @@ export const scene: SceneModule = {
   },
 };
 
-function handles(viewport: () => View, threeView?: OptimizerThreeView): Handle[] {
+function handles(viewport: () => View, canvas: HTMLCanvasElement, threeView?: OptimizerThreeView): Handle[] {
+  const view = () => responsiveView(viewport(), canvas);
   return [
-    startHandle(viewport, threeView),
-    ...SLIDERS.map((definition) => sliderHandle(viewport, definition.param, definition.range)),
-    stepHandle(viewport),
-    ...TOGGLES.map((toggle, index) => toggleHandle(viewport, toggle.param, index)),
+    startHandle(view, threeView),
+    ...SLIDERS.map((definition) => sliderHandle(view, definition.param, definition.range)),
+    stepHandle(view),
+    ...TOGGLES.map((toggle, index) => toggleHandle(view, toggle.param, index)),
     orbitHandle({
       speed: 0.004,
       minElevation: 0.12,
@@ -92,7 +98,7 @@ function handles(viewport: () => View, threeView?: OptimizerThreeView): Handle[]
       minDistance: 4.2,
       maxDistance: 10,
       hitTest(px, py) {
-        const box = landscapeBox(viewport());
+        const box = landscapeBox(view());
         return px >= box.x && px <= box.x + box.width && py >= box.y && py <= box.y + box.height;
       },
     }),
@@ -108,7 +114,7 @@ function startHandle(viewport: () => View, threeView?: OptimizerThreeView): Hand
       const point = threeView.projectStart(state, viewport());
       const box = landscapeBox(viewport());
       if (px < box.x || px > box.x + box.width || py < box.y || py > box.y + box.height) return false;
-      return Math.hypot(px - point.x, py - point.y) < box.width * 0.06;
+      return Math.hypot(px - point.x, py - point.y) < Math.max(box.width * 0.06, touchRadius(viewport()));
     },
     onDrag(px, py, state) {
       const point = threeView?.pickSurface(px, py, state, viewport());
@@ -127,8 +133,9 @@ function sliderHandle(viewport: () => View, param: string, range: [number, numbe
     params: [param],
     hitTest(px, py, state) {
       if (definition.optimizer && !(state[`active.${definition.optimizer}`] as boolean)) return false;
-      const box = sliderBox(viewport(), definition);
-      const radius = Math.min(viewport().width, viewport().height) * 0.035;
+      const view = viewport();
+      const box = sliderBox(view, definition);
+      const radius = touchRadius(view);
       return px >= box.x0 - radius && px <= box.x1 + radius && Math.abs(py - box.y) <= radius;
     },
     onDrag(px) {
@@ -145,7 +152,7 @@ function stepHandle(viewport: () => View): Handle {
     params: ["step"],
     hitTest(px, py) {
       const box = stepBox(viewport());
-      const radius = Math.min(viewport().width, viewport().height) * 0.035;
+      const radius = touchRadius(viewport());
       return px >= box.x0 - radius && px <= box.x1 + radius && Math.abs(py - box.y) <= radius;
     },
     onDrag(px) {
@@ -161,8 +168,13 @@ function toggleHandle(viewport: () => View, param: string, index: number): Handl
     id: param,
     params: [param],
     hitTest(px, py) {
-      const box = toggleBox(viewport(), index);
-      return px >= box.x && px <= box.x + box.width && py >= box.y && py <= box.y + box.height;
+      const view = viewport();
+      const box = toggleBox(view, index);
+      const halfWidth = Math.max(box.width / 2, touchRadius(view));
+      const halfHeight = Math.max(box.height / 2, touchRadius(view));
+      const centerX = box.x + box.width / 2;
+      const centerY = box.y + box.height / 2;
+      return Math.abs(px - centerX) <= halfWidth && Math.abs(py - centerY) <= halfHeight;
     },
     onDown(_px, _py, state: Readonly<PlainState>) {
       next = !(state[param] as boolean);
@@ -177,34 +189,52 @@ function clamp(value: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, value));
 }
 
+function responsiveView(view: View, canvas: HTMLCanvasElement): View {
+  const bounds = canvas.getBoundingClientRect?.();
+  const pixelRatio = bounds?.width ? view.width / bounds.width : 1;
+  return { ...view, pixelRatio };
+}
+
+function touchRadius(view: View): number {
+  return Math.max(Math.min(view.width, view.height) * 0.035, cssPixels(view, 22));
+}
+
 const NIGHT_CSS = `
 .xv-player.optimizers-night { background: #050609; color: #f5f7fa; }
-.xv-player.optimizers-night .xv-board { top: 2%; right: 1.5%; width: 23%; height: 63%; padding: 4px; color: #f5f7fa; font-size: 16px; }
+.xv-player.optimizers-night .xv-board { top: 2%; right: 1.5%; width: 23%; height: 63%; padding: 4px; color: #f5f7fa; font-size: clamp(12px, 1.25vw, 16px); }
 .xv-player.optimizers-night .xv-board-inner { gap: 30px; }
 .xv-player.optimizers-night .xv-board-item { width: 100%; text-align: center; }
-.xv-player.optimizers-night .xv-captions { color: #fff; text-shadow: 0 1px 3px #000; }
+.xv-player.optimizers-night .xv-captions { color: #fff; background: rgba(5, 6, 9, 0.74); border-radius: 5px; text-shadow: 0 1px 3px #000; }
 .xv-player.optimizers-night .xv-chrome { background: rgba(5, 6, 9, 0.9); }
 .xv-player.optimizers-night .xv-chrome button { color: #f5f7fa; }
 .xv-player.optimizers-night .xv-chrome button:hover { background: rgba(255, 255, 255, 0.1); }
+.xv-player.optimizers-night .xv-chrome button:focus-visible,
+.xv-player.optimizers-night .xv-scrubber:focus-visible { outline-color: #78c7ff; }
 .xv-player.optimizers-night .xv-scrubber { accent-color: #f5f7fa; }
 .xv-player.optimizers-night .xv-elapsed { color: #cbd0d8; }
+.xv-shell.optimizers-night-shell .xv-assistant { border-color: #2b313b; background: #0b0d12; color: #f5f7fa; }
+.xv-shell.optimizers-night-shell .xv-assistant-body { border-color: #2b313b; }
+.xv-shell.optimizers-night-shell .xv-assistant-input { border-color: #515967; background: #141821; color: #f5f7fa; }
+.xv-shell.optimizers-night-shell .xv-assistant-input:disabled { background: #11141a; color: #8e96a3; }
+.xv-shell.optimizers-night-shell .xv-assistant button:not(.xv-assistant-toggle) { border-color: #515967; background: #171b23; }
+.xv-shell.optimizers-night-shell .xv-assistant-footer { color: #aeb6c2; }
+.xv-shell.optimizers-night-shell .xv-assistant-turn { border-color: #515967; }
 body.optimizers-night-page { background: #050609; }
-@media (max-width: 700px) {
-  .xv-player.optimizers-night .xv-board { font-size: 6px; }
-  .xv-player.optimizers-night .xv-board-inner { gap: 10px; }
-}
 `;
 
 function applyNightTheme(ctx: SceneContext): () => void {
   const root = ctx.canvas.parentElement;
   if (!root) return () => {};
+  const shell = root.closest(".xv-shell");
   const style = ctx.canvas.ownerDocument.createElement("style");
   style.textContent = NIGHT_CSS;
   root.classList.add("optimizers-night");
+  shell?.classList.add("optimizers-night-shell");
   ctx.canvas.ownerDocument.body.classList.add("optimizers-night-page");
   root.append(style);
   return () => {
     root.classList.remove("optimizers-night");
+    shell?.classList.remove("optimizers-night-shell");
     ctx.canvas.ownerDocument.body.classList.remove("optimizers-night-page");
     style.remove();
   };

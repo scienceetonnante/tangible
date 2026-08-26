@@ -137,6 +137,10 @@ values. Check resizing and touch interaction where relevant. Ask for changes in
 conceptual terms: what must be manipulable, connected, visible, or easier to
 notice.
 
+Give every canvas a meaningful accessible description. If important canvas
+controls do not yet have equivalent HTML controls, document that limitation for
+visitors instead of implying complete keyboard or screen-reader access.
+
 Follow these design rules:
 
 - Implement the smallest scene that proves the intended relationship.

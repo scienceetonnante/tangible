@@ -3,6 +3,7 @@ import type { OptimizerName } from "./model.js";
 export interface View {
   width: number;
   height: number;
+  pixelRatio?: number;
 }
 
 export interface SliderDefinition {
@@ -16,10 +17,10 @@ export interface SliderDefinition {
   slot?: 0 | 1;
 }
 
-export const SERIES: Record<OptimizerName, { color: string; wash: string; label: string }> = {
-  sgd: { color: "#ff8a1f", wash: "rgba(255, 138, 31, 0.11)", label: "SGD" },
-  momentum: { color: "#55a7ff", wash: "rgba(85, 167, 255, 0.11)", label: "Momentum" },
-  adamw: { color: "#43d69e", wash: "rgba(67, 214, 158, 0.11)", label: "AdamW" },
+export const SERIES: Record<OptimizerName, { color: string; wash: string; label: string; dash: number[] }> = {
+  sgd: { color: "#ff8a1f", wash: "rgba(255, 138, 31, 0.11)", label: "SGD", dash: [] },
+  momentum: { color: "#55a7ff", wash: "rgba(85, 167, 255, 0.11)", label: "Momentum", dash: [0.014, 0.009] },
+  adamw: { color: "#43d69e", wash: "rgba(67, 214, 158, 0.11)", label: "AdamW", dash: [0.003, 0.008] },
 };
 
 export const PROBLEM_SLIDERS: SliderDefinition[] = [
@@ -29,8 +30,8 @@ export const PROBLEM_SLIDERS: SliderDefinition[] = [
 
 export const ALGORITHM_SLIDERS: SliderDefinition[] = [
   { param: "sgd.lr", label: "learning rate η", range: [0.02, 0.12], digits: 3, y: 0.19, section: "algorithm", optimizer: "sgd" },
-  { param: "momentum.lr", label: "learning rate η", range: [0.02, 0.25], digits: 3, y: 0.35, section: "algorithm", optimizer: "momentum" },
-  { param: "momentum.beta", label: "smoothing β", range: [0, 0.95], digits: 2, y: 0.42, section: "algorithm", optimizer: "momentum" },
+  { param: "momentum.lr", label: "learning rate η", range: [0.02, 0.25], digits: 3, y: 0.33, section: "algorithm", optimizer: "momentum" },
+  { param: "momentum.beta", label: "smoothing β", range: [0, 0.95], digits: 2, y: 0.43, section: "algorithm", optimizer: "momentum" },
   { param: "adamw.lr", label: "learning rate η", range: [0.02, 0.16], digits: 3, y: 0.56, section: "algorithm", optimizer: "adamw" },
 ];
 
@@ -78,7 +79,7 @@ export function toggleBox(view: View, index: number) {
 export function algorithmGroupBox(view: View, optimizer: OptimizerName) {
   const vertical = {
     sgd: [0.115, 0.13],
-    momentum: [0.275, 0.18],
+    momentum: [0.265, 0.21],
     adamw: [0.49, 0.125],
   }[optimizer]!;
   return {
@@ -87,4 +88,12 @@ export function algorithmGroupBox(view: View, optimizer: OptimizerName) {
     width: view.width * ALGORITHM_WIDTH,
     height: view.height * vertical[1],
   };
+}
+
+export function cssPixels(view: View, value: number): number {
+  return value * (view.pixelRatio ?? 1);
+}
+
+export function cssWidth(view: View): number {
+  return view.width / (view.pixelRatio ?? 1);
 }

@@ -47,6 +47,7 @@ export class Chrome {
     this.playBtn = doc.createElement("button");
     this.playBtn.className = "xv-play";
     this.playBtn.textContent = "▶";
+    this.playBtn.setAttribute("aria-label", "Play lesson");
     this.playBtn.onclick = () => this.togglePlay();
 
     this.scrubber = doc.createElement("input");
@@ -55,6 +56,7 @@ export class Chrome {
     this.scrubber.max = "1000";
     this.scrubber.value = "0";
     this.scrubber.className = "xv-scrubber";
+    this.scrubber.setAttribute("aria-label", "Lesson position");
     // Seek live while dragging; suppress the frame loop's value writes so the drag
     // isn't fought back to the playhead. Driven by `input` (fires on every value
     // change in all browsers) with a watchdog — robust to flaky pointer events on
@@ -80,14 +82,19 @@ export class Chrome {
     const captions = doc.createElement("button");
     captions.className = "xv-captions-toggle";
     captions.textContent = "CC";
+    captions.setAttribute("aria-label", "Show captions");
+    captions.setAttribute("aria-pressed", "false");
     captions.onclick = () => {
       this.captionsOn = !this.captionsOn;
+      captions.setAttribute("aria-pressed", String(this.captionsOn));
+      captions.setAttribute("aria-label", this.captionsOn ? "Hide captions" : "Show captions");
       opts.onCaptionsToggle?.(this.captionsOn);
     };
 
     const full = doc.createElement("button");
     full.className = "xv-fullscreen";
     full.textContent = "⛶";
+    full.setAttribute("aria-label", "Enter full screen");
     full.onclick = () => this.toggleFullscreen();
 
     this.el.append(this.playBtn, this.scrubber, this.elapsed, captions, full);
@@ -116,6 +123,7 @@ export class Chrome {
     // Drive the icon from the actual state (robust to browsers that fire media
     // play/pause events unreliably, e.g. Safari).
     this.playBtn.textContent = this.clock.playing ? "⏸" : "▶";
+    this.playBtn.setAttribute("aria-label", this.clock.playing ? "Pause lesson" : "Play lesson");
   }
 
   private togglePlay(): void {

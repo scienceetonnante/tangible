@@ -4,6 +4,7 @@ import { MAX_STEPS, type OptimizerName } from "./model.js";
 import {
   algorithmGroupBox,
   ALGORITHM_SLIDERS,
+  cssPixels,
   PROBLEM_SLIDERS,
   SERIES,
   sliderBox,
@@ -54,7 +55,7 @@ export function drawStep(
   g.fill();
   g.stroke();
   g.fillStyle = FOREGROUND;
-  g.font = `${unit * 0.017}px sans-serif`;
+  g.font = `${Math.max(cssPixels(view, 11), unit * 0.017)}px sans-serif`;
   g.textAlign = "left";
   g.textBaseline = "top";
   g.fillText(`step ${Math.round(step)}`, box.x0, box.y + unit * 0.018);
@@ -77,7 +78,7 @@ function drawAlgorithmGroups(
     g.fillStyle = active ? SERIES[name].color : DISABLED;
     g.fillRect(box.x, box.y, unit * 0.007, box.height);
     g.fillStyle = active ? FOREGROUND : DISABLED;
-    g.font = `500 ${unit * 0.018}px sans-serif`;
+    g.font = `500 ${Math.max(cssPixels(view, 12), unit * 0.018)}px sans-serif`;
     g.textAlign = "left";
     g.textBaseline = "top";
     g.fillText(SERIES[name].label, box.x + unit * 0.012, box.y + unit * 0.009);
@@ -95,7 +96,7 @@ function drawToggles(g: CanvasRenderingContext2D, view: View, state: Readonly<Pl
     g.fillRect(box.x, box.y, box.width, box.height);
     g.strokeRect(box.x, box.y, box.width, box.height);
     g.fillStyle = active ? "#050609" : "#6b7280";
-    g.font = `500 ${unit * 0.02}px sans-serif`;
+    g.font = `500 ${Math.max(cssPixels(view, 11), unit * 0.02)}px sans-serif`;
     g.textAlign = "center";
     g.textBaseline = "middle";
     g.fillText(toggle.label, box.x + box.width / 2, box.y + box.height / 2);
@@ -131,7 +132,7 @@ function drawSlider(
   g.fill();
   g.stroke();
   g.fillStyle = active ? FOREGROUND : DISABLED;
-  g.font = `${unit * 0.016}px sans-serif`;
+  g.font = `${Math.max(cssPixels(view, 11), unit * 0.016)}px sans-serif`;
   g.textAlign = "left";
   g.textBaseline = "bottom";
   g.fillText(definition.label, box.x0, box.y - unit * 0.017);

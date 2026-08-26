@@ -67,6 +67,6 @@ export default async function prepare() {
   await writeFile(join(distDir, "answer.json"), JSON.stringify(answer));
   await writeFile(
     join(distDir, "index.html"),
-    `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Tangible e2e</title></head><body><div id="app" style="width:640px;max-width:100%"></div><script src="data.js"></script><script src="main.js"></script></body></html>`,
+    `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Tangible e2e</title></head><body><div id="app" style="width:100%"></div><script src="data.js"></script><script src="main.js"></script></body></html>`,
   );
 }

@@ -4,7 +4,7 @@ import { StateStore } from "../../../packages/player/src/store.js";
 import type { ParameterActivityMap, SceneFrame } from "../../../packages/player/src/index.js";
 import { describe, expect, it } from "vitest";
 import { scene, schema } from "./scene.js";
-import { algorithmGroupBox, landscapeBox, lossPlotBox, sliderBox, SLIDERS, stepBox } from "./view.js";
+import { algorithmGroupBox, landscapeBox, lossPlotBox, sliderBox, SLIDERS, stepBox, toggleBox } from "./view.js";
 
 function recordingContext() {
   const calls: string[] = [];
@@ -12,6 +12,7 @@ function recordingContext() {
   const textPositions: { text: string; x: number; y: number }[] = [];
   const segments: [number, number, number, number][] = [];
   const arcs: number[] = [];
+  const dashes: number[][] = [];
   const assignments: { property: string; value: unknown }[] = [];
   let start: [number, number] | undefined;
   const handler: ProxyHandler<Record<string, unknown>> = {
@@ -27,6 +28,7 @@ function recordingContext() {
         segments.push([start[0], start[1], Number(args[0]), Number(args[1])]);
       }
       if (property === "arc") arcs.push(Number(args[2]));
+      if (property === "setLineDash") dashes.push(args[0] as number[]);
     },
     set: (_target, property, value) => {
       assignments.push({ property: String(property), value });
@@ -40,6 +42,7 @@ function recordingContext() {
     textPositions,
     segments,
     arcs,
+    dashes,
     assignments,
   };
 }
@@ -53,10 +56,14 @@ function sceneFrame(activity: ParameterActivityMap = {}): SceneFrame {
 }
 
 function instance(width = 1000, height = 600) {
-  const { context, calls, texts, textPositions, segments, arcs, assignments } = recordingContext();
-  const canvas = { getContext: () => context } as unknown as HTMLCanvasElement;
+  const { context, calls, texts, textPositions, segments, arcs, dashes, assignments } = recordingContext();
+  const attributes = new Map<string, string>();
+  const canvas = {
+    getContext: () => context,
+    setAttribute: (name: string, value: string) => attributes.set(name, value),
+  } as unknown as HTMLCanvasElement;
   const created = scene.create({ canvas, overlay: {} as HTMLElement, viewport: () => ({ width, height }) });
-  return { created, calls, texts, textPositions, segments, arcs, assignments };
+  return { created, calls, texts, textPositions, segments, arcs, dashes, assignments, attributes };
 }
 
 describe("optimizer scene", () => {
@@ -204,13 +211,57 @@ describe("optimizer scene", () => {
     expect(hint.y).toBe(readout.y);
   });
 
-  it("separates the camera and interaction text in a compact viewport", () => {
+  it("uses one readable camera hint in a compact viewport", () => {
     const { created, textPositions } = instance(390, 219);
     created.render(defaultState(), sceneFrame());
     const hint = textPositions.find((entry) => entry.text === "drag to orbit · scroll to zoom")!;
-    const readout = textPositions.find((entry) => entry.text.startsWith("["))!;
+    const readout = textPositions.find((entry) => entry.text.startsWith("["));
+    const step = stepBox({ width: 390, height: 219 });
 
-    expect(hint.y).toBeLessThan(readout.y);
+    expect(readout).toBeUndefined();
+    expect(hint.y).toBeLessThan(step.y);
+  });
+
+  it("gives canvas sliders and toggles finger-sized hit areas on a tablet", () => {
+    const { created } = instance(768, 432);
+    const state = defaultState();
+    const definition = SLIDERS.find((candidate) => candidate.param === "kappa")!;
+    const slider = sliderBox({ width: 768, height: 432 }, definition);
+    const sliderHandle = created.handles().find((handle) => handle.id === "kappa")!;
+    expect(sliderHandle.hitTest((slider.x0 + slider.x1) / 2, slider.y + 22, state)).toBe(true);
+
+    const toggle = created.handles().find((handle) => handle.id === "active.sgd")!;
+    const visual = toggleBox({ width: 768, height: 432 }, 0);
+    expect(toggle.hitTest(visual.x + visual.width / 2, visual.y + visual.height / 2 + 22, state)).toBe(true);
+  });
+
+  it("clamps slider drags to both boundaries", () => {
+    const { created } = instance(768, 432);
+    const definition = SLIDERS.find((candidate) => candidate.param === "kappa")!;
+    const box = sliderBox({ width: 768, height: 432 }, definition);
+    const slider = created.handles().find((handle) => handle.id === "kappa")!;
+
+    expect(slider.onDrag(box.x0 - 100, box.y, defaultState())).toEqual({ kappa: 1 });
+    expect(slider.onDrag(box.x1 + 100, box.y, defaultState())).toEqual({ kappa: 40 });
+  });
+
+  it("identifies optimizer loss paths with different line patterns", () => {
+    const { created, dashes } = instance();
+    created.render(
+      { ...defaultState(), "active.momentum": true, "active.adamw": true },
+      sceneFrame(),
+    );
+
+    expect(dashes.some((dash) => dash.length === 0)).toBe(true);
+    expect(dashes.some((dash) => dash.length === 2 && dash[0]! > dash[1]!)).toBe(true);
+    expect(dashes.some((dash) => dash.length === 2 && dash[0]! < dash[1]!)).toBe(true);
+  });
+
+  it("gives the canvas a meaningful accessible description", () => {
+    const { attributes } = instance();
+
+    expect(attributes.get("role")).toBe("img");
+    expect(attributes.get("aria-label")).toContain("loss landscape comparing SGD, momentum, and AdamW");
   });
 
   it("draws a vertical loss-plot guide every five steps", () => {

@@ -93,6 +93,22 @@ Test playback, interaction, captions, and the assistant when enabled before
 making the Space public. The complete process is described in
 [Deploy to Hugging Face Spaces](./docs/authoring.md#deploy-to-hugging-face-spaces).
 
+## Current viewing and accessibility support
+
+Tangible's first release supports desktop and tablet layouts. A portrait phone
+shows a clear request to rotate the device or use a larger screen instead of a
+compressed lesson. Phone landscape remains available with a more compact
+layout.
+
+The standard playback and assistant controls work with a keyboard, include
+visible focus indicators, and provide captions. The optimizer lesson also gives
+its canvas a screen-reader description and identifies optimizer paths with
+labels, marker shapes, and line patterns as well as color. Its sliders, toggles,
+starting point, and camera are still drawn on a canvas and do not yet have
+equivalent HTML controls. Keyboard and screen-reader users therefore cannot
+operate every scene parameter. Equivalent controls are planned after the first
+release.
+
 ## Documentation
 
 - [Authoring a lesson](./docs/authoring.md) explains the complete workflow from

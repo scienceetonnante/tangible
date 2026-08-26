@@ -68,6 +68,7 @@ describe("Player composition", () => {
     expect(mount.querySelector(".xv-shell")!.classList.contains("xv-with-assistant")).toBe(false);
     expect(mount.querySelector("canvas")).toBeTruthy();
     expect(mount.querySelector(".xv-chrome")).toBeTruthy();
+    expect(mount.querySelector(".xv-portrait-message")?.textContent).toContain("Rotate your phone to landscape");
     expect(mount.querySelector(".xv-gate")).toBeNull();
 
     player.audio.currentTime = 5;
@@ -247,6 +248,8 @@ After the pause.
     const player = new Player({ mount, scene: stubScene([]), tracks, assistant: { context: assistantContext } });
     const input = mount.querySelector(".xv-assistant-input") as HTMLInputElement;
     expect(mount.querySelector(".xv-shell")!.classList.contains("xv-with-assistant")).toBe(true);
+    expect(mount.querySelector(".xv-assistant-toggle")?.getAttribute("aria-expanded")).toBe("false");
+    expect((mount.querySelector(".xv-assistant-body") as HTMLElement).hidden).toBe(true);
     expect(input.disabled).toBe(true);
 
     player.audio.dispatchEvent(new Event("play"));
