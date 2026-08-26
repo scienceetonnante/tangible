@@ -2,7 +2,7 @@
 // lesson (tracks/captions/audio inlined by prepare.mjs) and expose it on window
 // for Playwright to drive.
 
-import { Player, PLAYER_CSS, preferredAudioSource } from "@tangible/player";
+import { Player, PLAYER_CSS, mimeForAudio, preferredAudioSource } from "@tangible/player";
 import type { AssistantContext, LessonTracks } from "@tangible/core";
 import { scene } from "../../lessons/unit-circle/scenes/scene";
 
@@ -30,7 +30,10 @@ const player = new Player({
   audioLoader: arrival
     ? async () => {
         await new Promise((resolve) => setTimeout(resolve, 400));
-        return [audio];
+        const response = await fetch(audio);
+        if (!response.ok) throw new Error(`narration returned ${response.status}`);
+        const buffer = await response.arrayBuffer();
+        return [URL.createObjectURL(new Blob([buffer], { type: mimeForAudio(audio) }))];
       }
     : undefined,
   introduction: arrival

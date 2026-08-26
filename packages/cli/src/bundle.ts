@@ -127,13 +127,14 @@ function indexHtml(manifest: Manifest): string {
 <title>${title}</title>
 <link rel="stylesheet" href="katex.css">
 <style>
-body { margin: 0; font-family: system-ui, sans-serif; background: #172033; }
+body { margin: 0; font-family: system-ui, sans-serif; background: #0b111a; }
 #app { width: 100%; }
-.xv-bootstrap { display: grid; place-items: center; width: min(100%, 177.7778dvh); aspect-ratio: 16 / 9; margin-inline: auto; padding: clamp(20px, 5vw, 64px); box-sizing: border-box; background: linear-gradient(135deg, #172033 0%, #263b52 100%); color: #fff; }
-.xv-bootstrap-content { width: min(680px, 100%); }
-.xv-bootstrap h1 { margin: 0; font-size: clamp(30px, 5vw, 58px); line-height: 1.05; }
-.xv-bootstrap-promise { max-width: 40ch; margin: 20px 0; font-size: clamp(18px, 2.4vw, 26px); line-height: 1.35; }
+.xv-bootstrap { display: grid; place-items: center; width: min(100%, 177.7778dvh); aspect-ratio: 16 / 9; margin-inline: auto; padding: clamp(14px, 3vw, 28px); box-sizing: border-box; background: radial-gradient(circle at 50% 35%, #263b52 0%, #111a27 70%); color: #fff; }
+.xv-bootstrap-content { width: min(560px, 100%); padding: clamp(22px, 3.5vw, 34px); border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 20px; box-sizing: border-box; background: rgba(18, 27, 41, 0.84); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.38); }
+.xv-bootstrap h1 { margin: 0; font-size: clamp(26px, 4.2vw, 40px); line-height: 1.05; }
+.xv-bootstrap-promise { max-width: 46ch; margin: 12px 0; font-size: clamp(16px, 2vw, 20px); line-height: 1.35; }
 .xv-bootstrap-status { color: #cbd8e4; font-size: 14px; }
+@media (max-width: 520px) { .xv-bootstrap { align-items: start; padding: 12px; } .xv-bootstrap-content { padding: 20px; border-radius: 16px; } }
 </style>
 </head>
 <body>

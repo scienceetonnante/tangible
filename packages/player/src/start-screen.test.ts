@@ -19,4 +19,11 @@ describe("lesson start screen", () => {
     expect(onStart).toHaveBeenCalledOnce();
     expect(onRetry).toHaveBeenCalledOnce();
   });
+
+  it("exposes the starting state", () => {
+    const screen = new StartScreen({ title: "Title", promise: "Promise." }, 120, { onStart: vi.fn(), onRetry: vi.fn() });
+    screen.setReady();
+    screen.setStarting();
+    expect(screen.el.dataset.state).toBe("starting");
+  });
 });

@@ -182,7 +182,9 @@ deployment:
 `promise` is the one-sentence explanation shown on the lesson's start screen.
 Tangible supplies the rest of that screen: the title, approximate duration,
 Start button, interaction guidance, loading and failure states, and the
-portrait-phone orientation notice.
+portrait-phone orientation notice. The framework shows this content in a
+translucent card over the initial lesson scene and prevents scene interaction
+until narration starts.
 
 `tts.provider` supports `elevenlabs` and `hf-endpoint`. Both providers require a
 `voice`. ElevenLabs also accepts an optional `model` and `speed`. The private

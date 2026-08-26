@@ -39,6 +39,7 @@ const assistantContext: AssistantContext = {
 };
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
@@ -125,6 +126,9 @@ describe("Player composition", () => {
     expect(player.audio.play).not.toHaveBeenCalled();
 
     finishLoading(["audio.wav"]);
+    await vi.waitFor(() => expect(player.audio.load).toHaveBeenCalledOnce());
+    expect(mount.querySelector(".xv-start-screen")?.getAttribute("data-state")).toBe("loading");
+    player.audio.dispatchEvent(new Event("canplay"));
     await vi.waitFor(() => expect(mount.querySelector(".xv-start-screen")?.getAttribute("data-state")).toBe("ready"));
     expect(mount.querySelector(".xv-start-status")?.textContent).toBe("Ready");
     (mount.querySelector(".xv-start-button") as HTMLButtonElement).click();
@@ -150,9 +154,34 @@ describe("Player composition", () => {
     await vi.waitFor(() => expect(mount.querySelector(".xv-start-screen")?.getAttribute("data-state")).toBe("failed"));
     expect(mount.querySelector(".xv-start-status")?.textContent).toContain("Check your connection");
     (mount.querySelector(".xv-start-button") as HTMLButtonElement).click();
+    await vi.waitFor(() => expect(player.audio.load).toHaveBeenCalledOnce());
+    player.audio.dispatchEvent(new Event("canplay"));
     await vi.waitFor(() => expect(mount.querySelector(".xv-start-screen")?.getAttribute("data-state")).toBe("ready"));
     expect(audioLoader).toHaveBeenCalledTimes(2);
     expect(error).toHaveBeenCalledOnce();
+    player.dispose();
+  });
+
+  it("turns a stalled play request into a retryable failure", async () => {
+    vi.useFakeTimers();
+    const mount = document.createElement("div");
+    const player = new Player({
+      mount,
+      scene: stubScene([]),
+      tracks,
+      introduction: { title: "A useful lesson", promise: "See how the example works." },
+    });
+    player.audio.play = vi.fn(() => new Promise<void>(() => {}));
+    player.audio.pause = vi.fn();
+
+    player.start();
+    (mount.querySelector(".xv-start-button") as HTMLButtonElement).click();
+    expect(mount.querySelector(".xv-start-screen")?.getAttribute("data-state")).toBe("starting");
+
+    await vi.advanceTimersByTimeAsync(5_000);
+    expect(mount.querySelector(".xv-start-screen")?.getAttribute("data-state")).toBe("failed");
+    expect(mount.querySelector(".xv-start-status")?.textContent).toContain("could not start");
+    expect(player.audio.pause).toHaveBeenCalledOnce();
     player.dispose();
   });
 

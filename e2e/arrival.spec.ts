@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("loading becomes a deliberate start and never autoplays", async ({ page }) => {
+test("loading becomes a deliberate start and never autoplays", async ({ page }, testInfo) => {
   await page.goto("/?arrival");
 
   const screen = page.locator(".xv-start-screen");
@@ -9,6 +9,12 @@ test("loading becomes a deliberate start and never autoplays", async ({ page }) 
   await expect(page.locator(".xv-start-promise")).toContainText("determines its sine and cosine");
   await expect(page.locator(".xv-start-meta")).toHaveText(/About \d+ minutes?/);
   await expect(page.locator(".xv-start-button")).toBeDisabled();
+  await expect(page.locator("canvas")).toBeVisible();
+  const card = await page.locator(".xv-start-content").boundingBox();
+  const player = await page.locator(".xv-player").boundingBox();
+  expect(card!.width).toBeLessThan(player!.width * 0.95);
+  if (testInfo.project.name !== "mobile-webkit") expect(card!.height).toBeLessThan(player!.height * 0.95);
+  await expect(screen).toHaveCSS("background-color", "rgba(4, 8, 15, 0.46)");
   await expect.poll(() => page.evaluate(() => (window as any).__player.clock.playing)).toBe(false);
 
   await expect(screen).toHaveAttribute("data-state", "ready");

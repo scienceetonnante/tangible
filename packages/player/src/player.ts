@@ -50,6 +50,9 @@ interface ActiveAnswer {
   startedAt: number;
 }
 
+const AUDIO_READY_TIMEOUT_MS = 15_000;
+const AUDIO_START_TIMEOUT_MS = 5_000;
+
 export class Player {
   readonly store: StateStore;
   readonly displayStore: StateStore;
@@ -216,7 +219,7 @@ export class Player {
     this.startScreen.setLoading();
     try {
       this.setAudioSources(await this.audioLoader());
-      this.audio.load();
+      await this.waitForAudioReady();
       this.startScreen.setReady();
     } catch (error) {
       console.error("narration loading failed:", error);
@@ -227,13 +230,36 @@ export class Player {
   private async beginLesson(): Promise<void> {
     if (!this.startScreen) return;
     this.startScreen.setStarting();
-    if (!(await this.clock.play())) {
+    if (!(await withTimeout(this.clock.play(), AUDIO_START_TIMEOUT_MS))) {
+      this.clock.pause();
       this.startScreen.setFailed("The narration could not start. Try again.", "start");
       return;
     }
     this.startScreen.el.remove();
     this.startScreen = undefined;
     if (this.chrome && !this.unbindKeys) this.unbindKeys = this.chrome.bindKeys();
+  }
+
+  private waitForAudioReady(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      const finish = (error?: Error) => {
+        clearTimeout(timeout);
+        this.audio.removeEventListener("canplay", onReady);
+        this.audio.removeEventListener("error", onError);
+        if (error) reject(error);
+        else resolve();
+      };
+      const onReady = () => finish();
+      const onError = () => finish(new Error(this.audio.error?.message || "the browser could not decode the narration"));
+      const timeout = setTimeout(
+        () => finish(new Error("the browser did not make the narration ready in time")),
+        AUDIO_READY_TIMEOUT_MS,
+      );
+      this.audio.addEventListener("canplay", onReady);
+      this.audio.addEventListener("error", onError);
+      this.audio.load();
+      if (this.audio.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) onReady();
+    });
   }
 
   private setAudioSources(sources: string[]): void {
@@ -387,4 +413,14 @@ function randomClientId(): string {
   const bytes = new Uint8Array(16);
   crypto.getRandomValues(bytes);
   return [...bytes].map((byte) => byte.toString(16).padStart(2, "0")).join("");
+}
+
+async function withTimeout(result: Promise<boolean>, timeoutMs: number): Promise<boolean> {
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  const expired = new Promise<false>((resolve) => {
+    timeout = setTimeout(() => resolve(false), timeoutMs);
+  });
+  const value = await Promise.race([result, expired]);
+  if (timeout !== undefined) clearTimeout(timeout);
+  return value;
 }

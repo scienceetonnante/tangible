@@ -17,16 +17,16 @@ export const PLAYER_CSS = `
 .xv-board-item.xv-shown { opacity: 1; }
 .xv-board-item.xv-dimmed { opacity: 0.4; }
 .xv-hl { background: #fff3a0; border-radius: 3px; }
-.xv-start-screen { position: absolute; inset: 0; z-index: 10; display: grid; place-items: center; padding: clamp(20px, 5vw, 64px); box-sizing: border-box; background: linear-gradient(135deg, #172033 0%, #263b52 100%); color: #fff; font-family: system-ui, sans-serif; user-select: text; }
-.xv-start-content { width: min(680px, 100%); }
-.xv-start-kind { margin-bottom: 16px; color: #b9d8ed; font-size: clamp(12px, 1.6vw, 15px); font-weight: 650; letter-spacing: 0.08em; text-transform: uppercase; }
-.xv-start-title { max-width: 16ch; margin: 0; font-size: clamp(30px, 5vw, 58px); line-height: 1.05; letter-spacing: -0.025em; }
-.xv-start-promise { max-width: 40ch; margin: 20px 0 0; font-size: clamp(18px, 2.4vw, 26px); line-height: 1.35; }
-.xv-start-meta { margin: 16px 0 0; color: #cbd8e4; font-size: clamp(14px, 1.8vw, 17px); }
-.xv-start-interactive { margin: 10px 0 0; color: #e5edf3; font-size: clamp(14px, 1.8vw, 17px); }
+.xv-start-screen { position: absolute; inset: 0; z-index: 10; display: grid; place-items: center; overflow: auto; padding: clamp(14px, 3vw, 28px); box-sizing: border-box; background: rgba(4, 8, 15, 0.46); -webkit-backdrop-filter: grayscale(0.55) brightness(0.72); backdrop-filter: grayscale(0.55) brightness(0.72); color: #fff; font-family: system-ui, sans-serif; user-select: text; }
+.xv-start-content { width: min(560px, 100%); padding: clamp(22px, 3.5vw, 34px); border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 20px; box-sizing: border-box; background: rgba(18, 27, 41, 0.84); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.38); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+.xv-start-kind { margin-bottom: 10px; color: #b9d8ed; font-size: clamp(11px, 1.4vw, 13px); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+.xv-start-title { max-width: 21ch; margin: 0; font-size: clamp(26px, 4.2vw, 40px); line-height: 1.05; letter-spacing: -0.025em; }
+.xv-start-promise { max-width: 46ch; margin: 12px 0 0; font-size: clamp(16px, 2vw, 20px); line-height: 1.35; }
+.xv-start-meta { margin: 12px 0 0; color: #cbd8e4; font-size: clamp(13px, 1.6vw, 15px); }
+.xv-start-interactive { margin: 7px 0 0; color: #e5edf3; font-size: clamp(13px, 1.6vw, 15px); }
 .xv-orientation-notice { display: none; margin: 12px 0 0; padding-left: 22px; color: #ffe6a6; font-size: 14px; line-height: 1.4; }
 .xv-orientation-notice::before { content: "↻"; display: inline-block; width: 22px; margin-left: -22px; }
-.xv-start-controls { display: flex; align-items: center; gap: 20px; margin-top: clamp(24px, 4vw, 40px); }
+.xv-start-controls { display: flex; align-items: center; gap: 18px; margin-top: clamp(18px, 3vw, 28px); }
 .xv-start-status { display: flex; flex: 1; align-items: center; gap: 10px; min-width: 0; color: #cbd8e4; font-size: 14px; }
 .xv-start-screen[data-state="failed"] .xv-start-status { color: #ffd0c8; }
 .xv-loading-spinner { width: 16px; height: 16px; flex: 0 0 auto; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: xv-spin 800ms linear infinite; }
@@ -38,7 +38,7 @@ export const PLAYER_CSS = `
 @keyframes xv-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .xv-loading-spinner { animation-duration: 1600ms; } .xv-start-button { transform: none !important; } }
 @media (max-width: 700px) { .xv-orientation-notice { display: block; } }
-@media (max-width: 520px) { .xv-start-screen { align-items: start; overflow: auto; padding: 22px 20px; } .xv-start-kind { margin-bottom: 10px; } .xv-start-promise { margin-top: 12px; } .xv-start-controls { align-items: stretch; flex-direction: column-reverse; gap: 12px; margin-top: 20px; } .xv-start-button { width: 100%; } }
+@media (max-width: 520px) { .xv-start-screen { align-items: start; padding: 12px; } .xv-start-content { padding: 20px; border-radius: 16px; } .xv-start-controls { align-items: stretch; flex-direction: column-reverse; gap: 12px; margin-top: 18px; } .xv-start-button { width: 100%; } }
 .xv-chrome { position: absolute; left: 0; right: 0; bottom: 0; height: 44px; display: flex; align-items: center; gap: 6px; padding: 0 8px; background: rgba(255,255,255,0.85); box-sizing: border-box; }
 .xv-chrome button { border: none; background: none; cursor: pointer; color: #222; font-size: 18px; height: 34px; min-width: 34px; padding: 0 6px; display: inline-flex; align-items: center; justify-content: center; line-height: 1; border-radius: 4px; }
 .xv-chrome button:hover { background: rgba(0,0,0,0.06); }

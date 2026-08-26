@@ -38,7 +38,7 @@ export class StartScreen {
 
     const interactive = document.createElement("p");
     interactive.className = "xv-start-interactive";
-    interactive.textContent = "You can interact with the scene while the explanation is playing.";
+    interactive.textContent = "Interactive scene — explore while listening.";
 
     const orientation = document.createElement("p");
     orientation.className = "xv-orientation-notice";
@@ -86,6 +86,7 @@ export class StartScreen {
   }
 
   setStarting(): void {
+    this.el.dataset.state = "starting";
     this.status.textContent = "Starting…";
     this.spinner.hidden = false;
     this.button.textContent = "Starting…";

@@ -44,7 +44,9 @@ committed. Tangible currently assumes that every lesson is in English.
 Write a concise, one-sentence `promise` in `lesson.yaml`. It appears below the
 lesson title before playback and should tell a visitor what they will see or
 understand. Tangible adds the duration, loading status, Start button, interaction
-guidance, and phone-orientation notice.
+guidance, and phone-orientation notice. The player renders the initial scene
+behind a translucent, input-blocking card, so lesson authors do not create or
+style a separate onboarding screen.
 
 Each lesson has one scene entry module, selected by the `scene` field in
 `lesson.yaml`. Narration chapters are sections on the lesson timeline; they do
