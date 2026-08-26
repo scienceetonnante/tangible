@@ -126,6 +126,8 @@ async function cmdFrame(flags: Flags): Promise<void> {
 
 type NarrationMode = "provider" | "offline" | "silent";
 
+class LessonBuildError extends Error {}
+
 /** Choose the configured provider, local draft voice, or silent test substitute. */
 function selectTts(config: TtsConfig, mode: NarrationMode): { adapter: TtsAdapter; voice: string } {
   if (mode === "silent") return { adapter: new FakeTtsAdapter(), voice: config.voice };
@@ -158,8 +160,9 @@ async function buildLesson(lessonDir: string, manifest: Manifest, scene: SceneIn
 
   const errs = check(parsed, scene).filter((d) => d.severity === "error");
   if (errs.length) {
-    for (const d of errs) console.error(formatDiagnostic(d));
-    die(`build aborted: ${errs.length} error(s) in ${file}`);
+    throw new LessonBuildError(
+      `${errs.map(formatDiagnostic).join("\n")}\nbuild aborted: ${errs.length} error(s) in ${file}`,
+    );
   }
 
   const { adapter, voice } = selectTts(manifest.tts, mode);
@@ -195,19 +198,29 @@ async function buildLesson(lessonDir: string, manifest: Manifest, scene: SceneIn
 async function cmdPreview(flags: Flags): Promise<void> {
   const lessonDir = flags.lesson ?? process.cwd();
   const manifest = await loadManifest(lessonDir);
-  const rebuild = async () => {
-    const scene = await loadScene(join(lessonDir, manifest.scene));
-    // Same TTS selection as build; cached, so it only re-synthesizes on prose edits.
-    // Pass --offline for fast local narration while editing the lesson.
-    await buildLesson(lessonDir, manifest, scene, narrationMode(flags));
-    await bundleSite(lessonDir, manifest, join(lessonDir, manifest.scene));
-  };
-  await rebuild();
   const watchPaths = [
     join(lessonDir, manifest.scene),
     join(lessonDir, "script.md"),
     ...(manifest.assistant ? [join(lessonDir, manifest.assistant.context)] : []),
   ];
+  const rebuild = async () => {
+    try {
+      const scene = await loadScene(join(lessonDir, manifest.scene));
+      // Same TTS selection as build; cached, so it only re-synthesizes on prose edits.
+      // Pass --offline for fast local narration while editing the lesson.
+      await buildLesson(lessonDir, manifest, scene, narrationMode(flags));
+      await bundleSite(lessonDir, manifest, join(lessonDir, manifest.scene));
+    } catch (error) {
+      throw new Error(authoringError(error));
+    }
+  };
+  let initialError: string | undefined;
+  try {
+    await rebuild();
+  } catch (error) {
+    initialError = authoringError(error);
+    console.error(`preview build failed:\n${initialError}`);
+  }
   const siteDir = join(lessonDir, "build", "site");
   const onProviderRequest = async (request: Record<string, unknown>) => {
     const path = await writeAssistantPromptLog(lessonDir, request);
@@ -220,6 +233,7 @@ async function cmdPreview(flags: Flags): Promise<void> {
     port: flags.port,
     host: flags.host,
     assistantApi: manifest.assistant ? createAssistantApi({ siteDir, fake: noProviders(flags), onProviderRequest }) : undefined,
+    initialError,
   });
 }
 
@@ -424,6 +438,13 @@ function noProviders(flags: Flags): boolean {
   return Boolean(flags.offline || flags.silent);
 }
 
+function authoringError(error: unknown): string {
+  if (error instanceof ParseError) {
+    return formatDiagnostic({ severity: "error", message: error.message, loc: error.loc });
+  }
+  return error instanceof Error ? error.message : String(error);
+}
+
 /** Load .env from the current dir and the lesson dir (built-in, no dependency). */
 function loadDotenv(lessonDir: string): void {
   for (const p of new Set([join(process.cwd(), ".env"), join(lessonDir, ".env")])) {
@@ -439,5 +460,6 @@ function die(msg: string): never {
 
 main().catch((e) => {
   if (e instanceof ParseError) die(formatDiagnostic({ severity: "error", message: e.message, loc: e.loc }));
+  if (e instanceof LessonBuildError) die(e.message);
   die(String(e instanceof Error ? (e.stack ?? e.message) : e));
 });

@@ -227,6 +227,11 @@ Use an offline preview while the prose and cue order are changing:
 pnpm lesson preview --offline --lesson lessons/my-lesson
 ```
 
+The preview remains running when a script or scene edit contains an error. It
+shows the compiler diagnostic on a red page and reloads the lesson automatically
+after the source is corrected. `lesson check`, `lesson build`, and deployment
+still stop on invalid source.
+
 Offline mode does not call a speech or answer provider. It synthesizes the
 narration locally with the quantized Supertonic 3 model and uses a local
 substitute for assistant answers. The first offline build downloads a pinned
