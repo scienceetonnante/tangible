@@ -20,7 +20,7 @@
     "@narrable/tts": "workspace:*",
     "@narrable/player": "workspace:*",
     "@narrable/ingredients": "workspace:*",
-    "esbuild": "^0.24.0",
+    "esbuild": "^0.28.2",
     "playwright": "^1.49.1",
     "yaml": "^2.6.1"
   }

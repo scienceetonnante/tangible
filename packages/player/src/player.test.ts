@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi } from "vitest";
+import { afterEach, describe, it, expect, vi } from "vitest";
 import { Player } from "./player.js";
 import type { SceneModule, SceneContext, SceneFrame } from "./scene-host.js";
 import type { AssistantContext, LessonTracks, PlainState } from "@narrable/core";
@@ -37,6 +37,8 @@ const assistantContext: AssistantContext = {
   groups: {},
   commandable: ["theta"],
 };
+
+afterEach(() => vi.unstubAllGlobals());
 
 function stubScene(seen: PlainState[]): SceneModule {
   return {
@@ -183,7 +185,19 @@ After the pause.
   });
 
   it("sends a persistent anonymous client id with assistant requests", async () => {
-    localStorage.clear();
+    const stored = new Map<string, string>();
+    vi.stubGlobal("localStorage", {
+      clear: () => stored.clear(),
+      getItem: (key: string) => stored.get(key) ?? null,
+      key: (index: number) => [...stored.keys()][index] ?? null,
+      get length() {
+        return stored.size;
+      },
+      removeItem: (key: string) => stored.delete(key),
+      setItem: (key: string, value: string) => {
+        stored.set(key, value);
+      },
+    } satisfies Storage);
     let requestHeaders: Headers | undefined;
     let requestBody: Record<string, unknown> | undefined;
     const fetchImpl: typeof fetch = async (_input, init) => {
