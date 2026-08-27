@@ -4,7 +4,16 @@ import { StateStore } from "../../../packages/player/src/store.js";
 import type { ParameterActivityMap, SceneFrame } from "../../../packages/player/src/index.js";
 import { describe, expect, it } from "vitest";
 import { scene, schema } from "./scene.js";
-import { algorithmGroupBox, landscapeBox, lossPlotBox, sliderBox, SLIDERS, stepBox, toggleBox } from "./view.js";
+import {
+  algorithmGroupBox,
+  landscapeBox,
+  lossPlotBox,
+  sliderBox,
+  sliderLabelOffset,
+  SLIDERS,
+  stepBox,
+  toggleBox,
+} from "./view.js";
 
 function recordingContext() {
   const calls: string[] = [];
@@ -155,19 +164,20 @@ describe("optimizer scene", () => {
     ["896 × 414 phone", { width: 620, height: 349 }],
   ])("keeps optimizer labels and controls separate in the %s scene", (_name, view) => {
     const unit = Math.min(view.width, view.height);
-    const titleFont = Math.max(12, unit * 0.018);
-    const sliderFont = Math.max(11, unit * 0.016);
+    const titleFont = Math.max(11, unit * 0.017);
+    const sliderFont = Math.max(10, unit * 0.015);
 
     for (const optimizer of ["sgd", "momentum", "adamw"] as const) {
       const group = algorithmGroupBox(view, optimizer);
       const titleBottom = group.y + unit * 0.009 + titleFont;
-      const sliders = SLIDERS.filter((definition) => definition.optimizer === optimizer).map((definition) =>
-        sliderBox(view, definition),
-      );
+      const sliders = SLIDERS.filter((definition) => definition.optimizer === optimizer).map((definition) => ({
+        definition,
+        box: sliderBox(view, definition),
+      }));
 
       for (const slider of sliders) {
-        const labelTop = slider.y - unit * 0.017 - sliderFont;
-        const knobBottom = slider.y + unit * 0.0112;
+        const labelTop = slider.box.y - sliderLabelOffset(view, slider.definition) - sliderFont;
+        const knobBottom = slider.box.y + unit * 0.0112;
         expect(labelTop).toBeGreaterThanOrEqual(titleBottom + 2);
         expect(knobBottom).toBeLessThanOrEqual(group.y + group.height);
       }
@@ -177,6 +187,20 @@ describe("optimizer scene", () => {
       sliderBox(view, definition),
     );
     expect(momentum[1]!.y - momentum[0]!.y).toBeGreaterThanOrEqual(44);
+
+    const smoothing = SLIDERS.find((definition) => definition.param === "momentum.beta")!;
+    const smoothingLabelTop = momentum[1]!.y - sliderLabelOffset(view, smoothing) - sliderFont;
+    expect(smoothingLabelTop - momentum[0]!.y).toBeLessThan(27);
+  });
+
+  it("uses smaller optimizer typography in a compact scene", () => {
+    const { created, assignments } = instance(577, 325);
+    created.render(defaultState(), sceneFrame());
+    const fonts = assignments.filter(({ property }) => property === "font").map(({ value }) => value);
+
+    expect(fonts).toContain("500 11px sans-serif");
+    expect(fonts).toContain("500 10px sans-serif");
+    expect(fonts).toContain("10px sans-serif");
   });
 
   it("aligns the step slider with the loss graph", () => {

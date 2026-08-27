@@ -13,6 +13,7 @@ export interface SliderDefinition {
   digits: number;
   y: number;
   compactY?: number;
+  compactLabelOffset?: number;
   section: "problem" | "algorithm";
   optimizer?: OptimizerName;
   slot?: 0 | 1;
@@ -32,7 +33,7 @@ export const PROBLEM_SLIDERS: SliderDefinition[] = [
 export const ALGORITHM_SLIDERS: SliderDefinition[] = [
   { param: "sgd.lr", label: "learning rate η", range: [0.02, 0.12], digits: 3, y: 0.19, compactY: 0.225, section: "algorithm", optimizer: "sgd" },
   { param: "momentum.lr", label: "learning rate η", range: [0.02, 0.25], digits: 3, y: 0.33, compactY: 0.37, section: "algorithm", optimizer: "momentum" },
-  { param: "momentum.beta", label: "smoothing β", range: [0, 0.95], digits: 2, y: 0.43, compactY: 0.507, section: "algorithm", optimizer: "momentum" },
+  { param: "momentum.beta", label: "smoothing β", range: [0, 0.95], digits: 2, y: 0.43, compactY: 0.507, compactLabelOffset: 0.032, section: "algorithm", optimizer: "momentum" },
   { param: "adamw.lr", label: "learning rate η", range: [0.02, 0.16], digits: 3, y: 0.56, compactY: 0.65, section: "algorithm", optimizer: "adamw" },
 ];
 
@@ -62,6 +63,11 @@ export function sliderBox(view: View, definition: SliderDefinition) {
   const [x0, x1] = definition.section === "problem" ? problemX : [0.568, 0.756];
   const y = isCompactHeight(view) ? (definition.compactY ?? definition.y) : definition.y;
   return { x0: view.width * x0, x1: view.width * x1, y: view.height * y };
+}
+
+export function sliderLabelOffset(view: View, definition: SliderDefinition): number {
+  const ratio = isCompactHeight(view) ? (definition.compactLabelOffset ?? 0.017) : 0.017;
+  return Math.min(view.width, view.height) * ratio;
 }
 
 export function stepBox(view: View) {

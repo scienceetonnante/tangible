@@ -8,6 +8,7 @@ import {
   PROBLEM_SLIDERS,
   SERIES,
   sliderBox,
+  sliderLabelOffset,
   stepBox,
   toggleBox,
   TOGGLES,
@@ -78,7 +79,7 @@ function drawAlgorithmGroups(
     g.fillStyle = active ? SERIES[name].color : DISABLED;
     g.fillRect(box.x, box.y, unit * 0.007, box.height);
     g.fillStyle = active ? FOREGROUND : DISABLED;
-    g.font = `500 ${Math.max(cssPixels(view, 12), unit * 0.018)}px sans-serif`;
+    g.font = `500 ${Math.max(cssPixels(view, 11), unit * 0.017)}px sans-serif`;
     g.textAlign = "left";
     g.textBaseline = "top";
     g.fillText(SERIES[name].label, box.x + unit * 0.012, box.y + unit * 0.009);
@@ -96,7 +97,7 @@ function drawToggles(g: CanvasRenderingContext2D, view: View, state: Readonly<Pl
     g.fillRect(box.x, box.y, box.width, box.height);
     g.strokeRect(box.x, box.y, box.width, box.height);
     g.fillStyle = active ? "#050609" : "#6b7280";
-    g.font = `500 ${Math.max(cssPixels(view, 11), unit * 0.02)}px sans-serif`;
+    g.font = `500 ${Math.max(cssPixels(view, 10), unit * 0.018)}px sans-serif`;
     g.textAlign = "center";
     g.textBaseline = "middle";
     g.fillText(toggle.label, box.x + box.width / 2, box.y + box.height / 2);
@@ -118,6 +119,7 @@ function drawSlider(
   const active = !definition.optimizer || (state[`active.${definition.optimizer}`] as boolean);
   const color = definition.optimizer ? SERIES[definition.optimizer].color : FOREGROUND;
   const liveColor = active ? color : DISABLED;
+  const labelOffset = sliderLabelOffset(view, definition);
 
   drawKnobGlow(g, knobX, box.y, unit, color, glow);
   g.strokeStyle = active ? "#343943" : "#202329";
@@ -132,12 +134,15 @@ function drawSlider(
   g.fill();
   g.stroke();
   g.fillStyle = active ? FOREGROUND : DISABLED;
-  g.font = `${Math.max(cssPixels(view, 11), unit * 0.016)}px sans-serif`;
+  const fontSize = definition.section === "algorithm"
+    ? Math.max(cssPixels(view, 10), unit * 0.015)
+    : Math.max(cssPixels(view, 11), unit * 0.016);
+  g.font = `${fontSize}px sans-serif`;
   g.textAlign = "left";
   g.textBaseline = "bottom";
-  g.fillText(definition.label, box.x0, box.y - unit * 0.017);
+  g.fillText(definition.label, box.x0, box.y - labelOffset);
   g.textAlign = "right";
-  g.fillText(value.toFixed(definition.digits), box.x1, box.y - unit * 0.017);
+  g.fillText(value.toFixed(definition.digits), box.x1, box.y - labelOffset);
 }
 
 function drawKnobGlow(
