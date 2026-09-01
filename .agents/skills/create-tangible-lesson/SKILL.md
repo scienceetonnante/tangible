@@ -1,6 +1,6 @@
 ---
 name: create-tangible-lesson
-description: Create, continue, review, or deploy a Tangible interactive lesson from a human-built scene and narration. Use for work in lessons/, including scene design, natural-language scene hints, formal narration cues, offline or real-voice builds, visual and interaction review, assistant context, and Hugging Face Space releases.
+description: Create, continue, review, or deploy a Tangible interactive lesson from an author's subject, scene, or narration. Use for work in lessons/, including scene design, natural-language scene hints, formal narration cues, offline or real-voice builds, visual and interaction review, assistant context, and Hugging Face Space releases.
 ---
 
 # Create a Tangible lesson
@@ -8,6 +8,11 @@ description: Create, continue, review, or deploy a Tangible interactive lesson f
 Treat lesson production as a staged collaboration. The human owns pedagogical
 intent and spoken prose. Own the technical scene, formal choreography,
 verification, and authorized deployment.
+
+For a new lesson, first establish the subject and the relationship that should
+become visible. If the author supplied both, begin without asking another
+question. If either is missing and guessing would change the teaching strategy,
+ask for it before replacing the starter scene.
 
 ## Load only the required context
 
@@ -31,11 +36,12 @@ Use existing lessons as examples, not as normative documentation.
 Inspect the lesson before editing. Continue from the earliest incomplete stage;
 do not redo approved work.
 
-1. Scene implemented and human-tested.
-2. Narration written with natural-language scene hints.
-3. Hints translated into formal cues.
-4. Lesson reviewed with real narration.
-5. Release authorized and deployed.
+1. Teaching relationship stated.
+2. Scene implemented and human-tested.
+3. Narration written with natural-language scene hints.
+4. Hints translated into formal cues.
+5. Lesson reviewed with real narration.
+6. Release authorized and deployed.
 
 If a missing human decision would materially alter the scene or teaching strategy,
 ask a concise question. Do not fill pedagogical gaps with silent assumptions.
@@ -48,6 +54,11 @@ For a new lesson, scaffold it:
 pnpm build
 pnpm lesson new <id> --lesson lessons/<id>
 ```
+
+The scaffold is a runnable example, not a proposed teaching strategy. Replace
+its generic amount-and-bar relationship with the smallest interaction that
+expresses the author's intended relationship. Keep the generated accessibility,
+responsive layout, cue, and pause patterns when they remain appropriate.
 
 The author may already know the intended lesson and may begin by coding the scene
 as an ordinary interactive website. Help implement the smallest scene that makes
@@ -104,6 +115,10 @@ argument. Use `--silent` instead when a test must avoid the local model download
 
 Before release, follow the review and deployment sections of
 `docs/authoring.md` and run the lesson-specific tests plus `pnpm lesson check`.
+
+When handing control back at a review boundary, state what is ready, what the
+author should try, and which later stage has deliberately not begun. Do not ask
+the author to inspect generated build files.
 
 ## 5. Deploy only with authorization
 

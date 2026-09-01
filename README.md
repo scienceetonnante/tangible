@@ -24,6 +24,25 @@ New lesson directory:
 pnpm lesson new my-lesson --lesson lessons/my-lesson
 ```
 
+For a complete first lesson, follow the
+[creator quick start](./docs/quickstart.md).
+
+## Create a lesson with a coding agent
+
+The repository includes a `create-tangible-lesson` skill and instructions that
+preserve the author's control of the teaching argument. Copy this prompt and
+replace the bracketed text:
+
+> Use `$create-tangible-lesson` and help me create a lesson about [subject]. The
+> relationship I want learners to see is [relationship]. Build the smallest
+> interactive scene first and stop for my review. Preserve my narration, turn
+> my double-bracket hints into formal cues, and do not deploy until I explicitly
+> authorize it.
+
+The human owns the narration, teaching intent, and final visual judgment. The
+agent implements the scene, translates natural-language hints into validated
+cues, checks the lesson, and prepares builds.
+
 ### Build the scene
 
 Build the interactive scene `scene.ts` in the `scenes` folder (or ask an agent to do it).

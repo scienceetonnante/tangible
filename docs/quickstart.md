@@ -47,6 +47,30 @@ The generated lesson already contains a scene, a range control, narration, a
 synchronized cue, and a pause. It does not contain an assistant, deployment
 target, or production speech provider.
 
+## Create with a coding agent
+
+Tangible includes repository instructions and a `create-tangible-lesson` skill.
+Agents that support repository-local skills can follow the complete staged
+workflow. Other coding agents can follow the same process by reading `AGENTS.md`,
+`lessons/AGENTS.md`, and this guide.
+
+Copy this prompt and replace the bracketed text:
+
+> Use `$create-tangible-lesson` and help me create a lesson about [subject]. The
+> relationship I want learners to see is [relationship]. Build the smallest
+> interactive scene first and stop for my review. Preserve my narration, turn
+> my double-bracket hints into formal cues, and do not deploy until I explicitly
+> authorize it.
+
+The human remains responsible for the teaching argument, spoken narration, and
+final visual judgment. The agent implements the scene, translates
+natural-language hints after scene review, runs the checks, and prepares local
+builds. Production narration and Space deployment come only after the lesson is
+stable.
+
+If you are following the guide without an agent, continue with the manual scene
+and narration edits below.
+
 Open the scene by itself:
 
 ```bash
