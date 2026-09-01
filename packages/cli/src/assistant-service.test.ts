@@ -179,6 +179,18 @@ describe("assistant service", () => {
     await expect(answerQuestion(request, context, { fetchImpl, hfToken: "token" })).rejects.not.toThrow("private provider detail");
   });
 
+  it("retains a concise JSON provider error for local diagnostics", async () => {
+    const fetchImpl: typeof fetch = async () => new Response(JSON.stringify({
+      error: "The selected model does not support this parameter.",
+    }), { status: 400 });
+
+    await expect(answerQuestion(request, context, { fetchImpl, hfToken: "token" })).rejects.toMatchObject({
+      status: 400,
+      detail: "The selected model does not support this parameter.",
+      message: "assistant provider returned HTTP 400: The selected model does not support this parameter.",
+    });
+  });
+
   it("aborts a provider call after the configured timeout", async () => {
     const fetchImpl: typeof fetch = (_input, init) => new Promise<Response>((_resolve, reject) => {
       const signal = init?.signal;

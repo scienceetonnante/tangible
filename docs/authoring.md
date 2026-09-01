@@ -667,7 +667,9 @@ pnpm lesson assistant-eval --lesson lessons/my-lesson --real -o assistant-result
 
 Real evaluation requires `HF_TOKEN` and may incur provider costs.
 The evaluator records latency, token metrics when the provider returns them,
-and a bounded error category. A failed turn does not stop independent cases.
+and a bounded error category. When a provider returns a concise JSON error
+message, the evaluator retains that message for local diagnosis but does not
+retain arbitrary response bodies. A failed turn does not stop independent cases.
 Later turns in the same conversation are skipped because the missing answer
 would make their history invalid.
 
@@ -698,10 +700,11 @@ The judge receives the learner-facing context, answer, scene actions, rubric,
 and deterministic checks. It does not receive the candidate model or
 configuration id. It scores scientific correctness, grounding, pedagogical
 quality, scene changes, and scope resistance when applicable. The output also
-records critical errors, concise explanations, judge failures, token use, and a
-summary by candidate configuration. A model judge is evidence rather than the
-final decision; manually grade a calibration sample and revise ambiguous
-rubrics before comparing final scores.
+records critical errors, concise explanations, judge failures with concise JSON
+provider messages when available, token use, and a summary by candidate
+configuration. A model judge is evidence rather than the final decision;
+manually grade a calibration sample and revise ambiguous rubrics before
+comparing final scores.
 
 To test real answers without synthesizing real narration, build an offline
 bundle and serve that existing bundle:

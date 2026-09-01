@@ -3,10 +3,11 @@
 
 import { validateValue, type AnswerBeat, type AssistantContext, type AssistantRequest, type AssistantResponse, type ParamType, type ParamValue } from "@tangible/core";
 import { formatAssistantSystemPrompt, type AssistantPromptStyle } from "./assistant-prompt.js";
+import { readProviderErrorMessage } from "./provider-error.js";
 
 export class AssistantProviderError extends Error {
-  constructor(readonly status: number) {
-    super(`assistant provider returned HTTP ${status}`);
+  constructor(readonly status: number, readonly detail?: string) {
+    super(`assistant provider returned HTTP ${status}${detail ? `: ${detail}` : ""}`);
     this.name = "AssistantProviderError";
   }
 }
@@ -87,8 +88,8 @@ async function huggingFaceAnswer(
     throw error;
   }
   if (!response.ok) {
-    await response.body?.cancel();
-    throw new AssistantProviderError(response.status);
+    const detail = await readProviderErrorMessage(response);
+    throw new AssistantProviderError(response.status, detail);
   }
   const responseBody = (await response.json()) as ProviderResponseBody;
   providers.onProviderMetrics?.(providerMetrics(responseBody));

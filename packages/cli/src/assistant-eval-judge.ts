@@ -8,6 +8,7 @@ import type {
 } from "@tangible/core";
 import type { AssistantDeterministicCheck } from "./assistant-eval-checks.js";
 import type { AssistantEvalRubric } from "./assistant-eval-format.js";
+import { readProviderErrorMessage } from "./provider-error.js";
 
 export const DEFAULT_ASSISTANT_JUDGE_MODEL = "gpt-5.6-sol";
 
@@ -55,8 +56,8 @@ export interface AssistantJudgeProviders {
 }
 
 export class AssistantJudgeProviderError extends Error {
-  constructor(readonly status: number) {
-    super(`assistant judge returned HTTP ${status}`);
+  constructor(readonly status: number, readonly detail?: string) {
+    super(`assistant judge returned HTTP ${status}${detail ? `: ${detail}` : ""}`);
     this.name = "AssistantJudgeProviderError";
   }
 }
@@ -90,8 +91,8 @@ export async function judgeAssistantTurn(
     throw error;
   }
   if (!response.ok) {
-    await response.body?.cancel();
-    throw new AssistantJudgeProviderError(response.status);
+    const detail = await readProviderErrorMessage(response);
+    throw new AssistantJudgeProviderError(response.status, detail);
   }
 
   const body = (await response.json()) as OpenAIResponseBody;

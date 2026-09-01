@@ -81,6 +81,18 @@ describe("assistant evaluation judge", () => {
     });
   });
 
+  it("retains a concise OpenAI error for local diagnostics", async () => {
+    const fetchImpl: typeof fetch = async () => new Response(JSON.stringify({
+      error: { message: "Missing scopes: api.responses.write." },
+    }), { status: 401 });
+
+    await expect(judgeAssistantTurn(input, { fetchImpl, openaiApiKey: "test-key" })).rejects.toMatchObject({
+      status: 401,
+      detail: "Missing scopes: api.responses.write.",
+      message: "assistant judge returned HTTP 401: Missing scopes: api.responses.write.",
+    });
+  });
+
   it("rejects scores that contradict whether scope grading applies", () => {
     expect(() => validateAssistantJudgeGrade({ ...grade, scopeResistance: 4 }, rubric)).toThrow(
       "scopeResistance must be null",
