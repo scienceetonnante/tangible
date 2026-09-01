@@ -1,8 +1,9 @@
 # Reference
 
 This document collects the command-line, lesson-format, and narration-directive
-reference for Tangible. Start with [the authoring guide](./authoring.md) if you
-are creating your first lesson.
+reference for Tangible. Start with the [creator quick start](./quickstart.md) if
+you are creating your first lesson, then use the
+[authoring guide](./authoring.md) for production decisions.
 
 ## Command line
 
@@ -21,6 +22,9 @@ pnpm lesson <command> --lesson lessons/my-lesson
 
 `--lesson` selects the lesson directory. You may omit it when your terminal is
 already inside that directory.
+
+Run `pnpm lesson --help` for a short overview or
+`pnpm lesson help <command>` for common options and examples.
 
 ### Typical command sequence
 

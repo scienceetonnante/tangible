@@ -27,11 +27,21 @@ import { runAssistantEval } from "./assistant-eval.js";
 import { runAssistantEvalGrade } from "./assistant-eval-grade.js";
 import { writeAssistantPromptLog } from "./assistant-prompt-log.js";
 import { deployLessonToSpace } from "./deploy.js";
+import { helpText } from "./help.js";
 
 async function main() {
   const argv = process.argv.slice(2);
   const cmd = argv[0];
   const flags = parseFlags(argv.slice(1));
+
+  if (cmd === "help" || cmd === "--help" || cmd === "-h") {
+    console.log(helpText(cmd === "help" ? argv[1] : undefined));
+    return;
+  }
+  if (flags.help) {
+    console.log(helpText(cmd));
+    return;
+  }
 
   if (cmd !== "scene") loadDotenv(flags.lesson ?? process.cwd()); // scene preview never needs provider credentials
 
@@ -86,7 +96,7 @@ async function main() {
       await cmdRef(flags);
       return;
     default:
-      die(`unknown command "${cmd ?? ""}"\nusage: lesson <new|check|build|frame|preview|scene|serve|deploy|assistant-eval|assistant-eval-grade|state|ref> [--lesson dir] [--input file] [--at t] [--drag p=v] [--bundle] [-o file] [--size WxH] [--port n] [--host address] [--offline] [--silent] [--real] [--create] [--dry-run] [--variant legacy|structured|both] [--configuration id[,id]] [--case id[,id]] [--repeats n]`);
+      die(`unknown command "${cmd ?? ""}"\nRun "pnpm lesson --help" to see the available commands.`);
   }
 }
 
@@ -406,6 +416,7 @@ function boardSpecs(tracks: Record<string, Keyframe[]>): Schema {
 }
 
 interface Flags {
+  help?: boolean;
   lesson?: string;
   input?: string;
   at?: string;
@@ -429,7 +440,8 @@ interface Flags {
 function parseFlags(args: string[]): Flags {
   const f: Flags = {};
   for (let i = 0; i < args.length; i++) {
-    if (args[i] === "--at") f.at = args[++i];
+    if (args[i] === "--help" || args[i] === "-h") f.help = true;
+    else if (args[i] === "--at") f.at = args[++i];
     else if (args[i] === "--lesson") f.lesson = resolvePath(args[++i]!);
     else if (args[i] === "--input") f.input = resolvePath(args[++i]!);
     else if (args[i] === "--offline") f.offline = true;

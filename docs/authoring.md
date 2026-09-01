@@ -1,5 +1,9 @@
 # Authoring a lesson
 
+If this is your first lesson, begin with the shorter
+[creator quick start](./quickstart.md). This guide remains the complete workflow
+and design reference for production lessons.
+
 Tangible's production model starts after the author has decided what to teach.
 There is no required planning document. The work begins with an interactive
 scene, followed by narration and integration:
