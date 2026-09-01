@@ -23,8 +23,16 @@ export interface AssistantProviders {
   hfToken?: string;
   fake?: boolean;
   promptStyle?: AssistantPromptStyle;
+  requestConfig?: AssistantProviderRequestConfig;
   onProviderRequest?: (request: Record<string, unknown>) => Promise<void> | void;
   onProviderMetrics?: (metrics: AssistantProviderMetrics) => void;
+}
+
+/** Evaluation-only changes to the model request; production defaults stay fixed. */
+export interface AssistantProviderRequestConfig {
+  model?: string;
+  systemPrefix?: string;
+  body?: Record<string, unknown>;
 }
 
 export interface AssistantProviderMetrics {
@@ -44,7 +52,7 @@ export async function answerQuestion(
   validateAssistantRequest(request, context);
   if (context.provider !== "huggingface") throw new Error(`unsupported assistant provider "${String(context.provider)}"`);
   const providerRequest = !providers.fake || providers.onProviderRequest
-    ? buildAssistantProviderRequest(request, context, providers.promptStyle ?? "structured")
+    ? buildAssistantProviderRequest(request, context, providers.promptStyle ?? "structured", providers.requestConfig)
     : undefined;
   if (providerRequest && providers.onProviderRequest) await providers.onProviderRequest(providerRequest);
   const beats = providers.fake ? fakeAnswer(context) : await huggingFaceAnswer(providerRequest!, providers, context.limits.providerTimeoutSeconds);
@@ -127,11 +135,13 @@ export function buildAssistantProviderRequest(
   request: AssistantRequest,
   context: AssistantContext,
   promptStyle: AssistantPromptStyle = "structured",
+  config: AssistantProviderRequestConfig = {},
 ): Record<string, unknown> {
   validateAssistantRequest(request, context);
+  validateAssistantProviderRequestConfig(config);
 
   const messages: { role: "system" | "user" | "assistant"; content: string }[] = [
-    { role: "system", content: systemPrompt(context, promptStyle) },
+    { role: "system", content: `${config.systemPrefix ?? ""}${systemPrompt(context, promptStyle)}` },
   ];
   for (const turn of request.history.slice(-context.limits.request.historyTurns)) {
     messages.push({ role: "user", content: turn.question });
@@ -149,7 +159,7 @@ export function buildAssistantProviderRequest(
   });
 
   return {
-    model: context.model,
+    model: config.model ?? context.model,
     messages,
     temperature: 0.2,
     max_tokens: context.limits.response.outputTokens,
@@ -157,7 +167,25 @@ export function buildAssistantProviderRequest(
       type: "json_schema",
       json_schema: { name: "lesson_answer", strict: true, schema: answerJsonSchema(context) },
     },
+    ...config.body,
   };
+}
+
+export function validateAssistantProviderRequestConfig(config: AssistantProviderRequestConfig): void {
+  if (config.model !== undefined && (typeof config.model !== "string" || !config.model.trim())) {
+    throw new Error("assistant request model must be non-empty text");
+  }
+  if (config.systemPrefix !== undefined && typeof config.systemPrefix !== "string") {
+    throw new Error("assistant request systemPrefix must be text");
+  }
+  if (config.body !== undefined && (!config.body || typeof config.body !== "object" || Array.isArray(config.body))) {
+    throw new Error("assistant request body must be an object");
+  }
+  for (const key of Object.keys(config.body ?? {})) {
+    if (["model", "messages", "max_tokens", "response_format", "stream", "n"].includes(key)) {
+      throw new Error(`assistant request body cannot override "${key}"`);
+    }
+  }
 }
 
 function systemPrompt(context: AssistantContext, _style: AssistantPromptStyle): string {

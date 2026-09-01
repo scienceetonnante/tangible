@@ -104,6 +104,10 @@ Compiled lesson files go to `build/lesson/`. The deployable site goes to
 - `frame --size <width>x<height>` sets PNG dimensions.
 - `assistant-eval --variant structured|legacy|both` selects an assistant prompt
   format for comparison.
+- `assistant-eval --configuration <id>[,<id>]` runs only the named model
+  configurations.
+- `assistant-eval --case <id>[,<id>]` runs only the named cases.
+- `assistant-eval --repeats <number>` overrides the file's repetition count.
 - `assistant-eval --real` contacts the real answer provider.
 
 `preview` and `serve` bind to `127.0.0.1` by default. Use `--host 0.0.0.0` only
@@ -121,7 +125,11 @@ pnpm lesson assistant-eval --lesson lessons/my-lesson -o assistant-eval.json
 ```
 
 Use `--variant structured|legacy|both` only when comparing assistant prompt
-formats. `--real` requires `HF_TOKEN` and may incur provider costs.
+formats. An evaluation file may define several model configurations, with
+provider-specific request settings, and a repetition count. Cases and
+configurations are interleaved so that changing provider conditions do not
+systematically favor one configuration. `--real` requires `HF_TOKEN` and may
+incur provider costs.
 
 ### Scene development without narration
 
@@ -266,9 +274,10 @@ traffic, queue, and provider-timeout values. See
 complete block and its defaults. `lesson check` rejects invalid limit values
 before a provider is called.
 
-An optional `assistant.eval.yaml` records representative question sequences,
-lesson times, and state overrides for `lesson assistant-eval`. It is a review
-artifact rather than part of the deployed lesson.
+An optional `assistant.eval.yaml` records model configurations, representative
+question sequences, lesson times, state overrides, and repetitions for
+`lesson assistant-eval`. It is a review artifact rather than part of the
+deployed lesson.
 
 ## Narration directives
 

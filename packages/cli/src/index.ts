@@ -65,6 +65,9 @@ async function main() {
         variant: flags.variant ?? "structured",
         real: flags.real ?? false,
         out: flags.out,
+        configurationIds: flags.configurationIds,
+        caseIds: flags.caseIds,
+        repeats: flags.repeats,
       });
       return;
     case "state":
@@ -74,7 +77,7 @@ async function main() {
       await cmdRef(flags);
       return;
     default:
-      die(`unknown command "${cmd ?? ""}"\nusage: lesson <new|check|build|frame|preview|scene|serve|deploy|assistant-eval|state|ref> [--lesson dir] [--at t] [--drag p=v] [--bundle] [-o file] [--size WxH] [--port n] [--host address] [--offline] [--silent] [--real] [--create] [--dry-run] [--variant legacy|structured|both]`);
+      die(`unknown command "${cmd ?? ""}"\nusage: lesson <new|check|build|frame|preview|scene|serve|deploy|assistant-eval|state|ref> [--lesson dir] [--at t] [--drag p=v] [--bundle] [-o file] [--size WxH] [--port n] [--host address] [--offline] [--silent] [--real] [--create] [--dry-run] [--variant legacy|structured|both] [--configuration id[,id]] [--case id[,id]] [--repeats n]`);
   }
 }
 
@@ -403,6 +406,9 @@ interface Flags {
   create?: boolean;
   dryRun?: boolean;
   variant?: "legacy" | "structured" | "both";
+  configurationIds?: string[];
+  caseIds?: string[];
+  repeats?: number;
 }
 
 function parseFlags(args: string[]): Flags {
@@ -421,6 +427,13 @@ function parseFlags(args: string[]): Flags {
     else if (args[i] === "--real") f.real = true;
     else if (args[i] === "--create") f.create = true;
     else if (args[i] === "--dry-run") f.dryRun = true;
+    else if (args[i] === "--configuration") {
+      f.configurationIds = [...(f.configurationIds ?? []), ...commaSeparatedIds(args[++i], "--configuration")];
+    }
+    else if (args[i] === "--case") {
+      f.caseIds = [...(f.caseIds ?? []), ...commaSeparatedIds(args[++i], "--case")];
+    }
+    else if (args[i] === "--repeats") f.repeats = Number(args[++i]);
     else if (args[i] === "--fake") die('the --fake option was renamed to --silent');
     else if (args[i] === "--variant") {
       const variant = args[++i];
@@ -430,6 +443,12 @@ function parseFlags(args: string[]): Flags {
     else if (args[i]?.startsWith("--")) die(`unknown option "${args[i]}"`);
   }
   return f;
+}
+
+function commaSeparatedIds(value: string | undefined, option: string): string[] {
+  const ids = value?.split(",").map((id) => id.trim()).filter(Boolean) ?? [];
+  if (!ids.length) die(`${option} needs one or more comma-separated ids`);
+  return ids;
 }
 
 function narrationMode(flags: Flags): NarrationMode {

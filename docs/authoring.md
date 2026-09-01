@@ -594,6 +594,18 @@ included in a release bundle.
 For repeatable prompt review, add `assistant.eval.yaml`:
 
 ```yaml
+repeats: 3
+
+configurations:
+  - id: current-model
+    model: google/gemma-4-31B-it:cerebras
+  - id: thinking-model
+    model: Qwen/Qwen3.8-27B:provider
+    request:
+      reasoning_effort: medium
+      chat_template_kwargs:
+        enable_thinking: true
+
 cases:
   - id: visual-follow-up
     at: 18.8
@@ -612,6 +624,17 @@ pnpm lesson build --silent --lesson lessons/my-lesson
 pnpm lesson assistant-eval --lesson lessons/my-lesson -o assistant-eval.json
 ```
 
+If `configurations` is absent, the evaluator uses the model in `lesson.yaml`
+under the configuration id `manifest`. A configuration may set `systemPrefix`
+or add provider-specific request fields under `request`. It cannot replace the
+messages, response schema, output limit, or other fields that enforce the
+assistant contract.
+
+Use `--configuration current-model,thinking-model` or `--case visual-follow-up`
+to run a subset. Use `--repeats 1` for a quick compatibility check without
+editing the tracked file. Repeating `--configuration` and `--case` is also
+supported.
+
 Use `--variant both` only to compare the structured prompt with the former raw
 context prompt. In dry mode, deterministic answers supply the history and
 temporary scene values needed by later questions. The resulting
@@ -624,9 +647,14 @@ Add `--real` only when you deliberately want to contact the answer provider:
 pnpm lesson assistant-eval --lesson lessons/my-lesson --real -o assistant-results.json
 ```
 
-Real evaluation requires `HF_TOKEN` and may incur provider costs. To test real
-answers without synthesizing real narration, build an offline bundle and serve
-that existing bundle:
+Real evaluation requires `HF_TOKEN` and may incur provider costs.
+The evaluator records latency, token metrics when the provider returns them,
+and a bounded error category. A failed turn does not stop independent cases.
+Later turns in the same conversation are skipped because the missing answer
+would make their history invalid.
+
+To test real answers without synthesizing real narration, build an offline
+bundle and serve that existing bundle:
 
 ```bash
 pnpm lesson build --offline --bundle --lesson lessons/my-lesson

@@ -4,6 +4,7 @@ import {
   AssistantProviderError,
   AssistantProviderTimeoutError,
   answerQuestion,
+  buildAssistantProviderRequest,
   validateAnswer,
   validateAssistantRequest,
   type AssistantProviderMetrics,
@@ -54,6 +55,33 @@ describe("assistant service", () => {
     expect(messages[0]!.content).toContain("# Teaching assistant for “Circle”");
     expect(messages.at(-1)!.content).toContain('"question": "Why?"');
     expect(logged?.response_format).toBeDefined();
+  });
+
+  it("applies explicit evaluation model and reasoning settings", () => {
+    const body = buildAssistantProviderRequest(request, context, "structured", {
+      model: "example/reasoner:provider",
+      systemPrefix: "<|think|>\n",
+      body: {
+        temperature: 0.7,
+        reasoning_effort: "medium",
+        chat_template_kwargs: { enable_thinking: true },
+      },
+    });
+
+    expect(body).toMatchObject({
+      model: "example/reasoner:provider",
+      temperature: 0.7,
+      reasoning_effort: "medium",
+      chat_template_kwargs: { enable_thinking: true },
+    });
+    const messages = body.messages as { role: string; content: string }[];
+    expect(messages[0]!.content).toMatch(/^<\|think\|>\n# Teaching assistant/);
+  });
+
+  it("does not let evaluation settings replace bounded request fields", () => {
+    expect(() => buildAssistantProviderRequest(request, context, "structured", {
+      body: { response_format: { type: "text" } },
+    })).toThrow('cannot override "response_format"');
   });
 
   it("rejects commands outside the allowlist and scalar range", () => {
