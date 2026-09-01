@@ -23,8 +23,8 @@ assistant:
       historyTurns: 8
       positionCharacters: 2000
     response:
-      outputTokens: 1200
-      beats: 6
+      outputTokens: 4096
+      beats: 2
       beatCharacters: 600
       answerCharacters: 2000
       transitionSeconds: 2
