@@ -52,9 +52,11 @@ export const PLAYER_CSS = `
 .xv-chrome { position: absolute; left: 0; right: 0; bottom: 0; height: 52px; display: flex; align-items: center; gap: 6px; padding: 0 8px; background: rgba(255,255,255,0.88); box-sizing: border-box; }
 .xv-chrome button { border: none; background: none; cursor: pointer; color: #222; font-size: 18px; height: 44px; min-width: 44px; padding: 0 6px; display: inline-flex; align-items: center; justify-content: center; line-height: 1; border-radius: 6px; }
 .xv-chrome button:hover { background: rgba(0,0,0,0.06); }
-.xv-chrome button:focus-visible, .xv-scrubber:focus-visible { outline: 3px solid #1677b8; outline-offset: 1px; }
+.xv-chrome button:focus-visible, .xv-scrubber:focus-visible, .xv-credit:focus-visible { outline: 3px solid #1677b8; outline-offset: 1px; }
 .xv-scrubber { flex: 1; min-width: 44px; height: 44px; cursor: pointer; }
 .xv-elapsed { font: 12px monospace; color: #333; min-width: 90px; text-align: right; }
+.xv-credit { min-height: 44px; padding: 0 6px; display: inline-flex; flex: 0 0 auto; align-items: center; box-sizing: border-box; border-radius: 6px; background: rgba(255,255,255,0.82); box-shadow: inset 0 0 0 1px rgba(17,24,39,0.14); color: #364152; font: 500 11px/1.2 system-ui, sans-serif; text-decoration: none; white-space: nowrap; }
+.xv-credit:hover { background: #fff; text-decoration: underline; }
 .xv-portrait-message { display: none; }
 .xv-assistant { border: 1px solid #cbd2da; border-top: 0; background: #f6f8fa; color: #20252c; font: 14px/1.4 system-ui, sans-serif; box-sizing: border-box; }
 .xv-assistant-toggle { width: 100%; min-height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border: 0; background: transparent; color: inherit; font: 650 15px/1.2 system-ui, sans-serif; text-align: left; cursor: pointer; }

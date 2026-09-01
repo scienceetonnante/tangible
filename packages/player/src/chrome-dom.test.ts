@@ -60,9 +60,15 @@ describe("Chrome scrubber", () => {
   it("labels playback controls and reports the captions state", () => {
     const chrome = new Chrome(new AudioClock(new FakeMedia()), tracks);
     const captions = chrome.el.querySelector(".xv-captions-toggle") as HTMLButtonElement;
+    const credit = chrome.el.querySelector(".xv-credit") as HTMLAnchorElement;
 
     expect((chrome.el.querySelector(".xv-scrubber") as HTMLInputElement).ariaLabel).toBe("Lesson position");
     expect((chrome.el.querySelector(".xv-fullscreen") as HTMLButtonElement).ariaLabel).toBe("Enter full screen");
+    expect(credit.textContent).toBe("Made with Tangible");
+    expect(credit.href).toBe("https://github.com/scienceetonnante/tangible");
+    expect(credit.target).toBe("_blank");
+    expect(credit.rel).toBe("noopener noreferrer");
+    expect(credit.ariaLabel).toBe("Made with Tangible (opens in a new tab)");
     expect(captions.getAttribute("aria-pressed")).toBe("false");
     captions.click();
     expect(captions.getAttribute("aria-pressed")).toBe("true");

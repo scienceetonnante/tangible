@@ -190,10 +190,15 @@ Use these principles for future lessons:
   controls, and collapsed assistant present. The landing card can hide scene
   layout failures.
 
-For the current player, include 844 × 390 and 896 × 414 phone landscape windows
-in the review set, alongside a desktop and a tablet. Capture screenshots at the
-same meaningful lesson time so that comparisons exercise the same controls and
-board content.
+For the current player, include 667 × 375, 844 × 390, and 896 × 414 phone
+landscape windows in the review set, alongside a desktop and a tablet. Capture
+screenshots at the same meaningful lesson time so that comparisons exercise the
+same controls and board content.
+
+The standard player adds a small “Made with Tangible” link at the right end of
+the playback controls. Scenes must not reproduce or position this link. If a
+scene changes the colors of the player controls, keep `.xv-credit` readable and
+preserve its visible keyboard focus indicator.
 
 The exact file format and scene exports are described in
 [the reference](./reference.md#lesson-files-and-manifest).

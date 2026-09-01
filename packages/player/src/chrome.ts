@@ -1,5 +1,6 @@
 // Chrome — the controls bar: play/pause, elapsed/remaining, scrubber with chapter
-// and pause-checkpoint ticks, captions toggle, fullscreen, keyboard shortcuts.
+// and pause-checkpoint ticks, captions toggle, fullscreen, project credit,
+// and keyboard shortcuts.
 
 import type { LessonTracks } from "@tangible/core";
 import type { AudioClock } from "./clock.js";
@@ -97,7 +98,15 @@ export class Chrome {
     full.setAttribute("aria-label", "Enter full screen");
     full.onclick = () => this.toggleFullscreen();
 
-    this.el.append(this.playBtn, this.scrubber, this.elapsed, captions, full);
+    const credit = doc.createElement("a");
+    credit.className = "xv-credit";
+    credit.href = "https://github.com/scienceetonnante/tangible";
+    credit.target = "_blank";
+    credit.rel = "noopener noreferrer";
+    credit.textContent = "Made with Tangible";
+    credit.setAttribute("aria-label", "Made with Tangible (opens in a new tab)");
+
+    this.el.append(this.playBtn, this.scrubber, this.elapsed, captions, full, credit);
   }
 
   /** Global keyboard shortcuts; returns a disposer. */
