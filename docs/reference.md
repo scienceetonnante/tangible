@@ -89,6 +89,7 @@ Compiled lesson files go to `build/lesson/`. The deployable site goes to
 | `serve` | Serve an existing bundle without rebuilding or watching source files. |
 | `deploy` | Build real narration and publish the lesson to its configured Hugging Face Space. |
 | `assistant-eval` | Inspect or run tracked assistant questions against a built lesson. |
+| `assistant-eval-grade` | Grade a saved real evaluation with an independent OpenAI model. |
 
 ### Options
 
@@ -109,6 +110,9 @@ Compiled lesson files go to `build/lesson/`. The deployable site goes to
 - `assistant-eval --case <id>[,<id>]` runs only the named cases.
 - `assistant-eval --repeats <number>` overrides the file's repetition count.
 - `assistant-eval --real` contacts the real answer provider.
+- `assistant-eval-grade --input <file>` reads a saved real evaluation result.
+- `assistant-eval-grade --configuration <id>[,<id>]` and `--case <id>[,<id>]`
+  grade a selected subset.
 
 `preview` and `serve` bind to `127.0.0.1` by default. Use `--host 0.0.0.0` only
 when another device must reach the local server.
@@ -136,6 +140,22 @@ claims, critical errors, and a scene policy. Successful answers are checked for
 required or forbidden scene actions, preserved parameters, final-value
 assertions, and exposed internal parameter names. The rubric is written to the
 result for grading but is not included in the candidate model request.
+
+Grade a saved real result separately:
+
+```bash
+pnpm lesson assistant-eval-grade \
+  --input assistant-results.json \
+  -o assistant-grades.json
+```
+
+This command uses `gpt-5.6-sol` with high reasoning effort and strict structured
+output. It sends the question, conversation, visible state, answer, scene
+actions, rubric, and deterministic checks. It does not send the candidate
+configuration id or model name. The saved grade restores those identifiers so
+scores can be summarized by configuration. The command requires
+`OPENAI_API_KEY`, makes one paid judge request per gradeable turn, and records
+judge failures without discarding other grades.
 
 ### Scene development without narration
 

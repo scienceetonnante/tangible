@@ -24,6 +24,7 @@ import { buildAssistantContext, emitAssistantContext } from "./assistant-context
 import { createAssistantApi, serveLesson } from "./assistant-server.js";
 import { bundleScenePreview } from "./scene-preview-bundle.js";
 import { runAssistantEval } from "./assistant-eval.js";
+import { runAssistantEvalGrade } from "./assistant-eval-grade.js";
 import { writeAssistantPromptLog } from "./assistant-prompt-log.js";
 import { deployLessonToSpace } from "./deploy.js";
 
@@ -70,6 +71,14 @@ async function main() {
         repeats: flags.repeats,
       });
       return;
+    case "assistant-eval-grade":
+      await runAssistantEvalGrade({
+        input: flags.input ?? die("usage: lesson assistant-eval-grade --input <assistant-results.json> [-o grades.json]"),
+        out: flags.out,
+        configurationIds: flags.configurationIds,
+        caseIds: flags.caseIds,
+      });
+      return;
     case "state":
       await cmdState(flags);
       return;
@@ -77,7 +86,7 @@ async function main() {
       await cmdRef(flags);
       return;
     default:
-      die(`unknown command "${cmd ?? ""}"\nusage: lesson <new|check|build|frame|preview|scene|serve|deploy|assistant-eval|state|ref> [--lesson dir] [--at t] [--drag p=v] [--bundle] [-o file] [--size WxH] [--port n] [--host address] [--offline] [--silent] [--real] [--create] [--dry-run] [--variant legacy|structured|both] [--configuration id[,id]] [--case id[,id]] [--repeats n]`);
+      die(`unknown command "${cmd ?? ""}"\nusage: lesson <new|check|build|frame|preview|scene|serve|deploy|assistant-eval|assistant-eval-grade|state|ref> [--lesson dir] [--input file] [--at t] [--drag p=v] [--bundle] [-o file] [--size WxH] [--port n] [--host address] [--offline] [--silent] [--real] [--create] [--dry-run] [--variant legacy|structured|both] [--configuration id[,id]] [--case id[,id]] [--repeats n]`);
   }
 }
 
@@ -393,6 +402,7 @@ function boardSpecs(tracks: Record<string, Keyframe[]>): Schema {
 
 interface Flags {
   lesson?: string;
+  input?: string;
   at?: string;
   offline?: boolean;
   silent?: boolean;
@@ -416,6 +426,7 @@ function parseFlags(args: string[]): Flags {
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--at") f.at = args[++i];
     else if (args[i] === "--lesson") f.lesson = resolvePath(args[++i]!);
+    else if (args[i] === "--input") f.input = resolvePath(args[++i]!);
     else if (args[i] === "--offline") f.offline = true;
     else if (args[i] === "--silent") f.silent = true;
     else if (args[i] === "--bundle") f.bundle = true;

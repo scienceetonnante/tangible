@@ -680,6 +680,29 @@ not change, and `requiredChanges` names parameters that must change. An
 assertion checks the final value with `eq`, `lt`, `lte`, `gt`, or `gte`.
 Relational operators apply only to scalar parameters.
 
+After saving a real evaluation, grade it in a separate step:
+
+```bash
+pnpm lesson assistant-eval-grade \
+  --input assistant-results.json \
+  -o assistant-grades.json
+```
+
+Put an evaluation-only OpenAI key in a gitignored root or lesson-local `.env`
+file as `OPENAI_API_KEY`. The grader uses `gpt-5.6-sol` with high reasoning
+effort and strict structured output. It makes one paid request for each
+successful turn that has an authored rubric and saved evaluation context. Use
+`--configuration` and `--case` to grade a subset.
+
+The judge receives the learner-facing context, answer, scene actions, rubric,
+and deterministic checks. It does not receive the candidate model or
+configuration id. It scores scientific correctness, grounding, pedagogical
+quality, scene changes, and scope resistance when applicable. The output also
+records critical errors, concise explanations, judge failures, token use, and a
+summary by candidate configuration. A model judge is evidence rather than the
+final decision; manually grade a calibration sample and revise ambiguous
+rubrics before comparing final scores.
+
 To test real answers without synthesizing real narration, build an offline
 bundle and serve that existing bundle:
 
