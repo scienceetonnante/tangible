@@ -80,6 +80,55 @@ export interface BoardItem {
 /** Full evaluated scene state at a time t: param name → value. */
 export type PlainState = Record<string, ParamValue>;
 
+/** Server-enforced limits for a lesson assistant. */
+export interface AssistantLimits {
+  request: {
+    bodyBytes: number;
+    questionCharacters: number;
+    historyTurns: number;
+    positionCharacters: number;
+  };
+  response: {
+    outputTokens: number;
+    beats: number;
+    beatCharacters: number;
+    answerCharacters: number;
+    transitionSeconds: number;
+  };
+  rate: {
+    browserRequestsPerTenMinutes: number;
+    ipRequestsPerTenMinutes: number;
+    globalRequestsPerHour: number;
+    globalRequestsPerDay: number;
+    concurrentProviderCalls: number;
+  };
+  providerTimeoutSeconds: number;
+}
+
+export const DEFAULT_ASSISTANT_LIMITS: AssistantLimits = {
+  request: {
+    bodyBytes: 64 * 1024,
+    questionCharacters: 1000,
+    historyTurns: 8,
+    positionCharacters: 2000,
+  },
+  response: {
+    outputTokens: 1200,
+    beats: 6,
+    beatCharacters: 600,
+    answerCharacters: 2000,
+    transitionSeconds: 2,
+  },
+  rate: {
+    browserRequestsPerTenMinutes: 8,
+    ipRequestsPerTenMinutes: 40,
+    globalRequestsPerHour: 120,
+    globalRequestsPerDay: 500,
+    concurrentProviderCalls: 2,
+  },
+  providerTimeoutSeconds: 30,
+};
+
 /** Build-time context supplied to the lesson question-answering model. */
 export interface AssistantContext {
   version: 1;
@@ -95,6 +144,7 @@ export interface AssistantContext {
   constants: Record<string, ParamValue>;
   groups: Record<string, string[]>;
   commandable: string[];
+  limits: AssistantLimits;
 }
 
 /** One model-authored answer beat and its declarative scene writes. */

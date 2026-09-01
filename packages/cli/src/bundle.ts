@@ -10,7 +10,7 @@ import { join } from "node:path";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { Manifest } from "./manifest.js";
-import type { LessonTracks } from "@tangible/core";
+import type { AssistantLimits, LessonTracks } from "@tangible/core";
 
 const require = createRequire(import.meta.url);
 
@@ -91,15 +91,15 @@ main().catch((error) => {
   if (existsSync(join(src, "assistant.json"))) await copyFile(join(src, "assistant.json"), join(outDir, "assistant.json"));
   await copyFile(katexCss, join(outDir, "katex.css"));
   await writeFile(join(outDir, "index.html"), indexHtml(manifest));
-  if (manifest.assistant) await bundleAssistantServer(outDir);
+  if (manifest.assistant) await bundleAssistantServer(outDir, manifest.assistant.limits);
   return outDir;
 }
 
-export async function bundleAssistantServer(outDir: string): Promise<void> {
+export async function bundleAssistantServer(outDir: string, limits: AssistantLimits): Promise<void> {
   const serverPath = join(dirname(fileURLToPath(import.meta.url)), "assistant-server.js");
   await build({
     stdin: {
-      contents: `import { serveLesson } from ${JSON.stringify(serverPath)}; serveLesson({ siteDir: process.cwd(), port: Number(process.env.PORT ?? 7860), host: "0.0.0.0" });`,
+      contents: `import { serveLesson } from ${JSON.stringify(serverPath)}; serveLesson({ siteDir: process.cwd(), port: Number(process.env.PORT ?? 7860), host: "0.0.0.0", limits: ${JSON.stringify(limits)} });`,
       resolveDir: outDir,
       sourcefile: "server-entry.mjs",
     },

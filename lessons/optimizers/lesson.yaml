@@ -16,6 +16,25 @@ assistant:
   provider: huggingface
   model: google/gemma-4-31B-it:cerebras
   context: assistant.md
+  limits:
+    request:
+      bodyBytes: 65536
+      questionCharacters: 1000
+      historyTurns: 8
+      positionCharacters: 2000
+    response:
+      outputTokens: 1200
+      beats: 6
+      beatCharacters: 600
+      answerCharacters: 2000
+      transitionSeconds: 2
+    rate:
+      browserRequestsPerTenMinutes: 8
+      ipRequestsPerTenMinutes: 40
+      globalRequestsPerHour: 120
+      globalRequestsPerDay: 500
+      concurrentProviderCalls: 2
+    providerTimeoutSeconds: 30
   commandable:
     - kappa
     - roughness

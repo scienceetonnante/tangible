@@ -98,7 +98,7 @@ export async function runAssistantEval(opts: AssistantEvalOptions): Promise<void
           state: { ...state },
           position: lessonPositionAt(test.at, tracks.chapters, latestCue(cues, test.at)),
           temporaryAssistantState: { ...temporaryAssistantState },
-          history: history.slice(-8),
+          history: history.slice(-context.limits.request.historyTurns),
         };
         if (!opts.real) {
           const response = await answerQuestion(request, context, { fake: true });

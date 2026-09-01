@@ -160,6 +160,7 @@ export class Player {
       this.assistant = new AssistantPanel({
         onAsk: (question) => void this.ask(question, opts.assistant!.context),
         onCancel: () => this.cancelAnswer("Cancelled"),
+        maxQuestionCharacters: opts.assistant.context.limits.request.questionCharacters,
       });
       this.shell.append(this.assistant.el);
       let hasPlayed = false;
@@ -315,7 +316,7 @@ export class Player {
       state: visibleState,
       position: lessonPositionAt(this.clock.t, this.tracks.chapters, this.captions.latestText(this.clock.t), this.pauseGate.activePrompt),
       temporaryAssistantState,
-      history: this.assistant!.history.slice(-8),
+      history: this.assistant!.history.slice(-context.limits.request.historyTurns),
     };
     try {
       const response = await this.assistantFetch!(this.assistantEndpoint, {

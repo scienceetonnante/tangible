@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { mkdtemp, mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { DEFAULT_ASSISTANT_LIMITS } from "@tangible/core";
 import { emitAssistantContext } from "./assistant-context.js";
 import type { Manifest } from "./manifest.js";
 
@@ -12,7 +13,13 @@ const manifest: Manifest = {
   scene: "scenes/scene.ts",
   defaults: { anticipation: -0.2, ease: "linear", transition: 1 },
   tts: { provider: "elevenlabs", voice: "voice", speed: 0.9 },
-  assistant: { provider: "huggingface", model: "test/model:provider", context: "assistant.md", commandable: ["theta"] },
+  assistant: {
+    provider: "huggingface",
+    model: "test/model:provider",
+    context: "assistant.md",
+    commandable: ["theta"],
+    limits: DEFAULT_ASSISTANT_LIMITS,
+  },
 };
 
 const scene = {
@@ -43,6 +50,7 @@ describe("assistant context", () => {
     expect(got.script).toBe(script);
     expect(got.narration).toBe("The angle is half a turn.");
     expect(got.commandable).toEqual(["theta"]);
+    expect(got.limits).toEqual(DEFAULT_ASSISTANT_LIMITS);
     expect(got).toMatchObject({ provider: "huggingface", model: "test/model:provider" });
     expect(got).not.toHaveProperty("tts");
   });

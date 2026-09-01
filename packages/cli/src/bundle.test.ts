@@ -4,18 +4,24 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
+import { DEFAULT_ASSISTANT_LIMITS } from "@tangible/core";
 import { bundleAssistantServer } from "./bundle.js";
 
 const execFileAsync = promisify(execFile);
 
 describe("assistant server bundle", () => {
-  it("provides require to bundled CommonJS dependencies", async () => {
+  it("includes the authored limits and provides require to bundled CommonJS dependencies", async () => {
     const outDir = await mkdtemp(join(tmpdir(), "tangible-server-bundle-"));
     try {
-      await bundleAssistantServer(outDir);
+      const limits = {
+        ...DEFAULT_ASSISTANT_LIMITS,
+        rate: { ...DEFAULT_ASSISTANT_LIMITS.rate, globalRequestsPerDay: 37 },
+      };
+      await bundleAssistantServer(outDir, limits);
 
       const server = await readFile(join(outDir, "server.mjs"), "utf8");
       expect(server).toContain("__tangibleCreateRequire(import.meta.url)");
+      expect(server).toContain('"globalRequestsPerDay": 37');
 
       const result = await execFileAsync(process.execPath, ["server.mjs"], {
         cwd: outDir,

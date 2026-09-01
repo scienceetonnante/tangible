@@ -3,6 +3,7 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { parse as parseYaml } from "yaml";
+import { DEFAULT_ASSISTANT_LIMITS, type AssistantLimits } from "@tangible/core";
 
 export type TtsConfig =
   | { provider: "elevenlabs"; voice: string; model?: string; speed?: number }
@@ -24,6 +25,7 @@ export interface Manifest {
     model: string;
     context: string;
     commandable: string[];
+    limits: AssistantLimits;
   };
 }
 
@@ -88,7 +90,33 @@ function validateManifest(value: unknown): asserts value is Manifest {
     if (!Array.isArray(assistant.commandable) || assistant.commandable.some((value) => typeof value !== "string" || !value)) {
       throw new Error('lesson.yaml field "assistant.commandable" must be a list of parameter names');
     }
+    if (assistant.limits === undefined) assistant.limits = DEFAULT_ASSISTANT_LIMITS;
+    else validateAssistantLimits(assistant.limits);
   }
+}
+
+function validateAssistantLimits(value: unknown): asserts value is AssistantLimits {
+  const limits = object(value, 'lesson.yaml field "assistant.limits"');
+  const request = object(limits.request, 'lesson.yaml field "assistant.limits.request"');
+  positiveInteger(request.bodyBytes, 'lesson.yaml field "assistant.limits.request.bodyBytes"');
+  positiveInteger(request.questionCharacters, 'lesson.yaml field "assistant.limits.request.questionCharacters"');
+  positiveInteger(request.historyTurns, 'lesson.yaml field "assistant.limits.request.historyTurns"');
+  positiveInteger(request.positionCharacters, 'lesson.yaml field "assistant.limits.request.positionCharacters"');
+
+  const response = object(limits.response, 'lesson.yaml field "assistant.limits.response"');
+  positiveInteger(response.outputTokens, 'lesson.yaml field "assistant.limits.response.outputTokens"');
+  positiveInteger(response.beats, 'lesson.yaml field "assistant.limits.response.beats"');
+  positiveInteger(response.beatCharacters, 'lesson.yaml field "assistant.limits.response.beatCharacters"');
+  positiveInteger(response.answerCharacters, 'lesson.yaml field "assistant.limits.response.answerCharacters"');
+  nonNegativeNumber(response.transitionSeconds, 'lesson.yaml field "assistant.limits.response.transitionSeconds"');
+
+  const rate = object(limits.rate, 'lesson.yaml field "assistant.limits.rate"');
+  positiveInteger(rate.browserRequestsPerTenMinutes, 'lesson.yaml field "assistant.limits.rate.browserRequestsPerTenMinutes"');
+  positiveInteger(rate.ipRequestsPerTenMinutes, 'lesson.yaml field "assistant.limits.rate.ipRequestsPerTenMinutes"');
+  positiveInteger(rate.globalRequestsPerHour, 'lesson.yaml field "assistant.limits.rate.globalRequestsPerHour"');
+  positiveInteger(rate.globalRequestsPerDay, 'lesson.yaml field "assistant.limits.rate.globalRequestsPerDay"');
+  positiveInteger(rate.concurrentProviderCalls, 'lesson.yaml field "assistant.limits.rate.concurrentProviderCalls"');
+  positiveNumber(limits.providerTimeoutSeconds, 'lesson.yaml field "assistant.limits.providerTimeoutSeconds"');
 }
 
 function object(value: unknown, name: string): Record<string, unknown> {
@@ -102,6 +130,20 @@ function nonEmptyString(value: unknown, name: string): asserts value is string {
 
 function finiteNumber(value: unknown, name: string): asserts value is number {
   if (typeof value !== "number" || !Number.isFinite(value)) throw new Error(`${name} must be a finite number`);
+}
+
+function positiveInteger(value: unknown, name: string): asserts value is number {
+  if (typeof value !== "number" || !Number.isSafeInteger(value) || value <= 0) throw new Error(`${name} must be a positive integer`);
+}
+
+function positiveNumber(value: unknown, name: string): asserts value is number {
+  finiteNumber(value, name);
+  if (value <= 0) throw new Error(`${name} must be positive`);
+}
+
+function nonNegativeNumber(value: unknown, name: string): asserts value is number {
+  finiteNumber(value, name);
+  if (value < 0) throw new Error(`${name} must be non-negative`);
 }
 
 function spaceId(value: unknown, name: string): asserts value is string {

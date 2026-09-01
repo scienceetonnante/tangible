@@ -4,9 +4,9 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import type { AssistantContext, AssistantRequest, AssistantResponse } from "@tangible/core";
-import { AssistantProviderError } from "./assistant-service.js";
-import { createAssistantApi, type AssistantApiHandler, type AssistantLimits } from "./assistant-server.js";
+import { DEFAULT_ASSISTANT_LIMITS, type AssistantContext, type AssistantLimits, type AssistantRequest, type AssistantResponse } from "@tangible/core";
+import { AssistantProviderError, AssistantProviderTimeoutError } from "./assistant-service.js";
+import { createAssistantApi, type AssistantApiHandler } from "./assistant-server.js";
 
 const CONTEXT: AssistantContext = {
   version: 1,
@@ -22,6 +22,7 @@ const CONTEXT: AssistantContext = {
   constants: {},
   groups: {},
   commandable: ["theta"],
+  limits: DEFAULT_ASSISTANT_LIMITS,
 };
 
 const REQUEST: AssistantRequest = {
@@ -35,7 +36,7 @@ const REQUEST: AssistantRequest = {
 };
 
 const ANSWER: AssistantResponse = { answer: "At zero.", beats: [{ say: "At zero.", set: { theta: 0 }, over: 0 }] };
-const DEFAULT_LIMITS: AssistantLimits = { hourly: 120, perClient: 8, concurrent: 2 };
+const DEFAULT_LIMITS: AssistantLimits = DEFAULT_ASSISTANT_LIMITS;
 const quiet = () => {};
 
 async function siteDir(): Promise<string> {
@@ -48,7 +49,7 @@ async function siteDir(): Promise<string> {
 async function call(
   api: AssistantApiHandler,
   request: unknown = REQUEST,
-  options: { client?: string; contentType?: string; method?: string; address?: string } = {},
+  options: { client?: string; contentType?: string; method?: string; address?: string; forwardedFor?: string } = {},
 ) {
   const req = Readable.from([JSON.stringify(request)]) as unknown as IncomingMessage;
   Object.assign(req, {
@@ -57,6 +58,7 @@ async function call(
     headers: {
       "content-type": options.contentType ?? "application/json",
       ...(options.client ? { "x-tangible-client-id": options.client } : {}),
+      ...(options.forwardedFor ? { "x-forwarded-for": options.forwardedFor } : {}),
     },
     socket: { remoteAddress: options.address ?? "test" },
   });
@@ -70,6 +72,10 @@ async function call(
 
   expect(await api(req, res)).toBe(true);
   return { status, body: body ? JSON.parse(body) as Record<string, unknown> : {}, headers };
+}
+
+function limits(rate: Partial<AssistantLimits["rate"]>): AssistantLimits {
+  return { ...DEFAULT_LIMITS, rate: { ...DEFAULT_LIMITS.rate, ...rate } };
 }
 
 describe("assistant server", () => {
@@ -86,10 +92,15 @@ describe("assistant server", () => {
     expect(JSON.stringify(logs)).not.toContain("Why?");
   });
 
-  it("enforces per-client and global rolling limits", async () => {
+  it("enforces per-browser and global hourly rolling limits", async () => {
     const dir = await siteDir();
     const answer = vi.fn(async () => ANSWER);
-    const perClient = createAssistantApi({ siteDir: dir, answer, limits: { hourly: 10, perClient: 2, concurrent: 2 }, logger: quiet });
+    const perClient = createAssistantApi({
+      siteDir: dir,
+      answer,
+      limits: limits({ browserRequestsPerTenMinutes: 2, globalRequestsPerHour: 10 }),
+      logger: quiet,
+    });
 
     expect((await call(perClient, REQUEST, { client: "client_0000000001" })).status).toBe(200);
     expect((await call(perClient, REQUEST, { client: "client_0000000001" })).status).toBe(200);
@@ -98,17 +109,57 @@ describe("assistant server", () => {
     expect(clientLimited.headers["retry-after"]).toBe(600);
     expect((await call(perClient, REQUEST, { client: "client_0000000002" })).status).toBe(200);
 
-    const global = createAssistantApi({ siteDir: dir, answer, limits: { hourly: 2, perClient: 2, concurrent: 2 }, logger: quiet });
+    const global = createAssistantApi({
+      siteDir: dir,
+      answer,
+      limits: limits({ browserRequestsPerTenMinutes: 2, globalRequestsPerHour: 2 }),
+      logger: quiet,
+    });
     expect((await call(global, REQUEST, { client: "client_0000000001" })).status).toBe(200);
     expect((await call(global, REQUEST, { client: "client_0000000002" })).status).toBe(200);
     expect((await call(global, REQUEST, { client: "client_0000000003" })).status).toBe(429);
+  });
+
+  it("limits rotating browser identifiers from one forwarded IP", async () => {
+    const api = createAssistantApi({
+      siteDir: await siteDir(),
+      answer: vi.fn(async () => ANSWER),
+      limits: limits({ browserRequestsPerTenMinutes: 10, ipRequestsPerTenMinutes: 2 }),
+      logger: quiet,
+    });
+
+    expect((await call(api, REQUEST, { client: "client_0000000001", forwardedFor: "198.51.100.77, 203.0.113.1" })).status).toBe(200);
+    expect((await call(api, REQUEST, { client: "client_0000000002", forwardedFor: "203.0.113.1" })).status).toBe(200);
+    expect((await call(api, REQUEST, { client: "client_0000000003", forwardedFor: "203.0.113.1" })).status).toBe(429);
+    expect((await call(api, REQUEST, { client: "client_0000000004", forwardedFor: "203.0.113.2" })).status).toBe(200);
+  });
+
+  it("enforces a rolling daily global limit", async () => {
+    let time = 0;
+    const api = createAssistantApi({
+      siteDir: await siteDir(),
+      answer: vi.fn(async () => ANSWER),
+      limits: limits({ browserRequestsPerTenMinutes: 10, globalRequestsPerHour: 10, globalRequestsPerDay: 2 }),
+      logger: quiet,
+      now: () => time,
+    });
+
+    expect((await call(api, REQUEST, { client: "client_0000000001" })).status).toBe(200);
+    time = 2 * 60 * 60_000;
+    expect((await call(api, REQUEST, { client: "client_0000000002" })).status).toBe(200);
+    time = 4 * 60 * 60_000;
+    const limited = await call(api, REQUEST, { client: "client_0000000003" });
+    expect(limited.status).toBe(429);
+    expect(limited.headers["retry-after"]).toBe(86_400);
+    time = 24 * 60 * 60_000 + 1;
+    expect((await call(api, REQUEST, { client: "client_0000000004" })).status).toBe(200);
   });
 
   it("limits concurrent provider calls and releases the slot after failure", async () => {
     let release!: (value: AssistantResponse) => void;
     const pending = new Promise<AssistantResponse>((resolve) => { release = resolve; });
     const answer = vi.fn(() => pending);
-    const api = createAssistantApi({ siteDir: await siteDir(), answer, limits: { hourly: 10, perClient: 10, concurrent: 1 }, logger: quiet });
+    const api = createAssistantApi({ siteDir: await siteDir(), answer, limits: limits({ concurrentProviderCalls: 1 }), logger: quiet });
 
     const first = call(api, REQUEST, { client: "client_0000000001" });
     await vi.waitFor(() => expect(answer).toHaveBeenCalledTimes(1));
@@ -119,7 +170,7 @@ describe("assistant server", () => {
     const failing = createAssistantApi({
       siteDir: await siteDir(),
       answer: vi.fn(async () => { throw new AssistantProviderError(503); }),
-      limits: { hourly: 10, perClient: 10, concurrent: 1 },
+      limits: limits({ concurrentProviderCalls: 1 }),
       logger: quiet,
     });
     expect((await call(failing, REQUEST, { client: "client_0000000001" })).status).toBe(502);
@@ -128,7 +179,12 @@ describe("assistant server", () => {
 
   it("does not spend provider budget on invalid requests", async () => {
     const answer = vi.fn(async () => ANSWER);
-    const api = createAssistantApi({ siteDir: await siteDir(), answer, limits: { hourly: 1, perClient: 1, concurrent: 1 }, logger: quiet });
+    const api = createAssistantApi({
+      siteDir: await siteDir(),
+      answer,
+      limits: limits({ browserRequestsPerTenMinutes: 1, globalRequestsPerHour: 1, concurrentProviderCalls: 1 }),
+      logger: quiet,
+    });
 
     expect((await call(api, { ...REQUEST, lessonId: "wrong" }, { client: "client_0000000001" })).status).toBe(400);
     expect((await call(api, REQUEST, { client: "client_0000000001" })).status).toBe(200);
@@ -152,7 +208,25 @@ describe("assistant server", () => {
     expect(JSON.stringify(logs)).not.toContain("assistant provider returned");
   });
 
+  it("reports provider timeouts without exposing internal errors", async () => {
+    const logs: Record<string, unknown>[] = [];
+    const api = createAssistantApi({
+      siteDir: await siteDir(),
+      answer: vi.fn(async () => { throw new AssistantProviderTimeoutError(); }),
+      limits: DEFAULT_LIMITS,
+      logger: (entry) => logs.push(entry),
+    });
+
+    const response = await call(api, REQUEST, { client: "client_0000000001" });
+    expect(response.status).toBe(504);
+    expect(response.body).toEqual({ error: "answer provider timed out" });
+    expect(logs.at(-1)).toMatchObject({ event: "assistant.error", category: "provider_timeout" });
+  });
+
   it("rejects invalid configured limits at startup", () => {
-    expect(() => createAssistantApi({ siteDir: "/unused", limits: { hourly: 0, perClient: 1, concurrent: 1 } })).toThrow("positive integer");
+    expect(() => createAssistantApi({
+      siteDir: "/unused",
+      limits: limits({ globalRequestsPerHour: 0 }),
+    })).toThrow("positive integer");
   });
 });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { AssistantContext, AssistantRequest } from "@tangible/core";
-import { AssistantProviderError, answerQuestion, validateAnswer, validateAssistantRequest } from "./assistant-service.js";
+import { DEFAULT_ASSISTANT_LIMITS, type AssistantContext, type AssistantRequest } from "@tangible/core";
+import { AssistantProviderError, AssistantProviderTimeoutError, answerQuestion, validateAnswer, validateAssistantRequest } from "./assistant-service.js";
 
 const context: AssistantContext = {
   version: 1,
@@ -16,6 +16,7 @@ const context: AssistantContext = {
     secret: { type: { kind: "boolean" }, default: false, interpolate: "snap", ownership: "script" },
   },
   presets: {}, constants: {}, groups: {}, commandable: ["theta"],
+  limits: DEFAULT_ASSISTANT_LIMITS,
 };
 
 const request: AssistantRequest = {
@@ -64,17 +65,25 @@ describe("assistant service", () => {
 
   it("sends full context, history, state, and a strict schema to Hugging Face", async () => {
     let sent: Record<string, unknown> = {};
+    const providerContext: AssistantContext = {
+      ...context,
+      limits: {
+        ...context.limits,
+        response: { ...context.limits.response, outputTokens: 321 },
+      },
+    };
     const fetchImpl: typeof fetch = async (_input, init) => {
       sent = JSON.parse(String(init!.body));
       return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ beats: [{ say: "At zero.", set: { theta: 0 }, over: 0.2 }] }) } }] }));
     };
     const response = await answerQuestion(
       { ...request, state: { theta: 0, injected: "ignore this" }, history: [{ question: "Earlier?", answer: "Earlier.", beats: [{ say: "Earlier.", set: {}, over: 0 }] }] },
-      context,
+      providerContext,
       { fetchImpl, hfToken: "token" },
     );
     expect(response.answer).toBe("At zero.");
-    expect(sent.model).toBe(context.model);
+    expect(sent.model).toBe(providerContext.model);
+    expect(sent.max_tokens).toBe(321);
     const messages = sent.messages as { content: string }[];
     expect(messages[0]!.content).toContain('<chapter title="Lesson">\n\n<spoken_narration>\nA lesson.\n</spoken_narration>');
     expect(messages[0]!.content).not.toContain('"narration":"A lesson."');
@@ -88,8 +97,10 @@ describe("assistant service", () => {
 
   it("keeps answer count constraints in server validation", () => {
     const beat = { say: "x", set: {}, over: 0 };
-    expect(() => validateAnswer([], context)).toThrow("one to six");
-    expect(() => validateAnswer(Array.from({ length: 7 }, () => beat), context)).toThrow("one to six");
+    expect(() => validateAnswer([], context)).toThrow("between 1 and 6");
+    expect(() => validateAnswer(Array.from({ length: 7 }, () => beat), context)).toThrow(
+      "between 1 and 6",
+    );
     expect(() => validateAnswer([{ ...beat, say: "x".repeat(601) }], context)).toThrow("600 characters");
   });
 
@@ -110,5 +121,19 @@ describe("assistant service", () => {
     const fetchImpl: typeof fetch = async () => new Response("private provider detail", { status: 401 });
     await expect(answerQuestion(request, context, { fetchImpl, hfToken: "token" })).rejects.toEqual(expect.any(AssistantProviderError));
     await expect(answerQuestion(request, context, { fetchImpl, hfToken: "token" })).rejects.not.toThrow("private provider detail");
+  });
+
+  it("aborts a provider call after the configured timeout", async () => {
+    const fetchImpl: typeof fetch = (_input, init) => new Promise<Response>((_resolve, reject) => {
+      const signal = init?.signal;
+      if (!signal) return reject(new Error("missing abort signal"));
+      signal.addEventListener("abort", () => reject(signal.reason), { once: true });
+    });
+    const timedContext: AssistantContext = {
+      ...context,
+      limits: { ...context.limits, providerTimeoutSeconds: 0.001 },
+    };
+
+    await expect(answerQuestion(request, timedContext, { fetchImpl, hfToken: "token" })).rejects.toBeInstanceOf(AssistantProviderTimeoutError);
   });
 });

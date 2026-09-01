@@ -126,9 +126,9 @@ without exposing raw authoring directives, presets, constants, or groups.
 The current user message contains a semantic lesson position, visible scene
 state, and provenance for values temporarily left by the preceding answer. The
 position includes only the latest chapter, current or most recent narration cue,
-and active pause prompt. It never reveals future narration. Up to eight
-successful page-local turns precede the current message, and the server does not
-persist this history.
+and active pause prompt. It never reveals future narration. Up to the lesson's
+configured number of successful page-local turns precede the current message,
+and the server does not persist this history.
 
 The provider receives no tools. A strict JSON schema and server validation bound
 the returned written beats and allowlisted absolute scene values. Provider

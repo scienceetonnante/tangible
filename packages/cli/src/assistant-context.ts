@@ -45,5 +45,6 @@ export async function buildAssistantContext(
     constants: scene.constants ?? {},
     groups: scene.groups ?? {},
     commandable: config.commandable,
+    limits: config.limits,
   };
 }

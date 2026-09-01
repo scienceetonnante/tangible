@@ -8,6 +8,7 @@ let nextPanelId = 0;
 export interface AssistantPanelOptions {
   onAsk(question: string): void;
   onCancel(): void;
+  maxQuestionCharacters?: number;
 }
 
 export class AssistantPanel {
@@ -48,7 +49,7 @@ export class AssistantPanel {
     this.input.type = "text";
     this.input.placeholder = "Pause the lesson to ask a question";
     this.input.setAttribute("aria-label", "Ask a question about this lesson");
-    this.input.maxLength = 1000;
+    this.input.maxLength = opts.maxQuestionCharacters ?? 1000;
 
     this.askButton = button("Ask", "xv-assistant-ask");
     this.askButton.type = "submit";

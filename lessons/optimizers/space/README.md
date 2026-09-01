@@ -25,4 +25,5 @@ The lesson assets are a self-contained bundle. A small same-origin Node server
 protects the Hugging Face Inference Providers credential used by the pause-time
 written question box. Configure `HF_TOKEN` as a Space secret; answers use the
 pinned `google/gemma-4-31B-it:cerebras` model. The public question API is bounded
-by per-browser, global hourly, and concurrency limits.
+by configured request and answer sizes, per-browser and per-IP traffic limits,
+global hourly and daily limits, concurrency, and a provider timeout.

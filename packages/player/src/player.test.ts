@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 import { afterEach, describe, it, expect, vi } from "vitest";
+import { DEFAULT_ASSISTANT_LIMITS, type AssistantContext, type LessonTracks, type PlainState } from "@tangible/core";
 import { Player } from "./player.js";
 import type { SceneModule, SceneContext, SceneFrame } from "./scene-host.js";
-import type { AssistantContext, LessonTracks, PlainState } from "@tangible/core";
 import { AnswerTimeline } from "./answer-timeline.js";
 
 const tracks: LessonTracks = {
@@ -36,6 +36,7 @@ const assistantContext: AssistantContext = {
   constants: {},
   groups: {},
   commandable: ["theta"],
+  limits: DEFAULT_ASSISTANT_LIMITS,
 };
 
 afterEach(() => {

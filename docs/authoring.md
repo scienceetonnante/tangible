@@ -384,6 +384,58 @@ The generated prompt adds the lesson title, the spoken lesson organized into
 chapters, useful demonstrated settings, board material, and the scene control
 contract. Authors do not need to repeat those details in `assistant.md`.
 
+### Configure assistant limits
+
+Put assistant limits in the `assistant.limits` section of `lesson.yaml`. The
+block is optional, but writing it out gives a public lesson one visible source
+of truth for request sizes, answer sizes, traffic, and provider timeout:
+
+```yaml
+assistant:
+  provider: huggingface
+  model: google/gemma-4-31B-it:cerebras
+  context: assistant.md
+  limits:
+    request:
+      bodyBytes: 65536
+      questionCharacters: 1000
+      historyTurns: 8
+      positionCharacters: 2000
+    response:
+      outputTokens: 1200
+      beats: 6
+      beatCharacters: 600
+      answerCharacters: 2000
+      transitionSeconds: 2
+    rate:
+      browserRequestsPerTenMinutes: 8
+      ipRequestsPerTenMinutes: 40
+      globalRequestsPerHour: 120
+      globalRequestsPerDay: 500
+      concurrentProviderCalls: 2
+    providerTimeoutSeconds: 30
+  commandable: []
+```
+
+These values are also the defaults when the block is absent. Request and answer
+limits are enforced by the server, even when a caller bypasses the player. The
+browser uses `questionCharacters` and `historyTurns` to keep its own request in
+the same bounds. `outputTokens` is sent to the inference provider, while the
+remaining response values are checked again after generation.
+
+The per-browser limit uses the random identifier stored by the player. The
+per-IP limit is a second, more generous limit that uses the rightmost address in
+`X-Forwarded-For`, falling back to the socket address. The server hashes the
+address with a new random salt on every start and never writes it to structured
+logs. This limit discourages one connection from rotating browser identifiers,
+but shared office, mobile, or conference networks can make several visitors
+appear under one address.
+
+The hourly and daily counters cover all accepted provider calls in the running
+server process. All traffic counters are in memory and reset when the Space
+restarts. A provider call that exceeds `providerTimeoutSeconds` is aborted and
+reported as a timeout.
+
 ### Understand the assistant request
 
 The server assembles a readable system message with five numbered sections:
@@ -425,10 +477,10 @@ started narration sentence, and the active pause prompt. It never includes
 future narration. `temporaryAssistantState` identifies values still coming from
 the preceding assistant answer rather than from the lesson or learner.
 
-Up to eight successful turns from the current browser page precede a follow-up
-question. The server does not persist this history. The provider receives no
-tools and cannot call scene code. It returns one JSON object with one to six
-validated beats:
+Up to the configured number of successful turns from the current browser page
+precede a follow-up question. The server does not persist this history. The
+provider receives no tools and cannot call scene code. It returns one JSON
+object whose beats are checked against the configured count and size limits:
 
 ```json
 {
@@ -552,8 +604,8 @@ learner-modified states, follow-up questions, and every allowed visual change.
 Assistant-enabled bundles include a same-origin Node server because provider
 credentials must not be sent to the browser. Lessons without an assistant can
 remain static. The server validates question length, conversation history,
-answer length, and every scene value. It also applies global, per-browser, and
-concurrency limits. These controls reduce operational risk, but they do not
+answer length, and every scene value. It also applies global, per-browser,
+per-IP, and concurrency limits. These controls reduce operational risk, but they do not
 replace a review of the assistant's pedagogy and scientific accuracy.
 
 Before release, confirm that:
@@ -686,12 +738,21 @@ Keep build-only credentials such as `HF_TTS_TOKEN`, `TTS_ENDPOINT_URL`, and
 `ELEVENLABS_API_KEY` local or in CI. They must not appear in the release artifact
 or Space variables.
 
-The public assistant API has global hourly, per-browser ten-minute, and
-concurrency limits. Override them only with positive integer Space variables:
+The normal values come from `assistant.limits` in `lesson.yaml`. Space variables
+may temporarily override the operational rate limits and provider timeout
+without changing the authored configuration:
 
 - `ASSISTANT_HOURLY_LIMIT`;
+- `ASSISTANT_DAILY_LIMIT`;
 - `ASSISTANT_CLIENT_10M_LIMIT`;
-- `ASSISTANT_MAX_CONCURRENT`.
+- `ASSISTANT_IP_10M_LIMIT`;
+- `ASSISTANT_MAX_CONCURRENT`;
+- `ASSISTANT_PROVIDER_TIMEOUT_SECONDS`.
+
+The first five overrides must be positive integers. The timeout must be a
+positive number of seconds. A Space restart applies the new values and clears
+the in-memory counters. Remove the variables to return to the values recorded
+in `lesson.yaml`.
 
 ### Safe release sequence
 

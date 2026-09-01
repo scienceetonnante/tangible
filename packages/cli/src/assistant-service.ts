@@ -11,6 +11,13 @@ export class AssistantProviderError extends Error {
   }
 }
 
+export class AssistantProviderTimeoutError extends Error {
+  constructor() {
+    super("assistant provider timed out");
+    this.name = "AssistantProviderTimeoutError";
+  }
+}
+
 export interface AssistantProviders {
   fetchImpl?: typeof fetch;
   hfToken?: string;
@@ -30,7 +37,7 @@ export async function answerQuestion(
     ? buildAssistantProviderRequest(request, context, providers.promptStyle ?? "structured")
     : undefined;
   if (providerRequest && providers.onProviderRequest) await providers.onProviderRequest(providerRequest);
-  const beats = providers.fake ? fakeAnswer(context) : await huggingFaceAnswer(providerRequest!, providers);
+  const beats = providers.fake ? fakeAnswer(context) : await huggingFaceAnswer(providerRequest!, providers, context.limits.providerTimeoutSeconds);
   validateAnswer(beats, context);
 
   let answer = "";
@@ -44,15 +51,23 @@ export async function answerQuestion(
 async function huggingFaceAnswer(
   providerRequest: Record<string, unknown>,
   providers: AssistantProviders,
+  timeoutSeconds: number,
 ): Promise<AnswerBeat[]> {
   const token = providers.hfToken ?? process.env.HF_TOKEN ?? "";
   if (!token) throw new Error("HF_TOKEN is not set");
 
-  const response = await (providers.fetchImpl ?? fetch)("https://router.huggingface.co/v1/chat/completions", {
-    method: "POST",
-    headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-    body: JSON.stringify(providerRequest),
-  });
+  let response: Response;
+  try {
+    response = await (providers.fetchImpl ?? fetch)("https://router.huggingface.co/v1/chat/completions", {
+      method: "POST",
+      headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
+      body: JSON.stringify(providerRequest),
+      signal: AbortSignal.timeout(timeoutSeconds * 1000),
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === "TimeoutError") throw new AssistantProviderTimeoutError();
+    throw error;
+  }
   if (!response.ok) {
     await response.body?.cancel();
     throw new AssistantProviderError(response.status);
@@ -74,7 +89,7 @@ export function buildAssistantProviderRequest(
   const messages: { role: "system" | "user" | "assistant"; content: string }[] = [
     { role: "system", content: systemPrompt(context, promptStyle) },
   ];
-  for (const turn of request.history.slice(-8)) {
+  for (const turn of request.history.slice(-context.limits.request.historyTurns)) {
     messages.push({ role: "user", content: turn.question });
     messages.push({ role: "assistant", content: JSON.stringify({ beats: turn.beats }) });
   }
@@ -93,7 +108,7 @@ export function buildAssistantProviderRequest(
     model: context.model,
     messages,
     temperature: 0.2,
-    max_tokens: 1200,
+    max_tokens: context.limits.response.outputTokens,
     response_format: {
       type: "json_schema",
       json_schema: { name: "lesson_answer", strict: true, schema: answerJsonSchema(context) },
@@ -106,17 +121,22 @@ function systemPrompt(context: AssistantContext, _style: AssistantPromptStyle): 
 }
 
 export function validateAnswer(beats: unknown, context: AssistantContext): asserts beats is AnswerBeat[] {
-  if (!Array.isArray(beats) || beats.length < 1 || beats.length > 6) throw new Error("answer must contain one to six beats");
+  const limits = context.limits.response;
+  if (!Array.isArray(beats) || beats.length < 1 || beats.length > limits.beats) {
+    throw new Error(`answer must contain between 1 and ${limits.beats} beats`);
+  }
   let chars = 0;
   for (const [i, raw] of beats.entries()) {
     if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw new Error(`beat ${i + 1} must be an object`);
     const beat = raw as Record<string, unknown>;
     if (typeof beat.say !== "string" || !beat.say.trim()) throw new Error(`beat ${i + 1}.say must be non-empty text`);
-    if (beat.say.length > 600) throw new Error(`beat ${i + 1}.say exceeds 600 characters`);
+    if (beat.say.length > limits.beatCharacters) throw new Error(`beat ${i + 1}.say exceeds ${limits.beatCharacters} characters`);
     chars += beat.say.length;
-    if (chars > 2000) throw new Error("answer exceeds 2000 characters");
+    if (chars > limits.answerCharacters) throw new Error(`answer exceeds ${limits.answerCharacters} characters`);
     if (!beat.set || typeof beat.set !== "object" || Array.isArray(beat.set)) throw new Error(`beat ${i + 1}.set must be an object`);
-    if (typeof beat.over !== "number" || beat.over < 0 || beat.over > 2) throw new Error(`beat ${i + 1}.over must be between 0 and 2 seconds`);
+    if (typeof beat.over !== "number" || beat.over < 0 || beat.over > limits.transitionSeconds) {
+      throw new Error(`beat ${i + 1}.over must be between 0 and ${limits.transitionSeconds} seconds`);
+    }
     for (const [param, value] of Object.entries(beat.set as Record<string, ParamValue>)) {
       if (!context.commandable.includes(param)) throw new Error(`assistant cannot command parameter "${param}"`);
       const spec = context.schema[param]!;
@@ -130,32 +150,39 @@ export function validateAnswer(beats: unknown, context: AssistantContext): asser
 }
 
 export function validateAssistantRequest(request: AssistantRequest, context: AssistantContext): void {
+  const limits = context.limits;
   if (!request || typeof request !== "object" || Array.isArray(request)) throw new Error("question request must be an object");
   if (request.lessonId !== context.lessonId) throw new Error("question does not match the lesson context");
-  if (typeof request.question !== "string" || !request.question.trim() || request.question.length > 1000) {
-    throw new Error("question must contain 1 to 1000 characters");
+  if (typeof request.question !== "string" || !request.question.trim() || request.question.length > limits.request.questionCharacters) {
+    throw new Error(`question must contain 1 to ${limits.request.questionCharacters} characters`);
   }
   if (!Number.isFinite(request.t)) throw new Error("lesson time must be finite");
   if (!request.state || typeof request.state !== "object" || Array.isArray(request.state)) throw new Error("scene state must be an object");
   const state = visibleState(request, context);
-  validatePosition(request.position);
+  validatePosition(request.position, limits.request.positionCharacters);
   filteredTemporaryAssistantState(request, context, state);
-  if (!Array.isArray(request.history) || request.history.length > 8) throw new Error("conversation history is limited to eight turns");
+  if (!Array.isArray(request.history) || request.history.length > limits.request.historyTurns) {
+    throw new Error(`conversation history is limited to ${limits.request.historyTurns} turns`);
+  }
   for (const [index, turn] of request.history.entries()) {
     if (!turn || typeof turn !== "object" || Array.isArray(turn)) throw new Error(`history turn ${index + 1} must be an object`);
-    if (typeof turn.question !== "string" || !turn.question.trim() || turn.question.length > 1000) {
+    if (typeof turn.question !== "string" || !turn.question.trim() || turn.question.length > limits.request.questionCharacters) {
       throw new Error(`history turn ${index + 1} has an invalid question`);
     }
-    if (typeof turn.answer !== "string" || turn.answer.length > 2000) throw new Error(`history turn ${index + 1} has an invalid answer`);
+    if (typeof turn.answer !== "string" || turn.answer.length > limits.response.answerCharacters) {
+      throw new Error(`history turn ${index + 1} has an invalid answer`);
+    }
     validateAnswer(turn.beats, context);
   }
 }
 
-function validatePosition(position: AssistantRequest["position"]): void {
+function validatePosition(position: AssistantRequest["position"], maxCharacters: number): void {
   if (!position || typeof position !== "object" || Array.isArray(position)) throw new Error("lesson position must be an object");
   for (const key of ["chapter", "narrationJustHeard", "pausePrompt"] as const) {
     const value = position[key];
-    if (value !== null && (typeof value !== "string" || value.length > 2000)) throw new Error(`lesson position ${key} must be null or bounded text`);
+    if (value !== null && (typeof value !== "string" || value.length > maxCharacters)) {
+      throw new Error(`lesson position ${key} must be null or bounded text`);
+    }
   }
 }
 

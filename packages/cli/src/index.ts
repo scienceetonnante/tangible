@@ -8,7 +8,7 @@ import { join, resolve as resolvePath } from "node:path";
 import { createHash } from "node:crypto";
 import { parseScript, check, compile, emit, synthesize, narrationSegmentOffsets, formatDiagnostic, ParseError } from "@tangible/compiler";
 import type { SceneInfo } from "@tangible/compiler";
-import { buildIndex, evaluate, validateSchema } from "@tangible/core";
+import { buildIndex, DEFAULT_ASSISTANT_LIMITS, evaluate, validateSchema } from "@tangible/core";
 import type { Schema, Keyframe, TtsAdapter, ParamSpec, ParamValue } from "@tangible/core";
 import { StateStore, Reconciler } from "@tangible/player";
 import { FakeTtsAdapter, ElevenLabsAdapter, HuggingFaceVoiceAdapter, SupertonicTtsAdapter } from "@tangible/tts";
@@ -232,7 +232,9 @@ async function cmdPreview(flags: Flags): Promise<void> {
     rebuild,
     port: flags.port,
     host: flags.host,
-    assistantApi: manifest.assistant ? createAssistantApi({ siteDir, fake: noProviders(flags), onProviderRequest }) : undefined,
+    assistantApi: manifest.assistant
+      ? createAssistantApi({ siteDir, fake: noProviders(flags), limits: manifest.assistant.limits, onProviderRequest })
+      : undefined,
     initialError,
   });
 }
@@ -260,6 +262,7 @@ async function cmdScene(flags: Flags): Promise<void> {
 
 async function cmdServe(flags: Flags): Promise<void> {
   const lessonDir = flags.lesson ?? process.cwd();
+  const manifest = await loadManifest(lessonDir);
   const siteDir = join(lessonDir, "build", "site");
   if (!existsSync(join(siteDir, "index.html"))) die('no static bundle — run "lesson build --bundle" first');
   serveLesson({
@@ -267,6 +270,7 @@ async function cmdServe(flags: Flags): Promise<void> {
     port: flags.port,
     host: flags.host,
     fake: noProviders(flags),
+    limits: manifest.assistant?.limits ?? DEFAULT_ASSISTANT_LIMITS,
     onProviderRequest: async (request) => {
       const path = await writeAssistantPromptLog(lessonDir, request);
       console.error(`assistant prompt → ${path}`);

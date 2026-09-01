@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { mkdir, mkdtemp, readFile, readdir, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { DEFAULT_ASSISTANT_LIMITS } from "@tangible/core";
 import type { Manifest } from "./manifest.js";
 import { deployLessonToSpace, type CommandResult, type CommandRunner } from "./deploy.js";
 
@@ -205,7 +206,15 @@ function manifest(assistant = true): Manifest {
     tts: { provider: "hf-endpoint", voice: "test" },
     deployment: { provider: "huggingface", space: "example/circle" },
   };
-  if (assistant) result.assistant = { provider: "huggingface", model: "test/model", context: "assistant.md", commandable: [] };
+  if (assistant) {
+    result.assistant = {
+      provider: "huggingface",
+      model: "test/model",
+      context: "assistant.md",
+      commandable: [],
+      limits: DEFAULT_ASSISTANT_LIMITS,
+    };
+  }
   return result;
 }
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { AssistantContext } from "@tangible/core";
+import { DEFAULT_ASSISTANT_LIMITS, type AssistantContext } from "@tangible/core";
 import { formatAssistantSystemPrompt } from "./assistant-prompt.js";
 
 const context: AssistantContext = {
@@ -21,6 +21,7 @@ const context: AssistantContext = {
   constants: { HALF_PI: 1.57 },
   groups: { display: ["visible", "note"] },
   commandable: ["theta", "visible"],
+  limits: DEFAULT_ASSISTANT_LIMITS,
 };
 
 describe("assistant prompt", () => {
