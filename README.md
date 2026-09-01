@@ -1,37 +1,65 @@
 # Tangible
 
-Tangible is a format for interactive lessons with an animated, manipulable
-scene, narration generated from a text-to-speech model, and an optional language
-model that can answer questions and manipulate the scene.
+Tangible is an open-source toolkit for narrated interactive lessons. A lesson
+combines a manipulable scene, spoken explanation, synchronized visual changes,
+and an optional language model that can answer questions and temporarily
+demonstrate ideas in the scene.
 
-Tangible lessons can be deployed on Hugging Face Spaces.
+![The Tangible optimizer lesson comparing SGD, momentum, and AdamW on an interactive loss landscape.](./docs/assets/optimizer-lesson.png)
 
-## Installation
+## Try the optimizer lesson
 
-Tangible currently requires Node 22 or newer and pnpm. After cloning the
-repository, install and build it once:
+[Open “Why adaptive optimizers exist” on Hugging Face
+Spaces](https://huggingface.co/spaces/dlouapre/tangible-optimizers).
+
+The lesson lets you play or seek through the explanation, orbit the loss
+landscape, move the starting point, change optimizer settings, pause for
+exploration, and ask written questions.
+
+## Create your first lesson
+
+Tangible currently requires Node.js 22 or newer, Git, and pnpm. Node 22 includes
+Corepack, which can activate the pnpm version pinned by the repository:
 
 ```bash
+git clone https://github.com/scienceetonnante/tangible.git
+cd tangible
+corepack enable
 pnpm install
 pnpm build
 ```
 
-## Create a lesson
+Run an existing lesson without a credential, model download, or ffmpeg:
 
-New lesson directory:
+```bash
+pnpm lesson preview --silent --lesson lessons/unit-circle
+```
+
+Generate a complete working lesson and open its interactive scene:
 
 ```bash
 pnpm lesson new my-lesson --lesson lessons/my-lesson
+pnpm lesson scene --lesson lessons/my-lesson
 ```
 
-For a complete first lesson, follow the
-[creator quick start](./docs/quickstart.md).
+The generated lesson contains an accessible range control, a linked visual
+result, short narration, a synchronized cue, and an interaction pause. Change
+the scene and `script.md`, then validate and preview the complete lesson:
+
+```bash
+pnpm lesson check --lesson lessons/my-lesson
+pnpm lesson preview --offline --lesson lessons/my-lesson
+```
+
+Audible offline preview requires ffmpeg and downloads a pinned 123 MB local
+speech model on its first run. It needs no API key. The
+[creator quick start](./docs/quickstart.md) walks through one visible scene
+change, one narration edit, and one cue edit.
 
 ## Create a lesson with a coding agent
 
-The repository includes a `create-tangible-lesson` skill and instructions that
-preserve the author's control of the teaching argument. Copy this prompt and
-replace the bracketed text:
+The repository includes instructions and a `create-tangible-lesson` skill for
+coding agents. Copy this prompt and replace the bracketed text:
 
 > Use `$create-tangible-lesson` and help me create a lesson about [subject]. The
 > relationship I want learners to see is [relationship]. Build the smallest
@@ -39,139 +67,113 @@ replace the bracketed text:
 > my double-bracket hints into formal cues, and do not deploy until I explicitly
 > authorize it.
 
-The human owns the narration, teaching intent, and final visual judgment. The
-agent implements the scene, translates natural-language hints into validated
-cues, checks the lesson, and prepares builds.
+The human owns the teaching argument, spoken narration, and final visual
+judgment. The agent implements the scene, translates natural-language hints
+after scene review, runs technical checks, and prepares builds. Production
+narration and deployment begin only after the lesson is stable.
 
-### Build the scene
+## How a lesson works
 
-Build the interactive scene `scene.ts` in the `scenes` folder (or ask an agent to do it).
+Tangible keeps authored state in readable text and TypeScript:
 
-Open its narration-free preview:
-```bash
-pnpm lesson scene --lesson lessons/my-lesson
+```text
+script.md ─────────┐
+                   ├─ compiler ─► narration + captions + animation tracks
+scenes/scene.ts ───┘                              │
+                                                 ▼
+                              player: time ► state ◄ learner interaction
 ```
 
-### Write the script
+The scene schema gives the narration and the learner a shared vocabulary. The
+human can write silent visual intent in double brackets:
 
-Create and edit the narration in `script.md`. Integrate commands for manipulating the scene (see *Narration directives* in `docs/reference`). You can write them directly or use hints like `[[Move the camera 90° and increase speed from 1 to 3]]` that an agent will convert to commands.
-
-###  Validate and preview the integrated lesson:
-
-```bash
-pnpm lesson check --lesson lessons/my-lesson
-pnpm lesson preview --offline --lesson lessons/my-lesson
+```markdown
+The horizontal projection is the cosine.
+[[Reveal the projection as the narrator says “horizontal”.]]
 ```
 
-Open <http://localhost:5179>. 
-Offline mode synthesizes narration locally with Supertonic and uses a local
-substitute for assistant answers. The first offline build downloads a pinned
-123 MB speech model; later builds need no network connection or API key. This
-voice lets you review cues, captions, seeking, pauses, layout, and interaction
-against audible draft narration.
+An agent runs `lesson ref`, translates the hint into a schema-valid directive,
+and checks it without contacting a provider:
 
-Use `--silent` instead of `--offline` when you need the former predictable
-silent clock, such as in an automated test:
-
-```bash
-pnpm lesson build --silent --lesson lessons/my-lesson
+```markdown
+The @show(projection) horizontal projection is the cosine.
 ```
 
-When the narration and cue order are stable, remove `--offline` to synthesize
-the configured production voice:
+Every scene renders from the complete state at the current lesson time. Seeking
+directly to a time therefore recreates the same view without replaying the
+lesson from the beginning.
 
-```bash
-pnpm lesson preview --lesson lessons/my-lesson
-```
+## Publish on Hugging Face Spaces
 
-### Deploy your lesson
-
-Add a deployment target to `lesson.yaml` and keep the Space card in
-`space/README.md`:
-
-```yaml
-deployment:
-  provider: huggingface
-  space: namespace/space-name
-```
-
-After reviewing the real narration locally, create the private Space with:
+After reviewing the complete lesson with its production voice, prepare the local
+Space metadata without contacting Hugging Face:
 
 ```bash
-pnpm lesson deploy --lesson lessons/my-lesson --create
+pnpm lesson deploy --prepare \
+  --space namespace/space-name \
+  --lesson lessons/my-lesson
 ```
 
-Assistant-enabled lessons are deployed even when the new Space does not yet have
-a dedicated `HF_TOKEN` secret. The command then prints the Space settings URL
-and explains that questions will not work until the secret is added. The same
-command without `--create` publishes later updates. It builds the real voice,
-uploads only the release artifact and Space card, waits for startup, and shows
-logs when the Space fails.
+Review and commit those files. Then authenticate, run the local release checks,
+and create the Space privately:
 
-Test playback, interaction, captions, and the assistant when enabled before
-making the Space public. The complete process is described in
-[Deploy to Hugging Face Spaces](./docs/authoring.md#deploy-to-hugging-face-spaces).
+```bash
+hf auth login
+pnpm lesson deploy --dry-run --create --lesson lessons/my-lesson
+pnpm lesson deploy --create --lesson lessons/my-lesson
+```
 
-## Current viewing and accessibility support
+Deployment uploads only the release artifact, waits for the Space to start, and
+prints logs when startup fails. It never makes an existing Space public, changes
+hardware, or replaces secrets. Review the private Space before changing its
+visibility. The [deployment guide](./docs/authoring.md#deploy-to-hugging-face-spaces)
+explains production narration, assistant secrets, logs, and release checks.
 
-Tangible's first release supports desktop and tablet layouts. A portrait phone
-shows a clear request to rotate the device or use a larger screen instead of a
-compressed lesson. Phone landscape remains available with a more compact
-layout.
+## Current scope and limitations
 
-The standard playback and assistant controls work with a keyboard, include
-visible focus indicators, and provide captions. The optimizer lesson also gives
-its canvas a screen-reader description and identifies optimizer paths with
-labels, marker shapes, and line patterns as well as color. Its sliders, toggles,
-starting point, and camera are still drawn on a canvas and do not yet have
-equivalent HTML controls. Keyboard and screen-reader users therefore cannot
-operate every scene parameter. Equivalent controls are planned after the first
-release.
+- Tangible currently assumes that narration is written in English.
+
+- The first release supports desktop and tablet layouts. Portrait phones ask
+  visitors to rotate the device or use a larger screen. Phone landscape uses a
+  compact layout.
+
+- Standard playback and assistant controls work with a keyboard, show visible
+  focus indicators, and provide captions.
+
+- Individual lessons can still contain canvas controls without equivalent HTML
+  controls. The optimizer lesson describes its canvas for screen readers and
+  distinguishes paths by labels, shapes, and line patterns, but its sliders,
+  starting point, and camera are not fully keyboard-operable.
 
 ## Documentation
 
-- [Authoring a lesson](./docs/authoring.md) explains the complete workflow from
-  scene development through narration, review, the optional lesson assistant,
-  and deployment.
-- [Reference](./docs/reference.md) documents commands, lesson files, scene
-  exports, manifest fields, and narration directives.
-- [Contributing](./docs/contributing.md) to the project.
+- [Creator quick start](./docs/quickstart.md) leads from a fresh clone to a
+  modified lesson without paid credentials.
 
-## Example lessons
+- [Authoring a lesson](./docs/authoring.md) covers scene design, narration,
+  choreography, review, assistants, and deployment.
 
-The repository includes three lessons that can be opened in offline mode:
+- [Reference](./docs/reference.md) documents every command, lesson file,
+  manifest field, scene export, and narration directive.
 
-- `unit-circle` is a compact 2D lesson and the primary integration example;
-- `optimizers` is a navigable 3D optimizer comparison; and
-- `python-sampler` contains an editable, browser-based Python example.
+- [Contributing](./CONTRIBUTING.md) explains how to work on lessons or the
+  framework.
 
-For example:
+## Included lessons
 
-```bash
-pnpm lesson preview --offline --lesson lessons/unit-circle
-```
+- `unit-circle` is a compact two-dimensional lesson and the primary integration
+  example.
 
-## Repository layout
+- `optimizers` is a navigable three-dimensional optimizer comparison.
 
-```text
-packages/    framework packages and command-line tools
-lessons/     authored lessons and integration examples
-docs/        authoring, reference, and contributor documentation
-e2e/         browser integration tests
-scripts/     repository maintenance and deployment helpers
-```
+- `python-sampler` contains editable browser-based Python examples.
 
-A typical lesson directory contains:
+Authored lessons live in `lessons/`. Framework packages and the command-line
+tool live in `packages/`. Generated `build/` and `.cache/` directories must not
+be edited or committed.
 
-```text
-lesson.yaml          lesson and provider configuration
-script.md            narration and scene directions
-assistant.md         optional lesson-assistant guidance
-assistant.eval.yaml  optional assistant evaluation cases
-scenes/              scene entry module, supporting code, and tests
-assets/              optional authored assets
-space/               optional Hugging Face Space card files
-```
+## Contributing, security, and license
 
-The `build/` and `.cache/` directories are generated locally and must not be
-edited or committed.
+Read [CONTRIBUTING.md](./CONTRIBUTING.md) before submitting changes.
+
+Tangible is licensed under the [Apache License 2.0](./LICENSE).

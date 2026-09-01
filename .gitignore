@@ -20,4 +20,4 @@ lessons/*/.cache/
 
 # OS / editor
 .DS_Store
-.idea
+.idea/
