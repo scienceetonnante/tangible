@@ -3,7 +3,7 @@ import * as THREE from "three";
 import type { Problem } from "./model.js";
 import { intersectLossSurface, normalizedLoss, SURFACE_HEIGHT } from "./surface.js";
 
-const problem: Problem = { kappa: 12, roughness: 0.2, startX: -1.65, startY: 1.15 };
+const problem: Problem = { kappa: 12, startX: -1.65, startY: 1.15 };
 
 describe("optimizer 3D surface", () => {
   it("intersects the rendered height field from above", () => {

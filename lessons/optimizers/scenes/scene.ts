@@ -28,7 +28,6 @@ const pathView: OrbitState = { target: [0, 0.4, 0], distance: 7.4, azimuth: -0.1
 export const schema: Schema = {
   scene: { type: { kind: "enum", values: ["landscape"] }, default: "landscape", interpolate: "snap", ownership: "script" },
   kappa: scriptScalar([1, 40], 1, "condition number κ"),
-  roughness: scriptScalar([0, 0.5], 0, "ripple amplitude"),
   "start.x": scriptScalar([-DOMAIN, DOMAIN], -1.65, "shared start x-coordinate"),
   "start.y": scriptScalar([-DOMAIN, DOMAIN], 1.15, "shared start y-coordinate"),
   camera: {
@@ -49,7 +48,6 @@ export const schema: Schema = {
 };
 
 export const groups: Record<string, string[]> = {
-  problem: ["kappa", "roughness"],
   start: ["start.x", "start.y"],
   active: ["active.sgd", "active.momentum", "active.adamw"],
 };

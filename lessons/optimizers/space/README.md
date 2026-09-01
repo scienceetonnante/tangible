@@ -14,7 +14,7 @@ short_description: Explore why momentum and AdamW outperform plain SGD
 # Why Adaptive Optimizers Exist
 
 An interactive narrated lesson comparing SGD, momentum, and AdamW on
-conditioned and rough 3D loss surfaces. Play the explanation, orbit the
+conditioned 3D loss surfaces. Play the explanation, orbit the
 landscape, move the starting point, and change optimizer settings while every
 path recomputes live.
 

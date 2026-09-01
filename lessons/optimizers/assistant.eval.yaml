@@ -3,7 +3,6 @@ cases:
     at: 100
     state:
       kappa: 24
-      roughness: 0
       step: 18
       active.sgd: true
       active.momentum: false

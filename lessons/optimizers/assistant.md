@@ -2,9 +2,8 @@
 
 Treat this two-dimensional deterministic scene as an illustration, not as proof
 of behavior in large stochastic neural networks. The stability rule η < 2/κ
-applies to the smooth quadratic shown in the lesson. Keep coordinate conditioning
-distinct from surface roughness, and do not claim that any optimizer is
-universally superior.
+applies to the smooth quadratic shown in the lesson. Do not claim that any
+optimizer is universally superior.
 
 # Visual answer guidance
 

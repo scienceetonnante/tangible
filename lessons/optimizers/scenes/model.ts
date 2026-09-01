@@ -9,7 +9,6 @@ export interface Point {
 
 export interface Problem {
   kappa: number;
-  roughness: number;
   startX: number;
   startY: number;
 }
@@ -33,24 +32,18 @@ export const ADAM_BETA_1 = 0.7;
 export const ADAM_BETA_2 = 0.95;
 export const WEIGHT_DECAY = 0.01;
 
-const RIPPLE_FREQUENCY = 8;
 const DIVERGENCE_RADIUS = DOMAIN * 3;
 const EPSILON = 1e-8;
 
-/** A conditioned quadratic bowl with a ripple along its first coordinate direction. */
-export function loss(x: number, y: number, problem: Pick<Problem, "kappa" | "roughness">): number {
-  const ripple = problem.roughness * (1 - Math.cos(RIPPLE_FREQUENCY * x));
-  return 0.5 * (x * x + problem.kappa * y * y) + ripple;
+/** A conditioned quadratic bowl. */
+export function loss(x: number, y: number, problem: Pick<Problem, "kappa">): number {
+  return 0.5 * (x * x + problem.kappa * y * y);
 }
 
 /** Analytic gradient of the lesson's loss surface. */
-export function gradient(
-  x: number,
-  y: number,
-  problem: Pick<Problem, "kappa" | "roughness">,
-): { x: number; y: number } {
+export function gradient(x: number, y: number, problem: Pick<Problem, "kappa">): { x: number; y: number } {
   return {
-    x: x + RIPPLE_FREQUENCY * problem.roughness * Math.sin(RIPPLE_FREQUENCY * x),
+    x,
     y: problem.kappa * y,
   };
 }

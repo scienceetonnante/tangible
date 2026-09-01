@@ -103,7 +103,7 @@ export class OptimizerThreeView {
   }
 
   private updateSurface(problem: Problem): void {
-    const key = `${problem.kappa.toFixed(5)}:${problem.roughness.toFixed(5)}`;
+    const key = problem.kappa.toFixed(5);
     if (key === this.surfaceKey) return;
     this.surfaceKey = key;
     this.surface.geometry.dispose();
@@ -115,7 +115,6 @@ export class OptimizerThreeView {
   private updateContent(frame: OptimizerFrame, state: Readonly<PlainState>): void {
     const keys = [
       "kappa",
-      "roughness",
       "start.x",
       "start.y",
       "step",
@@ -258,7 +257,6 @@ function markerGeometry(name: OptimizerName): THREE.BufferGeometry {
 function problemFrom(state: Readonly<PlainState>): Problem {
   return {
     kappa: state.kappa as number,
-    roughness: state.roughness as number,
     startX: state["start.x"] as number,
     startY: state["start.y"] as number,
   };

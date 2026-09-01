@@ -86,9 +86,12 @@ describe("optimizer scene", () => {
     expect(schema["start.y"]!.type).toEqual({ kind: "scalar", range: [-2, 2] });
   });
 
-  it("lets roughness reach one half in both the schema and slider", () => {
-    expect(schema.roughness!.type).toEqual({ kind: "scalar", range: [0, 0.5] });
-    expect(SLIDERS.find((slider) => slider.param === "roughness")!.range).toEqual([0, 0.5]);
+  it("uses the full problem-control width for the condition number", () => {
+    const view = { width: 1000, height: 600 };
+    const condition = SLIDERS.find((slider) => slider.param === "kappa")!;
+
+    expect(schema.kappa!.type).toEqual({ kind: "scalar", range: [1, 40] });
+    expect(sliderBox(view, condition)).toMatchObject({ x0: 15, x1: 445 });
   });
 
   it("freezes learner changes while paused, then returns after a fresh resume hold", () => {
@@ -229,7 +232,7 @@ describe("optimizer scene", () => {
     expect(calls).toContain("lineTo");
     expect(calls).toContain("fillText");
     expect(calls).toContain("rotate");
-    expect(created.handles()).toHaveLength(12);
+    expect(created.handles()).toHaveLength(11);
     expect(texts).toContain("Loss");
     expect(texts).toContain("step 24");
     expect(texts.some((text) => text.startsWith("matched step"))).toBe(false);

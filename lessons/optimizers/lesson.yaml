@@ -40,7 +40,6 @@ assistant:
     providerTimeoutSeconds: 45
   commandable:
     - kappa
-    - roughness
     - start.x
     - start.y
     - step

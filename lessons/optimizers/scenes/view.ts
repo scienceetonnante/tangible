@@ -16,7 +16,6 @@ export interface SliderDefinition {
   compactLabelOffset?: number;
   section: "problem" | "algorithm";
   optimizer?: OptimizerName;
-  slot?: 0 | 1;
 }
 
 export const SERIES: Record<OptimizerName, { color: string; wash: string; label: string; dash: number[] }> = {
@@ -26,8 +25,7 @@ export const SERIES: Record<OptimizerName, { color: string; wash: string; label:
 };
 
 export const PROBLEM_SLIDERS: SliderDefinition[] = [
-  { param: "kappa", label: "condition κ", range: [1, 40], digits: 0, y: 0.065, section: "problem", slot: 0 },
-  { param: "roughness", label: "roughness", range: [0, 0.5], digits: 2, y: 0.065, section: "problem", slot: 1 },
+  { param: "kappa", label: "condition κ", range: [1, 40], digits: 0, y: 0.065, section: "problem" },
 ];
 
 export const ALGORITHM_SLIDERS: SliderDefinition[] = [
@@ -59,8 +57,7 @@ export function lossPlotBox(view: View) {
 }
 
 export function sliderBox(view: View, definition: SliderDefinition) {
-  const problemX = definition.slot === 0 ? [0.015, 0.215] : [0.245, 0.445];
-  const [x0, x1] = definition.section === "problem" ? problemX : [0.568, 0.756];
+  const [x0, x1] = definition.section === "problem" ? [0.015, 0.445] : [0.568, 0.756];
   const y = isCompactHeight(view) ? (definition.compactY ?? definition.y) : definition.y;
   return { x0: view.width * x0, x1: view.width * x1, y: view.height * y };
 }

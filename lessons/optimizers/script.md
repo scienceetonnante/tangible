@@ -50,7 +50,7 @@ Press play when you are ready to continue.")
 
 @chapter(Two different fixes)
 
-@cue(problem -> [25, 0], start -> [-1.65, 1.15], step -> 40, active -> [true, false, false], sgd.lr -> 0.075, momentum.lr -> 0.075, momentum.beta = 0.05, adamw.lr -> 0.075, over: 2s) 
+@cue(kappa -> 25, start -> [-1.65, 1.15], step -> 40, active -> [true, false, false], sgd.lr -> 0.075, momentum.lr -> 0.075, momentum.beta = 0.05, adamw.lr -> 0.075, over: 2s)
 Let us return to the same ravine and compare every optimizer.
 @camera(target: [0, 0.4, 0], distance: 7, azimuth: 32°, elevation: 60°, over: 5s)
 First, add momentum. @cue(active.momentum = true) The blue path smooths the wall-to-wall motion, and the parameter beta controls how much history the optimizer retains.

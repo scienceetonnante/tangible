@@ -13,7 +13,6 @@ export interface OptimizerFrame {
 export function buildFrame(state: Readonly<PlainState>): OptimizerFrame {
   const problem: Problem = {
     kappa: number(state, "kappa"),
-    roughness: number(state, "roughness"),
     startX: number(state, "start.x"),
     startY: number(state, "start.y"),
   };
