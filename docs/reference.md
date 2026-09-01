@@ -231,9 +231,10 @@ until narration starts.
 The optional `tags` list contains subject terms for Hugging Face discovery.
 When Tangible creates a Space card, it removes duplicates and combines these
 terms with the automatic `tangible`, `education`, and `interactive-learning`
-tags. It also uses the promise as the start of the Space's short description and
-appends “an interactive Tangible lesson.” An existing custom Space card remains
-under the author's control.
+tags. It also uses the lesson title followed by “a Tangible lesson” as the
+Space's short description, shortening the title when necessary to keep the
+description within 60 characters. An existing custom Space card remains under
+the author's control.
 
 The `tts` section is optional while a lesson is being developed with `--offline`
 or `--silent`. A provider-backed preview and deployment require it. When present,

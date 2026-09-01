@@ -8,7 +8,7 @@ app_port: 7860
 fullWidth: true
 header: default
 pinned: false
-short_description: Why momentum and AdamW outperform plain SGD — an interactive Tangible lesson
+short_description: Why momentum and AdamW beat SGD — a Tangible lesson
 tags:
   - tangible
   - education

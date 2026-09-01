@@ -6,7 +6,7 @@ colorTo: blue
 sdk: docker
 app_port: 7860
 pinned: false
-short_description: How an angle determines sine and cosine — an interactive Tangible lesson
+short_description: Sine and cosine on the unit circle — a Tangible lesson
 tags:
   - tangible
   - education

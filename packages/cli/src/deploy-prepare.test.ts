@@ -33,12 +33,27 @@ describe("Space preparation", () => {
       expect(card).toContain("app_file: index.html");
       expect(card).toContain("header: default");
       expect(card).toContain(
-        'short_description: "See how the example changes — an interactive Tangible lesson"',
+        'short_description: "Example lesson — a Tangible lesson"',
       );
       expect(card).toContain('tags:\n  - "tangible"\n  - "education"\n  - "interactive-learning"');
       const attributes = await readFile(join(dir, "space", ".gitattributes"), "utf8");
       expect(attributes).toContain("*.webm filter=lfs");
       expect(attributes).toContain("*.m4a filter=lfs");
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("keeps generated short descriptions within the Hugging Face limit", async () => {
+    const dir = await fixture();
+    try {
+      await writeFile(join(dir, "lesson.yaml"), BASE.replace("Example lesson", "A very long lesson title ".repeat(4)));
+      await prepareSpace(dir, await loadManifest(dir), "example/long-title");
+      const card = await readFile(join(dir, "space", "README.md"), "utf8");
+      const line = card.split("\n").find((candidate) => candidate.startsWith("short_description: "))!;
+      const description = JSON.parse(line.slice("short_description: ".length)) as string;
+      expect([...description]).toHaveLength(60);
+      expect(description).toMatch(/… — a Tangible lesson$/);
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

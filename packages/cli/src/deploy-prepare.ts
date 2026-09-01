@@ -73,7 +73,7 @@ function validateSpaceId(space: string): void {
 
 function spaceCard(manifest: Manifest): string {
   const runtime = manifest.assistant ? "sdk: docker\napp_port: 7860" : "sdk: static\napp_file: index.html";
-  const shortDescription = `${manifest.promise.trim().replace(/\.$/, "")} — an interactive Tangible lesson`;
+  const shortDescription = spaceShortDescription(manifest.title);
   const tags = [...new Set(["tangible", "education", "interactive-learning", ...(manifest.tags ?? [])])]
     .map((tag) => `  - ${JSON.stringify(tag)}`)
     .join("\n");
@@ -98,4 +98,14 @@ ${manifest.promise}
 This interactive narrated lesson was built with
 [Tangible](https://github.com/scienceetonnante/tangible).
 `;
+}
+
+function spaceShortDescription(title: string): string {
+  const suffix = " — a Tangible lesson";
+  const titleCharacters = [...title.trim()];
+  const available = 60 - [...suffix].length;
+  const subject = titleCharacters.length > available
+    ? `${titleCharacters.slice(0, available - 1).join("").trimEnd()}…`
+    : titleCharacters.join("");
+  return `${subject}${suffix}`;
 }
