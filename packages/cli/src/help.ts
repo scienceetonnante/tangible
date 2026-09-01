@@ -86,10 +86,12 @@ Build the lesson with --bundle before rendering a frame.`,
   deploy: `Prepare or publish a Hugging Face Space release
 
 Usage:
+  pnpm lesson deploy --prepare --space <namespace/name> --lesson lessons/<id>
   pnpm lesson deploy --dry-run --create --lesson lessons/<id>
   pnpm lesson deploy --create --lesson lessons/<id>
   pnpm lesson deploy --lesson lessons/<id>
 
+--prepare changes only local authored files and makes no Hugging Face API calls.
 Deployment requires production narration and a clean Git worktree. The first
 remote deployment uses --create and creates the Space privately.`,
 };

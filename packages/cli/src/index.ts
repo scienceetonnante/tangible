@@ -28,6 +28,7 @@ import { runAssistantEvalGrade } from "./assistant-eval-grade.js";
 import { writeAssistantPromptLog } from "./assistant-prompt-log.js";
 import { deployLessonToSpace } from "./deploy.js";
 import { helpText } from "./help.js";
+import { prepareSpace } from "./deploy-prepare.js";
 
 async function main() {
   const argv = process.argv.slice(2);
@@ -309,6 +310,23 @@ async function cmdDeploy(flags: Flags): Promise<void> {
   if (flags.offline || flags.silent) die("lesson deploy does not support --offline or --silent because a release must contain real narration");
   const lessonDir = flags.lesson ?? process.cwd();
   const manifest = await loadManifest(lessonDir);
+  if (flags.prepare) {
+    const result = await prepareSpace(
+      lessonDir,
+      manifest,
+      flags.space ?? die('usage: lesson deploy --prepare --space <namespace/name> --lesson <dir>'),
+    );
+    console.error(`Prepared ${result.space} for deployment.`);
+    if (result.changed.length) console.error(`Changed: ${result.changed.join(", ")}`);
+    else console.error("The local Space configuration was already complete.");
+    console.error(`
+Next:
+  1. Review and commit the authored files.
+  2. Configure and review the production voice.
+  3. Run: pnpm lesson deploy --dry-run --create --lesson ${lessonDir}
+  4. Run: pnpm lesson deploy --create --lesson ${lessonDir}`);
+    return;
+  }
   await deployLessonToSpace({
     lessonDir,
     manifest,
@@ -431,6 +449,8 @@ interface Flags {
   real?: boolean;
   create?: boolean;
   dryRun?: boolean;
+  prepare?: boolean;
+  space?: string;
   variant?: "legacy" | "structured" | "both";
   configurationIds?: string[];
   caseIds?: string[];
@@ -455,6 +475,8 @@ function parseFlags(args: string[]): Flags {
     else if (args[i] === "--real") f.real = true;
     else if (args[i] === "--create") f.create = true;
     else if (args[i] === "--dry-run") f.dryRun = true;
+    else if (args[i] === "--prepare") f.prepare = true;
+    else if (args[i] === "--space") f.space = args[++i];
     else if (args[i] === "--configuration") {
       f.configurationIds = [...(f.configurationIds ?? []), ...commaSeparatedIds(args[++i], "--configuration")];
     }

@@ -91,6 +91,7 @@ Compiled lesson files go to `build/lesson/`. The deployable site goes to
 | `state --at <t>` | Print the computed scene state at a lesson time in seconds. |
 | `frame --at <t> -o <file>` | Render a PNG of the built lesson at a chosen time. |
 | `serve` | Serve an existing bundle without rebuilding or watching source files. |
+| `deploy --prepare --space <namespace/name>` | Create or complete local Space metadata without contacting Hugging Face. |
 | `deploy` | Build real narration and publish the lesson to its configured Hugging Face Space. |
 | `assistant-eval` | Inspect or run tracked assistant questions against a built lesson. |
 | `assistant-eval-grade` | Grade a saved real evaluation with an independent OpenAI model. |
@@ -103,6 +104,8 @@ Compiled lesson files go to `build/lesson/`. The deployable site goes to
 - `--bundle` asks `build` to create the deployable site.
 - `deploy --create` creates the configured Space privately before the first deployment.
 - `deploy --dry-run` performs local release checks and builds without contacting Hugging Face.
+- `deploy --prepare --space <namespace/name>` records the target and prepares
+  the Space card and audio Git LFS rules without a remote operation.
 - `--port <number>` and `--host <address>` set the local server address.
 - `state --drag <param>=<value>` simulates learner interaction and
   reconciliation.

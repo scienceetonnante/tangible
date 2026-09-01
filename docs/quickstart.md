@@ -163,3 +163,17 @@ The [authoring guide](./authoring.md) explains scene design, responsive review,
 natural-language hints, formal choreography, real narration, the optional
 lesson assistant, and safe Space deployment. The [reference](./reference.md)
 contains the complete command and directive syntax.
+
+When the complete lesson and production narration have been reviewed, prepare
+the local Hugging Face Space files without creating anything remotely:
+
+```bash
+pnpm lesson deploy --prepare \
+  --space namespace/space-name \
+  --lesson lessons/my-lesson
+```
+
+Review and commit the generated metadata before running the dry deployment.
+The [deployment guide](./authoring.md#deploy-to-hugging-face-spaces) explains
+authentication, real narration, private review, secrets, and the final manual
+visibility decision.

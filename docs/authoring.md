@@ -760,6 +760,17 @@ intended production narration.
 
 ### Configure the deployment target
 
+Prepare the local deployment files with:
+
+```bash
+pnpm lesson deploy --prepare --space namespace/space-name --lesson lessons/my-lesson
+```
+
+This command makes no Hugging Face API calls. It records the target in
+`lesson.yaml`, creates the appropriate static or Docker Space card when absent,
+and completes the narration Git LFS rules. It preserves a valid existing Space
+card and refuses to replace a different deployment target.
+
 Record only the stable remote Space identifier in `lesson.yaml`:
 
 ```yaml
