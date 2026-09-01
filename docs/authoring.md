@@ -699,6 +699,20 @@ app_file: index.html
 The other Space card fields, including `fullWidth` and `header`, also belong in
 this README.
 
+Track every narration format through Git LFS in `space/.gitattributes`:
+
+```gitattributes
+*.webm filter=lfs diff=lfs merge=lfs -text
+*.m4a filter=lfs diff=lfs merge=lfs -text
+*.mp3 filter=lfs diff=lfs merge=lfs -text
+*.wav filter=lfs diff=lfs merge=lfs -text
+```
+
+The deployment command checks the finished release and stops if an included
+narration format is missing its rule. Without the rule, Hugging Face may store a
+large media file through Git LFS while a Docker Space checks out only the small
+text pointer, which browsers cannot play.
+
 ### Validate without changing Hugging Face
 
 Run a dry deployment before the first release:

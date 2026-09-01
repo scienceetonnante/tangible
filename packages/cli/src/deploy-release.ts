@@ -2,7 +2,7 @@
 
 import { cp, copyFile, mkdir, mkdtemp, readFile, readdir, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join, relative } from "node:path";
+import { extname, join, relative } from "node:path";
 import { parse as parseYaml } from "yaml";
 import type { Manifest } from "./manifest.js";
 
@@ -58,11 +58,34 @@ export async function stageRelease(lessonDir: string): Promise<StagedRelease> {
     }
     await copyFile(join(lessonDir, "space", "README.md"), join(path, "README.md"));
     await copyFile(join(lessonDir, "space", ".gitattributes"), join(path, ".gitattributes"));
+    await validateAudioLfsRules(path);
     const summary = await inspectRelease(path);
     return { root, path, ...summary };
   } catch (error) {
     await rm(root, { recursive: true, force: true });
     throw error;
+  }
+}
+
+async function validateAudioLfsRules(root: string): Promise<void> {
+  const audioFiles = (await readdir(root, { withFileTypes: true }))
+    .filter((entry) => entry.isFile() && /^audio\.(wav|mp3|webm|m4a|ogg)$/.test(entry.name))
+    .map((entry) => entry.name);
+  if (!audioFiles.length) return;
+
+  const lines = (await readFile(join(root, ".gitattributes"), "utf8"))
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter((line) => line && !line.startsWith("#"));
+  for (const audioFile of audioFiles) {
+    const pattern = `*${extname(audioFile)}`;
+    const tracked = lines.some((line) => {
+      const fields = line.split(/\s+/);
+      return fields[0] === pattern && fields.includes("filter=lfs");
+    });
+    if (!tracked) {
+      throw new Error(`space/.gitattributes must track "${pattern}" with Git LFS because the release contains "${audioFile}"`);
+    }
   }
 }
 

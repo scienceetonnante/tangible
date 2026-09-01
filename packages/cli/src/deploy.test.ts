@@ -177,6 +177,32 @@ describe("Hugging Face Space deployment", () => {
       else process.env.ELEVENLABS_API_KEY = former;
     }
   });
+
+  it("requires every narration format in the release to use Git LFS", async () => {
+    const lessonDir = await fixture();
+    const options = {
+      lessonDir,
+      manifest: manifest(),
+      dryRun: true,
+      check: async () => {},
+      build: async () => {
+        await buildSite(lessonDir);
+        await writeFile(join(lessonDir, "build", "site", "audio.webm"), "webm audio");
+      },
+      runCommand: runner([], async (_command, args) => standardResponse(args)),
+      log: () => {},
+    };
+
+    await expect(deployLessonToSpace(options)).rejects.toThrow(
+      'space/.gitattributes must track "*.webm" with Git LFS because the release contains "audio.webm"',
+    );
+
+    await writeFile(
+      join(lessonDir, "space", ".gitattributes"),
+      "*.wav filter=lfs diff=lfs merge=lfs -text\n*.webm filter=lfs diff=lfs merge=lfs -text\n",
+    );
+    await expect(deployLessonToSpace(options)).resolves.toMatchObject({ dryRun: true });
+  });
 });
 
 async function fixture(assistant = true): Promise<string> {
