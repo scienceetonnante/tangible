@@ -1,10 +1,12 @@
 import { describe, expect, it } from "vitest";
 import type { Schema } from "@tangible/core";
+import { classifyAssistantEvalError } from "./assistant-eval.js";
+import { evaluateAssistantDeterministicChecks } from "./assistant-eval-checks.js";
 import {
-  classifyAssistantEvalError,
   validateAssistantEvalFile,
   type AssistantEvalFile,
-} from "./assistant-eval.js";
+  type AssistantEvalRubric,
+} from "./assistant-eval-format.js";
 import { AssistantProviderError, AssistantProviderTimeoutError } from "./assistant-service.js";
 
 const schema: Schema = {
@@ -26,7 +28,18 @@ const validFile: AssistantEvalFile = {
       request: { reasoning_effort: "medium", chat_template_kwargs: { enable_thinking: true } },
     },
   ],
-  cases: [{ id: "explain-angle", at: 12, state: { theta: 3.14 }, turns: ["Why is this pi?"] }],
+  cases: [{
+    id: "explain-angle",
+    at: 12,
+    state: { theta: 3.14 },
+    turns: [{
+      question: "Why is this pi?",
+      rubric: {
+        referenceFacts: ["The angle is pi radians."],
+        scene: { policy: "forbidden", preserve: ["theta"] },
+      },
+    }],
+  }],
 };
 
 describe("assistant evaluation file", () => {
@@ -71,6 +84,68 @@ describe("assistant evaluation file", () => {
       schema,
       30,
     )).toThrow("outside [0, 6.28]");
+  });
+
+  it("validates rubric parameters and scalar assertions", () => {
+    expect(() => validateAssistantEvalFile(
+      {
+        ...validFile,
+        cases: [{
+          id: "bad-rubric",
+          at: 1,
+          turns: [{
+            question: "Show me.",
+            rubric: {
+              referenceFacts: ["Theta must stay in range."],
+              scene: {
+                policy: "required",
+                assertions: [{ param: "missing", operator: "eq", value: 1 }],
+              },
+            },
+          }],
+        }],
+      },
+      "assistant.eval.yaml",
+      schema,
+      30,
+    )).toThrow('unknown parameter "missing"');
+  });
+});
+
+describe("assistant deterministic grading", () => {
+  const visualRubric: AssistantEvalRubric = {
+    referenceFacts: ["The requested state has theta below 2."],
+    scene: {
+      policy: "required",
+      preserve: ["fixed"],
+      requiredChanges: ["theta"],
+      assertions: [{ param: "theta", operator: "lt", value: 2 }],
+    },
+  };
+
+  it("checks scene policy, preservation, required changes, and final assertions", () => {
+    const checks = evaluateAssistantDeterministicChecks(
+      "Here is the stable case.",
+      [{ say: "Here it is.", set: { theta: 1.5 }, over: 0 }],
+      visualRubric,
+      { theta: 3, fixed: true },
+      ["theta", "fixed"],
+    );
+
+    expect(checks.every((check) => check.passed)).toBe(true);
+  });
+
+  it("reports forbidden actions and internal parameter names", () => {
+    const checks = evaluateAssistantDeterministicChecks(
+      "I will change sgd.lr.",
+      [{ say: "Changed.", set: { theta: 1 }, over: 0 }],
+      { referenceFacts: ["No visual is needed."], scene: { policy: "forbidden" } },
+      { theta: 1 },
+      ["sgd.lr", "theta"],
+    );
+
+    expect(checks.find((check) => check.id === "internal-parameter-names")?.passed).toBe(false);
+    expect(checks.find((check) => check.id === "scene-policy")?.passed).toBe(false);
   });
 });
 

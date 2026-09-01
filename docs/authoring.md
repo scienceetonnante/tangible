@@ -612,8 +612,26 @@ cases:
     state:
       theta: 1.5708
     turns:
-      - What does cosine represent here?
-      - Can you show me a case where it is zero?
+      - question: What does cosine represent here?
+        rubric:
+          referenceFacts:
+            - Cosine is the point's horizontal coordinate on the unit circle.
+          forbiddenClaims:
+            - Cosine is the vertical coordinate.
+          criticalErrors:
+            - The answer reverses sine and cosine.
+          scene:
+            policy: forbidden
+      - question: Can you show me a case where it is zero?
+        rubric:
+          referenceFacts:
+            - Cosine is zero at a quarter turn.
+          scene:
+            policy: required
+            preserve: [show.projection]
+            requiredChanges: [theta]
+            assertions:
+              - { param: theta, operator: eq, value: 1.5708 }
 ```
 
 Render the provider requests without downloading a voice model or making
@@ -652,6 +670,15 @@ The evaluator records latency, token metrics when the provider returns them,
 and a bounded error category. A failed turn does not stop independent cases.
 Later turns in the same conversation are skipped because the missing answer
 would make their history invalid.
+
+A turn may remain a plain question string, or it may contain a question and an
+authored rubric. `referenceFacts`, `forbiddenClaims`, and `criticalErrors` are
+reserved for later model or human grading and are never sent to the candidate
+model. The `scene` block drives deterministic checks. Its policy is
+`forbidden`, `optional`, or `required`. `preserve` names parameters that must
+not change, and `requiredChanges` names parameters that must change. An
+assertion checks the final value with `eq`, `lt`, `lte`, `gt`, or `gte`.
+Relational operators apply only to scalar parameters.
 
 To test real answers without synthesizing real narration, build an offline
 bundle and serve that existing bundle:

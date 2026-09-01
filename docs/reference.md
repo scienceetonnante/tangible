@@ -131,6 +131,12 @@ configurations are interleaved so that changing provider conditions do not
 systematically favor one configuration. `--real` requires `HF_TOKEN` and may
 incur provider costs.
 
+Each turn can include an authored rubric with reference facts, forbidden
+claims, critical errors, and a scene policy. Successful answers are checked for
+required or forbidden scene actions, preserved parameters, final-value
+assertions, and exposed internal parameter names. The rubric is written to the
+result for grading but is not included in the candidate model request.
+
 ### Scene development without narration
 
 `lesson scene` reads only `id` and `scene` from `lesson.yaml`. It loads the scene

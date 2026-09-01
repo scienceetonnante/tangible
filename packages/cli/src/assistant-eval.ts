@@ -6,7 +6,6 @@ import { join } from "node:path";
 import {
   buildIndex,
   evaluate,
-  validateValue,
   type AnswerBeat,
   type AssistantContext,
   type AssistantHistoryTurn,
@@ -14,7 +13,6 @@ import {
   type LessonTracks,
   type ParamValue,
   type PlainState,
-  type Schema,
 } from "@tangible/core";
 import { lessonPositionAt, latestCue, parseVtt } from "@tangible/player";
 import { parse as parseYaml } from "yaml";
@@ -25,31 +23,22 @@ import {
   AssistantProviderTimeoutError,
   answerQuestion,
   buildAssistantProviderRequest,
-  validateAssistantProviderRequestConfig,
   type AssistantProviderMetrics,
-  type AssistantProviderRequestConfig,
 } from "./assistant-service.js";
 import type { AssistantPromptStyle } from "./assistant-prompt.js";
-
-export interface AssistantEvalFile {
-  configurations?: AssistantEvalConfiguration[];
-  repeats?: number;
-  cases: AssistantEvalCase[];
-}
-
-export interface AssistantEvalConfiguration {
-  id: string;
-  model: string;
-  systemPrefix?: string;
-  request?: Record<string, unknown>;
-}
-
-export interface AssistantEvalCase {
-  id: string;
-  at: number;
-  state?: PlainState;
-  turns: string[];
-}
+import {
+  evaluateAssistantDeterministicChecks,
+  type AssistantDeterministicCheck,
+} from "./assistant-eval-checks.js";
+import {
+  assistantEvalRequestConfig,
+  assistantEvalTurn,
+  validateAssistantEvalFile,
+  validateAssistantEvalRepeats,
+  type AssistantEvalConfiguration,
+  type AssistantEvalFile,
+  type AssistantEvalRubric,
+} from "./assistant-eval-format.js";
 
 export interface AssistantEvalOptions {
   lessonDir: string;
@@ -69,6 +58,14 @@ export type AssistantEvalErrorCategory =
 
 interface EvalTurnResult {
   question: string;
+  rubric?: AssistantEvalRubric;
+  evaluationContext?: {
+    lessonPosition: AssistantRequest["position"];
+    visibleState: PlainState;
+    temporaryAssistantState: PlainState;
+    history: AssistantHistoryTurn[];
+  };
+  deterministicChecks?: AssistantDeterministicCheck[];
   providerRequest?: Record<string, unknown>;
   simulatedAnswer?: string;
   simulatedBeats?: AnswerBeat[];
@@ -119,7 +116,7 @@ export async function runAssistantEval(opts: AssistantEvalOptions): Promise<void
   const configurations = selectedConfigurations(data, context.model, opts.configurationIds, evalPath);
   const cases = selectById(data.cases, opts.caseIds, "case", evalPath);
   const repeats = opts.repeats ?? data.repeats ?? 1;
-  validateRepeats(repeats, `${evalPath}: repeats`);
+  validateAssistantEvalRepeats(repeats, `${evalPath}: repeats`);
   const requests =
     cases.reduce((count, test) => count + test.turns.length, 0) *
     configurations.length *
@@ -145,9 +142,14 @@ export async function runAssistantEval(opts: AssistantEvalOptions): Promise<void
           const turns: EvalTurnResult[] = [];
           let failedTurn: string | undefined;
 
-          for (const question of test.turns) {
+          for (const definition of test.turns) {
+            const { question, rubric } = assistantEvalTurn(definition);
             if (failedTurn) {
-              turns.push({ question, skipped: `previous turn failed: ${failedTurn}` });
+              turns.push({
+                question,
+                ...(rubric ? { rubric } : {}),
+                skipped: `previous turn failed: ${failedTurn}`,
+              });
               continue;
             }
             const request = assistantRequest(
@@ -161,11 +163,26 @@ export async function runAssistantEval(opts: AssistantEvalOptions): Promise<void
               tracks,
               cues,
             );
-            const requestConfig = providerRequestConfig(configuration);
+            const evaluationContext = {
+              lessonPosition: request.position,
+              visibleState: request.state,
+              temporaryAssistantState: request.temporaryAssistantState,
+              history: request.history,
+            };
+            const requestConfig = assistantEvalRequestConfig(configuration);
             if (!opts.real) {
               const response = await answerQuestion(request, context, { fake: true });
               turns.push({
                 question,
+                ...(rubric ? { rubric } : {}),
+                evaluationContext,
+                deterministicChecks: evaluateAssistantDeterministicChecks(
+                  response.answer,
+                  response.beats,
+                  rubric,
+                  state,
+                  context.commandable,
+                ),
                 providerRequest: buildAssistantProviderRequest(request, context, variant, requestConfig),
                 simulatedAnswer: response.answer,
                 simulatedBeats: response.beats,
@@ -187,6 +204,15 @@ export async function runAssistantEval(opts: AssistantEvalOptions): Promise<void
               });
               turns.push({
                 question,
+                ...(rubric ? { rubric } : {}),
+                evaluationContext,
+                deterministicChecks: evaluateAssistantDeterministicChecks(
+                  response.answer,
+                  response.beats,
+                  rubric,
+                  state,
+                  context.commandable,
+                ),
                 answer: response.answer,
                 beats: response.beats,
                 latencyMs: Date.now() - started,
@@ -196,7 +222,13 @@ export async function runAssistantEval(opts: AssistantEvalOptions): Promise<void
               temporaryAssistantState = finalAnswerState(response.beats);
             } catch (error) {
               const failure = classifyAssistantEvalError(error);
-              turns.push({ question, latencyMs: Date.now() - started, error: failure });
+              turns.push({
+                question,
+                ...(rubric ? { rubric } : {}),
+                evaluationContext,
+                latencyMs: Date.now() - started,
+                error: failure,
+              });
               failedTurn = failure.category;
             }
           }
@@ -219,75 +251,6 @@ export async function runAssistantEval(opts: AssistantEvalOptions): Promise<void
   const output = `${JSON.stringify(results, null, 2)}\n`;
   if (opts.out) await writeFile(opts.out, output);
   else process.stdout.write(output);
-}
-
-export function validateAssistantEvalFile(
-  data: AssistantEvalFile,
-  path: string,
-  schema: Schema,
-  duration: number,
-): void {
-  if (!data || typeof data !== "object" || Array.isArray(data)) {
-    throw new Error(`${path}: evaluation must be an object`);
-  }
-  if (data.repeats !== undefined) validateRepeats(data.repeats, `${path}: repeats`);
-  if (data.configurations !== undefined) {
-    if (!Array.isArray(data.configurations) || !data.configurations.length) {
-      throw new Error(`${path}: configurations must be a non-empty array`);
-    }
-    const configurationIds = new Set<string>();
-    for (const configuration of data.configurations) {
-      if (!configuration || typeof configuration !== "object" || Array.isArray(configuration)) {
-        throw new Error(`${path}: every configuration must be an object`);
-      }
-      validateId(configuration.id, "configuration", path);
-      if (configurationIds.has(configuration.id)) {
-        throw new Error(`${path}: duplicate configuration id "${configuration.id}"`);
-      }
-      configurationIds.add(configuration.id);
-      if (typeof configuration.model !== "string" || !configuration.model.trim()) {
-        throw new Error(`${path}: configuration "${configuration.id}" needs a model`);
-      }
-      if (configuration.systemPrefix !== undefined && typeof configuration.systemPrefix !== "string") {
-        throw new Error(`${path}: configuration "${configuration.id}" systemPrefix must be text`);
-      }
-      if (
-        configuration.request !== undefined &&
-        (!configuration.request || typeof configuration.request !== "object" || Array.isArray(configuration.request))
-      ) {
-        throw new Error(`${path}: configuration "${configuration.id}" request must be an object`);
-      }
-      try {
-        validateAssistantProviderRequestConfig(providerRequestConfig(configuration));
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        throw new Error(`${path}: configuration "${configuration.id}": ${message}`);
-      }
-    }
-  }
-  if (!Array.isArray(data.cases) || !data.cases.length) {
-    throw new Error(`${path}: cases must be a non-empty array`);
-  }
-  const caseIds = new Set<string>();
-  for (const test of data.cases) {
-    if (!test || typeof test !== "object" || Array.isArray(test)) {
-      throw new Error(`${path}: every case must be an object`);
-    }
-    validateId(test.id, "case", path);
-    if (caseIds.has(test.id)) throw new Error(`${path}: duplicate case id "${test.id}"`);
-    caseIds.add(test.id);
-    if (!Number.isFinite(test.at) || test.at < 0 || test.at > duration) {
-      throw new Error(`${path}: case "${test.id}" time must be between 0 and ${duration}`);
-    }
-    validateState(test.state, test.id, path, schema);
-    if (
-      !Array.isArray(test.turns) ||
-      !test.turns.length ||
-      test.turns.some((turn) => typeof turn !== "string" || !turn.trim())
-    ) {
-      throw new Error(`${path}: case "${test.id}" needs non-empty turns`);
-    }
-  }
 }
 
 export function classifyAssistantEvalError(error: unknown): {
@@ -329,47 +292,6 @@ function selectById<T extends { id: string }>(
   const missing = requested.filter((id) => !values.some((value) => value.id === id));
   if (missing.length) throw new Error(`${path}: unknown ${kind} id(s): ${missing.join(", ")}`);
   return selected;
-}
-
-function validateId(value: unknown, kind: string, path: string): asserts value is string {
-  if (typeof value !== "string" || !/^[a-z0-9][a-z0-9_-]*$/.test(value)) {
-    throw new Error(`${path}: every ${kind} needs a lowercase id using letters, numbers, "-", or "_"`);
-  }
-}
-
-function validateRepeats(value: number, label: string): void {
-  if (!Number.isSafeInteger(value) || value < 1 || value > 20) {
-    throw new Error(`${label} must be an integer between 1 and 20`);
-  }
-}
-
-function validateState(state: PlainState | undefined, id: string, path: string, schema: Schema): void {
-  if (state === undefined) return;
-  if (!state || typeof state !== "object" || Array.isArray(state)) {
-    throw new Error(`${path}: case "${id}" state must be an object`);
-  }
-  for (const [param, value] of Object.entries(state)) {
-    const spec = schema[param];
-    if (!spec) throw new Error(`${path}: case "${id}" state has unknown parameter "${param}"`);
-    const error = validateValue(spec.type, value);
-    if (error) throw new Error(`${path}: case "${id}" state ${param}: ${error}`);
-    if (
-      spec.type.kind === "scalar" &&
-      spec.type.range &&
-      typeof value === "number" &&
-      (value < spec.type.range[0] || value > spec.type.range[1])
-    ) {
-      throw new Error(`${path}: case "${id}" state ${param} is outside [${spec.type.range.join(", ")}]`);
-    }
-  }
-}
-
-function providerRequestConfig(configuration: AssistantEvalConfiguration): AssistantProviderRequestConfig {
-  return {
-    model: configuration.model,
-    ...(configuration.systemPrefix !== undefined ? { systemPrefix: configuration.systemPrefix } : {}),
-    ...(configuration.request ? { body: configuration.request } : {}),
-  };
 }
 
 function assistantRequest(
