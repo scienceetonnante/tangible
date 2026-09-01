@@ -413,6 +413,9 @@ assistant:
       globalRequestsPerHour: 120
       globalRequestsPerDay: 500
       concurrentProviderCalls: 2
+    queue:
+      maxPendingRequests: 0
+      waitTimeoutSeconds: 20
     providerTimeoutSeconds: 30
   commandable: []
 ```
@@ -431,10 +434,43 @@ logs. This limit discourages one connection from rotating browser identifiers,
 but shared office, mobile, or conference networks can make several visitors
 appear under one address.
 
-The hourly and daily counters cover all accepted provider calls in the running
-server process. All traffic counters are in memory and reset when the Space
+The hourly and daily counters cover provider calls that start in the running
+server process. When all provider slots are active, up to `maxPendingRequests`
+requests wait in arrival order. Set this value to zero to reject excess traffic
+immediately. A waiting request leaves the queue after `waitTimeoutSeconds` and
+does not consume the hourly or daily provider budget.
+
+All traffic counters and the queue are in memory and reset when the Space
 restarts. A provider call that exceeds `providerTimeoutSeconds` is aborted and
 reported as a timeout.
+
+### Read assistant logs
+
+The assistant server writes one structured JSON object per operational event:
+
+- `assistant.config` records the effective limits after Space variables have
+  been applied;
+- `assistant.queued` records that a valid request entered the provider queue;
+- `assistant.request` records character counts, history length, queue wait, and
+  the current ten-minute, hourly, daily, active, and pending counts;
+- `assistant.success` records latency, answer size, provider token counts,
+  cached and reasoning token counts when supplied, and the completion reason;
+- `assistant.limited` names the limit that rejected a request and includes the
+  current traffic counts; and
+- `assistant.error` records a safe error category, provider status when known,
+  latency, and any token metrics received before the failure.
+
+These logs never contain question text, answer text, prompt content,
+credentials, browser identifiers, or raw IP addresses. Provider token counts
+are optional because some providers or failed requests do not return them. Use
+the request and success events to estimate traffic and token cost, and use
+limited, queued, timeout, and provider-status events to diagnose availability.
+Read recent or live Hugging Face Space logs with:
+
+```bash
+hf spaces logs -n 1000 owner/space
+hf spaces logs -f owner/space
+```
 
 ### Understand the assistant request
 
@@ -747,12 +783,15 @@ without changing the authored configuration:
 - `ASSISTANT_CLIENT_10M_LIMIT`;
 - `ASSISTANT_IP_10M_LIMIT`;
 - `ASSISTANT_MAX_CONCURRENT`;
+- `ASSISTANT_MAX_QUEUED`;
+- `ASSISTANT_QUEUE_WAIT_SECONDS`;
 - `ASSISTANT_PROVIDER_TIMEOUT_SECONDS`.
 
-The first five overrides must be positive integers. The timeout must be a
-positive number of seconds. A Space restart applies the new values and clears
-the in-memory counters. Remove the variables to return to the values recorded
-in `lesson.yaml`.
+The hourly, daily, browser, IP, and concurrency overrides must be positive
+integers. `ASSISTANT_MAX_QUEUED` must be a non-negative integer; zero disables
+waiting. Both timeout values must be positive numbers of seconds. A Space
+restart applies the new values and clears the in-memory counters and queue.
+Remove the variables to return to the values recorded in `lesson.yaml`.
 
 ### Safe release sequence
 

@@ -24,6 +24,16 @@ export interface AssistantProviders {
   fake?: boolean;
   promptStyle?: AssistantPromptStyle;
   onProviderRequest?: (request: Record<string, unknown>) => Promise<void> | void;
+  onProviderMetrics?: (metrics: AssistantProviderMetrics) => void;
+}
+
+export interface AssistantProviderMetrics {
+  inputTokens?: number;
+  outputTokens?: number;
+  totalTokens?: number;
+  cachedInputTokens?: number;
+  reasoningTokens?: number;
+  finishReason?: string;
 }
 
 export async function answerQuestion(
@@ -72,10 +82,44 @@ async function huggingFaceAnswer(
     await response.body?.cancel();
     throw new AssistantProviderError(response.status);
   }
-  const responseBody = (await response.json()) as { choices?: { message?: { content?: string } }[] };
+  const responseBody = (await response.json()) as ProviderResponseBody;
+  providers.onProviderMetrics?.(providerMetrics(responseBody));
   const content = responseBody.choices?.[0]?.message?.content;
   if (!content) throw new Error("Hugging Face returned no answer");
   return (JSON.parse(content) as { beats: AnswerBeat[] }).beats;
+}
+
+interface ProviderResponseBody {
+  choices?: { message?: { content?: string }; finish_reason?: unknown }[];
+  usage?: {
+    prompt_tokens?: unknown;
+    completion_tokens?: unknown;
+    total_tokens?: unknown;
+    prompt_tokens_details?: { cached_tokens?: unknown };
+    completion_tokens_details?: { reasoning_tokens?: unknown };
+  };
+}
+
+function providerMetrics(body: ProviderResponseBody): AssistantProviderMetrics {
+  const usage = body.usage;
+  const finishReason = body.choices?.[0]?.finish_reason;
+  const inputTokens = tokenCount(usage?.prompt_tokens);
+  const outputTokens = tokenCount(usage?.completion_tokens);
+  const totalTokens = tokenCount(usage?.total_tokens);
+  const cachedInputTokens = tokenCount(usage?.prompt_tokens_details?.cached_tokens);
+  const reasoningTokens = tokenCount(usage?.completion_tokens_details?.reasoning_tokens);
+  return {
+    ...(inputTokens !== undefined ? { inputTokens } : {}),
+    ...(outputTokens !== undefined ? { outputTokens } : {}),
+    ...(totalTokens !== undefined ? { totalTokens } : {}),
+    ...(cachedInputTokens !== undefined ? { cachedInputTokens } : {}),
+    ...(reasoningTokens !== undefined ? { reasoningTokens } : {}),
+    ...(typeof finishReason === "string" && /^[a-zA-Z0-9_-]{1,40}$/.test(finishReason) ? { finishReason } : {}),
+  };
+}
+
+function tokenCount(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? value : undefined;
 }
 
 /** Construct the complete provider body without making a network request. */

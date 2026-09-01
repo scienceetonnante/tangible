@@ -29,12 +29,15 @@ assistant:
       answerCharacters: 2000
       transitionSeconds: 2
     rate:
-      browserRequestsPerTenMinutes: 8
-      ipRequestsPerTenMinutes: 40
-      globalRequestsPerHour: 120
-      globalRequestsPerDay: 500
-      concurrentProviderCalls: 2
-    providerTimeoutSeconds: 30
+      browserRequestsPerTenMinutes: 12
+      ipRequestsPerTenMinutes: 100
+      globalRequestsPerHour: 1000
+      globalRequestsPerDay: 5000
+      concurrentProviderCalls: 8
+    queue:
+      maxPendingRequests: 30
+      waitTimeoutSeconds: 30
+    providerTimeoutSeconds: 45
   commandable:
     - kappa
     - roughness

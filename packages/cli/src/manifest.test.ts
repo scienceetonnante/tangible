@@ -49,6 +49,9 @@ assistant:
       globalRequestsPerHour: 120
       globalRequestsPerDay: 500
       concurrentProviderCalls: 2
+    queue:
+      maxPendingRequests: 7
+      waitTimeoutSeconds: 12.5
     providerTimeoutSeconds: 30
   commandable: [theta]
 deployment:
@@ -63,6 +66,7 @@ deployment:
           request: { questionCharacters: 900, historyTurns: 4 },
           response: { outputTokens: 800, transitionSeconds: 1.5 },
           rate: { ipRequestsPerTenMinutes: 40, globalRequestsPerDay: 500 },
+          queue: { maxPendingRequests: 7, waitTimeoutSeconds: 12.5 },
           providerTimeoutSeconds: 30,
         },
       },
@@ -129,6 +133,9 @@ assistant:
       globalRequestsPerHour: 120
       globalRequestsPerDay: 0
       concurrentProviderCalls: 2
+    queue:
+      maxPendingRequests: 0
+      waitTimeoutSeconds: 20
     providerTimeoutSeconds: 30
 `)).rejects.toThrow("globalRequestsPerDay");
   });

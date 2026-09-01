@@ -261,7 +261,7 @@ by the provider. Assistant-enabled bundles include a same-origin server; other
 lessons remain static. See
 [the assistant section of the authoring guide](./authoring.md#add-a-lesson-assistant).
 The optional nested `assistant.limits` block records all request, response,
-traffic, and provider-timeout values. See
+traffic, queue, and provider-timeout values. See
 [Configure assistant limits](./authoring.md#configure-assistant-limits) for the
 complete block and its defaults. `lesson check` rejects invalid limit values
 before a provider is called.

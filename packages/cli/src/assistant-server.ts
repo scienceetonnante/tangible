@@ -7,7 +7,13 @@ import { readFile } from "node:fs/promises";
 import { isIP } from "node:net";
 import { join } from "node:path";
 import type { AssistantContext, AssistantLimits, AssistantRequest } from "@tangible/core";
-import { AssistantProviderError, AssistantProviderTimeoutError, answerQuestion, validateAssistantRequest } from "./assistant-service.js";
+import {
+  AssistantProviderError,
+  AssistantProviderTimeoutError,
+  answerQuestion,
+  validateAssistantRequest,
+  type AssistantProviderMetrics,
+} from "./assistant-service.js";
 import { serveFromDir } from "./static-server.js";
 
 export interface AssistantServerOptions {
@@ -28,13 +34,18 @@ export function createAssistantApi(opts: AssistantServerOptions): AssistantApiHa
   const browsers = new Map<string, number[]>();
   const ips = new Map<string, number[]>();
   let globalRequests: number[] = [];
-  let active = 0;
   const limits = limitsFromEnvironment(opts.limits);
   validateLimits(limits);
+  const providerGate = new ProviderGate(
+    limits.rate.concurrentProviderCalls,
+    limits.queue.maxPendingRequests,
+    limits.queue.waitTimeoutSeconds * 1000,
+  );
   const ipSalt = randomBytes(16);
   const now = opts.now ?? Date.now;
   const answer = opts.answer ?? answerQuestion;
   const log = opts.logger ?? ((entry) => console.error(JSON.stringify({ timestamp: new Date().toISOString(), ...entry })));
+  log({ event: "assistant.config", limits });
   return async (req, res) => {
     if ((req.url ?? "").split("?")[0] !== "/api/answer") return false;
     if (req.method !== "POST") return json(res, 405, { error: "method not allowed" });
@@ -44,6 +55,9 @@ export function createAssistantApi(opts: AssistantServerOptions): AssistantApiHa
     const started = Date.now();
     let request: AssistantRequest | undefined;
     let context: AssistantContext | undefined;
+    let providerMetrics: AssistantProviderMetrics | undefined;
+    let providerStarted: number | undefined;
+    let queueWaitMs = 0;
     let stage: "request" | "server" | "provider" = "request";
     try {
       request = await readJson(req, limits.request.bodyBytes) as AssistantRequest;
@@ -62,11 +76,15 @@ export function createAssistantApi(opts: AssistantServerOptions): AssistantApiHa
       const hourlyRequests = globalRequests.filter((entry) => time - entry < 60 * 60_000);
       const browserRequests = recentRequests(browsers, browser, time);
       const ipRequests = ip ? recentRequests(ips, ip, time) : [];
-      if (browserRequests.length >= limits.rate.browserRequestsPerTenMinutes) return limited(log, res, requestId, request, "browser", 600);
-      if (ip && ipRequests.length >= limits.rate.ipRequestsPerTenMinutes) return limited(log, res, requestId, request, "ip", 600);
-      if (hourlyRequests.length >= limits.rate.globalRequestsPerHour) return limited(log, res, requestId, request, "hourly", 3600);
-      if (globalRequests.length >= limits.rate.globalRequestsPerDay) return limited(log, res, requestId, request, "daily", 86_400);
-      if (active >= limits.rate.concurrentProviderCalls) return limited(log, res, requestId, request, "concurrent", 5);
+      const traffic = () => trafficSnapshot(browserRequests, ipRequests, globalRequests, now(), providerGate);
+      if (browserRequests.length >= limits.rate.browserRequestsPerTenMinutes) return limited(log, res, requestId, request, "browser", 600, traffic());
+      if (ip && ipRequests.length >= limits.rate.ipRequestsPerTenMinutes) return limited(log, res, requestId, request, "ip", 600, traffic());
+      if (hourlyRequests.length >= limits.rate.globalRequestsPerHour) return limited(log, res, requestId, request, "hourly", 3600, traffic());
+      if (globalRequests.length >= limits.rate.globalRequestsPerDay) return limited(log, res, requestId, request, "daily", 86_400, traffic());
+      if (providerGate.isFull()) {
+        const limit = limits.queue.maxPendingRequests === 0 ? "concurrent" : "queue_full";
+        return limited(log, res, requestId, request, limit, 5, traffic());
+      }
 
       removeInactive(browsers, time);
       removeInactive(ips, time);
@@ -76,8 +94,54 @@ export function createAssistantApi(opts: AssistantServerOptions): AssistantApiHa
         ipRequests.push(time);
         ips.set(ip, ipRequests);
       }
-      globalRequests.push(time);
-      active++;
+
+      const willQueue = providerGate.isBusy();
+      const admissionPromise = providerGate.acquire();
+      if (willQueue) {
+        log({
+          event: "assistant.queued",
+          requestId,
+          lessonId: request.lessonId,
+          traffic: trafficSnapshot(browserRequests, ipRequests, globalRequests, time, providerGate),
+        });
+      }
+      const admission = await admissionPromise;
+      if (admission.status === "full") {
+        return limited(log, res, requestId, request, "queue_full", 5, traffic());
+      }
+      if (admission.status === "timeout") {
+        return limited(log, res, requestId, request, "queue_timeout", 5, traffic());
+      }
+      queueWaitMs = admission.waitedMs;
+
+      const providerTime = now();
+      globalRequests = globalRequests.filter((entry) => providerTime - entry < 24 * 60 * 60_000);
+      const providerHourlyRequests = globalRequests.filter((entry) => providerTime - entry < 60 * 60_000);
+      if (providerHourlyRequests.length >= limits.rate.globalRequestsPerHour) {
+        providerGate.release();
+        return limited(
+          log,
+          res,
+          requestId,
+          request,
+          "hourly",
+          3600,
+          trafficSnapshot(browserRequests, ipRequests, globalRequests, providerTime, providerGate),
+        );
+      }
+      if (globalRequests.length >= limits.rate.globalRequestsPerDay) {
+        providerGate.release();
+        return limited(
+          log,
+          res,
+          requestId,
+          request,
+          "daily",
+          86_400,
+          trafficSnapshot(browserRequests, ipRequests, globalRequests, providerTime, providerGate),
+        );
+      }
+      globalRequests.push(providerTime);
 
       log({
         event: "assistant.request",
@@ -85,13 +149,20 @@ export function createAssistantApi(opts: AssistantServerOptions): AssistantApiHa
         lessonId: request.lessonId,
         questionChars: request.question?.length,
         historyTurns: request.history?.length,
+        queueWaitMs,
+        traffic: trafficSnapshot(browserRequests, ipRequests, globalRequests, providerTime, providerGate),
       });
       stage = "provider";
       let response;
+      providerStarted = Date.now();
       try {
-        response = await answer(request, context, { fake: opts.fake, onProviderRequest: opts.onProviderRequest });
+        response = await answer(request, context, {
+          fake: opts.fake,
+          onProviderRequest: opts.onProviderRequest,
+          onProviderMetrics: (metrics) => { providerMetrics = metrics; },
+        });
       } finally {
-        active--;
+        providerGate.release();
       }
       log({
         event: "assistant.success",
@@ -100,6 +171,9 @@ export function createAssistantApi(opts: AssistantServerOptions): AssistantApiHa
         model: opts.fake ? "fake" : context.model,
         beats: response.beats.length,
         answerChars: response.answer.length,
+        queueWaitMs,
+        providerLatencyMs: Date.now() - providerStarted,
+        ...providerMetrics,
         latencyMs: Date.now() - started,
       });
       return json(res, 200, response);
@@ -114,6 +188,9 @@ export function createAssistantApi(opts: AssistantServerOptions): AssistantApiHa
         model: opts.fake ? "fake" : context?.model,
         category,
         ...(error instanceof AssistantProviderError ? { providerStatus: error.status } : {}),
+        ...(providerStarted !== undefined ? { providerLatencyMs: Date.now() - providerStarted } : {}),
+        ...providerMetrics,
+        queueWaitMs,
         latencyMs: Date.now() - started,
       });
       return json(res, status, { error: stage === "request" ? "invalid question request" : timedOut ? "answer provider timed out" : stage === "provider" ? "answer provider failed" : "internal server error" });
@@ -157,6 +234,10 @@ function limitsFromEnvironment(configured: AssistantLimits): AssistantLimits {
       globalRequestsPerDay: positiveInteger("ASSISTANT_DAILY_LIMIT", configured.rate.globalRequestsPerDay),
       concurrentProviderCalls: positiveInteger("ASSISTANT_MAX_CONCURRENT", configured.rate.concurrentProviderCalls),
     },
+    queue: {
+      maxPendingRequests: nonNegativeInteger("ASSISTANT_MAX_QUEUED", configured.queue.maxPendingRequests),
+      waitTimeoutSeconds: positiveNumber("ASSISTANT_QUEUE_WAIT_SECONDS", configured.queue.waitTimeoutSeconds),
+    },
     providerTimeoutSeconds: positiveNumber("ASSISTANT_PROVIDER_TIMEOUT_SECONDS", configured.providerTimeoutSeconds),
   };
 }
@@ -166,6 +247,14 @@ function positiveInteger(name: string, fallback: number): number {
   if (raw === undefined) return fallback;
   const value = Number(raw);
   if (!Number.isSafeInteger(value) || value <= 0) throw new Error(`${name} must be a positive integer`);
+  return value;
+}
+
+function nonNegativeInteger(name: string, fallback: number): number {
+  const raw = process.env[name];
+  if (raw === undefined) return fallback;
+  const value = Number(raw);
+  if (!Number.isSafeInteger(value) || value < 0) throw new Error(`${name} must be a non-negative integer`);
   return value;
 }
 
@@ -185,6 +274,12 @@ function validateLimits(limits: AssistantLimits): void {
   }
   if (!Number.isFinite(transitionSeconds) || transitionSeconds < 0) {
     throw new Error("assistant limit transitionSeconds must be non-negative");
+  }
+  if (!Number.isSafeInteger(limits.queue.maxPendingRequests) || limits.queue.maxPendingRequests < 0) {
+    throw new Error("assistant limit maxPendingRequests must be a non-negative integer");
+  }
+  if (!Number.isFinite(limits.queue.waitTimeoutSeconds) || limits.queue.waitTimeoutSeconds <= 0) {
+    throw new Error("assistant limit waitTimeoutSeconds must be positive");
   }
   if (!Number.isFinite(limits.providerTimeoutSeconds) || limits.providerTimeoutSeconds <= 0) {
     throw new Error("assistant limit providerTimeoutSeconds must be positive");
@@ -224,6 +319,23 @@ function removeInactive(entries: Map<string, number[]>, time: number): void {
   for (const [id, requests] of entries) if (!requests.some((entry) => time - entry < 10 * 60_000)) entries.delete(id);
 }
 
+function trafficSnapshot(
+  browserRequests: number[],
+  ipRequests: number[],
+  globalRequests: number[],
+  time: number,
+  providerGate: ProviderGate,
+): Record<string, number> {
+  return {
+    browserRequestsTenMinutes: browserRequests.filter((entry) => time - entry < 10 * 60_000).length,
+    ipRequestsTenMinutes: ipRequests.filter((entry) => time - entry < 10 * 60_000).length,
+    globalRequestsHour: globalRequests.filter((entry) => time - entry < 60 * 60_000).length,
+    globalRequestsDay: globalRequests.filter((entry) => time - entry < 24 * 60 * 60_000).length,
+    activeProviderCalls: providerGate.active,
+    pendingRequests: providerGate.pending,
+  };
+}
+
 function isJson(req: IncomingMessage): boolean {
   const raw = req.headers["content-type"];
   const value = Array.isArray(raw) ? raw[0] : raw;
@@ -235,10 +347,11 @@ function limited(
   res: ServerResponse,
   requestId: string,
   request: AssistantRequest,
-  limit: "browser" | "ip" | "hourly" | "daily" | "concurrent",
+  limit: "browser" | "ip" | "hourly" | "daily" | "concurrent" | "queue_full" | "queue_timeout",
   retryAfter: number,
+  traffic: Record<string, number>,
 ): true {
-  log({ event: "assistant.limited", requestId, lessonId: request.lessonId, limit });
+  log({ event: "assistant.limited", requestId, lessonId: request.lessonId, limit, retryAfterSeconds: retryAfter, traffic });
   return json(res, 429, { error: "too many questions; try again shortly" }, { "retry-after": retryAfter });
 }
 
@@ -252,4 +365,73 @@ function json(res: ServerResponse, status: number, body: unknown, headers: Recor
   });
   res.end(text);
   return true;
+}
+
+type ProviderAdmission =
+  | { status: "acquired"; waitedMs: number }
+  | { status: "full" }
+  | { status: "timeout" };
+
+interface ProviderWaiter {
+  started: number;
+  timer: NodeJS.Timeout;
+  resolve: (admission: ProviderAdmission) => void;
+}
+
+class ProviderGate {
+  private activeCalls = 0;
+  private readonly waiters: ProviderWaiter[] = [];
+
+  constructor(
+    private readonly maxActive: number,
+    private readonly maxPending: number,
+    private readonly waitTimeoutMs: number,
+  ) {}
+
+  get active(): number {
+    return this.activeCalls;
+  }
+
+  get pending(): number {
+    return this.waiters.length;
+  }
+
+  isBusy(): boolean {
+    return this.activeCalls >= this.maxActive;
+  }
+
+  isFull(): boolean {
+    return this.isBusy() && this.waiters.length >= this.maxPending;
+  }
+
+  acquire(): Promise<ProviderAdmission> {
+    const started = Date.now();
+    if (!this.isBusy()) {
+      this.activeCalls++;
+      return Promise.resolve({ status: "acquired", waitedMs: 0 });
+    }
+    if (this.waiters.length >= this.maxPending) return Promise.resolve({ status: "full" });
+
+    return new Promise((resolve) => {
+      const timer = setTimeout(() => {
+        const index = this.waiters.indexOf(waiter);
+        if (index === -1) return;
+        this.waiters.splice(index, 1);
+        resolve({ status: "timeout" });
+      }, this.waitTimeoutMs);
+      const waiter: ProviderWaiter = { started, resolve, timer };
+      this.waiters.push(waiter);
+    });
+  }
+
+  release(): void {
+    const waiter = this.waiters.shift();
+    if (waiter) {
+      clearTimeout(waiter.timer);
+      waiter.resolve({ status: "acquired", waitedMs: Date.now() - waiter.started });
+      return;
+    }
+    this.activeCalls--;
+    if (this.activeCalls < 0) throw new Error("assistant provider gate released without an active call");
+  }
 }

@@ -135,6 +135,13 @@ the returned written beats and allowlisted absolute scene values. Provider
 credentials remain on the server. The temporary answer timeline disappears when
 playback resumes or another question begins.
 
+The server admits provider calls through a bounded first-in, first-out queue.
+Hourly and daily budgets count calls when they start, while browser and IP
+limits prevent one visitor from filling the queue. Structured operational logs
+record effective limits, traffic counts, queue waits, latency, safe error
+categories, and provider token usage when available. They never record prompts,
+questions, answers, credentials, browser identifiers, or raw IP addresses.
+
 ## Working conventions
 
 - Preserve the invariants above.

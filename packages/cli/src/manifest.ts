@@ -116,6 +116,10 @@ function validateAssistantLimits(value: unknown): asserts value is AssistantLimi
   positiveInteger(rate.globalRequestsPerHour, 'lesson.yaml field "assistant.limits.rate.globalRequestsPerHour"');
   positiveInteger(rate.globalRequestsPerDay, 'lesson.yaml field "assistant.limits.rate.globalRequestsPerDay"');
   positiveInteger(rate.concurrentProviderCalls, 'lesson.yaml field "assistant.limits.rate.concurrentProviderCalls"');
+
+  const queue = object(limits.queue, 'lesson.yaml field "assistant.limits.queue"');
+  nonNegativeInteger(queue.maxPendingRequests, 'lesson.yaml field "assistant.limits.queue.maxPendingRequests"');
+  positiveNumber(queue.waitTimeoutSeconds, 'lesson.yaml field "assistant.limits.queue.waitTimeoutSeconds"');
   positiveNumber(limits.providerTimeoutSeconds, 'lesson.yaml field "assistant.limits.providerTimeoutSeconds"');
 }
 
@@ -134,6 +138,10 @@ function finiteNumber(value: unknown, name: string): asserts value is number {
 
 function positiveInteger(value: unknown, name: string): asserts value is number {
   if (typeof value !== "number" || !Number.isSafeInteger(value) || value <= 0) throw new Error(`${name} must be a positive integer`);
+}
+
+function nonNegativeInteger(value: unknown, name: string): asserts value is number {
+  if (typeof value !== "number" || !Number.isSafeInteger(value) || value < 0) throw new Error(`${name} must be a non-negative integer`);
 }
 
 function positiveNumber(value: unknown, name: string): asserts value is number {

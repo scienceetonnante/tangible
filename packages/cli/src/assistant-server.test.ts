@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { Readable } from "node:stream";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { mkdtemp, writeFile } from "node:fs/promises";
@@ -39,6 +39,8 @@ const ANSWER: AssistantResponse = { answer: "At zero.", beats: [{ say: "At zero.
 const DEFAULT_LIMITS: AssistantLimits = DEFAULT_ASSISTANT_LIMITS;
 const quiet = () => {};
 
+afterEach(() => vi.unstubAllEnvs());
+
 async function siteDir(): Promise<string> {
   const dir = await mkdtemp(join(tmpdir(), "tangible-site-"));
   await writeFile(join(dir, "index.html"), "<h1>Lesson</h1>");
@@ -74,8 +76,15 @@ async function call(
   return { status, body: body ? JSON.parse(body) as Record<string, unknown> : {}, headers };
 }
 
-function limits(rate: Partial<AssistantLimits["rate"]>): AssistantLimits {
-  return { ...DEFAULT_LIMITS, rate: { ...DEFAULT_LIMITS.rate, ...rate } };
+function limits(
+  rate: Partial<AssistantLimits["rate"]> = {},
+  queue: Partial<AssistantLimits["queue"]> = {},
+): AssistantLimits {
+  return {
+    ...DEFAULT_LIMITS,
+    rate: { ...DEFAULT_LIMITS.rate, ...rate },
+    queue: { ...DEFAULT_LIMITS.queue, ...queue },
+  };
 }
 
 describe("assistant server", () => {
@@ -87,8 +96,13 @@ describe("assistant server", () => {
     expect(response.status).toBe(200);
     expect(response.body.answer).toContain("quarter turn");
     expect(response.headers["x-content-type-options"]).toBe("nosniff");
-    expect(logs.map((entry) => entry.event)).toEqual(["assistant.request", "assistant.success"]);
-    expect(logs[1]).toMatchObject({ lessonId: "circle", model: "fake", beats: 2 });
+    expect(logs.map((entry) => entry.event)).toEqual(["assistant.config", "assistant.request", "assistant.success"]);
+    expect(logs[0]).toMatchObject({ limits: DEFAULT_LIMITS });
+    expect(logs[1]).toMatchObject({
+      queueWaitMs: 0,
+      traffic: { globalRequestsHour: 1, globalRequestsDay: 1, activeProviderCalls: 1 },
+    });
+    expect(logs[2]).toMatchObject({ lessonId: "circle", model: "fake", beats: 2 });
     expect(JSON.stringify(logs)).not.toContain("Why?");
   });
 
@@ -177,6 +191,97 @@ describe("assistant server", () => {
     expect((await call(failing, REQUEST, { client: "client_0000000002" })).status).toBe(502);
   });
 
+  it("queues provider calls in arrival order and rejects requests beyond the queue", async () => {
+    const releases: ((value: AssistantResponse) => void)[] = [];
+    const answer = vi.fn(() => new Promise<AssistantResponse>((resolve) => releases.push(resolve)));
+    const logs: Record<string, unknown>[] = [];
+    const api = createAssistantApi({
+      siteDir: await siteDir(),
+      answer,
+      limits: limits({ concurrentProviderCalls: 1 }, { maxPendingRequests: 1, waitTimeoutSeconds: 1 }),
+      logger: (entry) => logs.push(entry),
+    });
+
+    const first = call(api, REQUEST, { client: "client_0000000001" });
+    await vi.waitFor(() => expect(answer).toHaveBeenCalledTimes(1));
+    const second = call(api, REQUEST, { client: "client_0000000002" });
+    await vi.waitFor(() => expect(logs.some((entry) => entry.event === "assistant.queued")).toBe(true));
+
+    const third = await call(api, REQUEST, { client: "client_0000000003" });
+    expect(third.status).toBe(429);
+    expect(logs.at(-1)).toMatchObject({ event: "assistant.limited", limit: "queue_full" });
+
+    releases[0]!(ANSWER);
+    await vi.waitFor(() => expect(answer).toHaveBeenCalledTimes(2));
+    releases[1]!(ANSWER);
+    expect((await first).status).toBe(200);
+    expect((await second).status).toBe(200);
+    const requests = logs.filter((entry) => entry.event === "assistant.request");
+    expect(requests[1]!.queueWaitMs).toEqual(expect.any(Number));
+  });
+
+  it("stops waiting after the configured queue timeout", async () => {
+    let release!: (value: AssistantResponse) => void;
+    let providerCalls = 0;
+    const answer = vi.fn(() => {
+      providerCalls++;
+      if (providerCalls > 1) return Promise.resolve(ANSWER);
+      return new Promise<AssistantResponse>((resolve) => { release = resolve; });
+    });
+    const logs: Record<string, unknown>[] = [];
+    const api = createAssistantApi({
+      siteDir: await siteDir(),
+      answer,
+      limits: limits(
+        { concurrentProviderCalls: 1, globalRequestsPerHour: 2 },
+        { maxPendingRequests: 1, waitTimeoutSeconds: 0.001 },
+      ),
+      logger: (entry) => logs.push(entry),
+    });
+
+    const first = call(api, REQUEST, { client: "client_0000000001" });
+    await vi.waitFor(() => expect(answer).toHaveBeenCalledTimes(1));
+    const timedOut = await call(api, REQUEST, { client: "client_0000000002" });
+    expect(timedOut.status).toBe(429);
+    expect(logs.at(-1)).toMatchObject({ event: "assistant.limited", limit: "queue_timeout" });
+    release(ANSWER);
+    expect((await first).status).toBe(200);
+    expect((await call(api, REQUEST, { client: "client_0000000003" })).status).toBe(200);
+    expect(answer).toHaveBeenCalledTimes(2);
+  });
+
+  it("logs provider token usage and completion status without response content", async () => {
+    const logs: Record<string, unknown>[] = [];
+    const api = createAssistantApi({
+      siteDir: await siteDir(),
+      answer: async (_request, _context, providers) => {
+        providers.onProviderMetrics?.({
+          inputTokens: 3100,
+          outputTokens: 92,
+          totalTokens: 3192,
+          cachedInputTokens: 2000,
+          reasoningTokens: 0,
+          finishReason: "stop",
+        });
+        return ANSWER;
+      },
+      limits: DEFAULT_LIMITS,
+      logger: (entry) => logs.push(entry),
+    });
+
+    expect((await call(api, REQUEST, { client: "client_0000000001" })).status).toBe(200);
+    expect(logs.at(-1)).toMatchObject({
+      event: "assistant.success",
+      inputTokens: 3100,
+      outputTokens: 92,
+      totalTokens: 3192,
+      cachedInputTokens: 2000,
+      reasoningTokens: 0,
+      finishReason: "stop",
+    });
+    expect(JSON.stringify(logs)).not.toContain("At zero.");
+  });
+
   it("does not spend provider budget on invalid requests", async () => {
     const answer = vi.fn(async () => ANSWER);
     const api = createAssistantApi({
@@ -221,6 +326,35 @@ describe("assistant server", () => {
     expect(response.status).toBe(504);
     expect(response.body).toEqual({ error: "answer provider timed out" });
     expect(logs.at(-1)).toMatchObject({ event: "assistant.error", category: "provider_timeout" });
+  });
+
+  it("applies operational Space-variable overrides and reports the effective configuration", async () => {
+    vi.stubEnv("ASSISTANT_CLIENT_10M_LIMIT", "12");
+    vi.stubEnv("ASSISTANT_IP_10M_LIMIT", "100");
+    vi.stubEnv("ASSISTANT_HOURLY_LIMIT", "1000");
+    vi.stubEnv("ASSISTANT_DAILY_LIMIT", "5000");
+    vi.stubEnv("ASSISTANT_MAX_CONCURRENT", "8");
+    vi.stubEnv("ASSISTANT_MAX_QUEUED", "30");
+    vi.stubEnv("ASSISTANT_QUEUE_WAIT_SECONDS", "30");
+    vi.stubEnv("ASSISTANT_PROVIDER_TIMEOUT_SECONDS", "45");
+    const logs: Record<string, unknown>[] = [];
+
+    createAssistantApi({ siteDir: "/unused", limits: DEFAULT_LIMITS, logger: (entry) => logs.push(entry) });
+
+    expect(logs[0]).toMatchObject({
+      event: "assistant.config",
+      limits: {
+        rate: {
+          browserRequestsPerTenMinutes: 12,
+          ipRequestsPerTenMinutes: 100,
+          globalRequestsPerHour: 1000,
+          globalRequestsPerDay: 5000,
+          concurrentProviderCalls: 8,
+        },
+        queue: { maxPendingRequests: 30, waitTimeoutSeconds: 30 },
+        providerTimeoutSeconds: 45,
+      },
+    });
   });
 
   it("rejects invalid configured limits at startup", () => {

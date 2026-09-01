@@ -102,6 +102,10 @@ export interface AssistantLimits {
     globalRequestsPerDay: number;
     concurrentProviderCalls: number;
   };
+  queue: {
+    maxPendingRequests: number;
+    waitTimeoutSeconds: number;
+  };
   providerTimeoutSeconds: number;
 }
 
@@ -125,6 +129,10 @@ export const DEFAULT_ASSISTANT_LIMITS: AssistantLimits = {
     globalRequestsPerHour: 120,
     globalRequestsPerDay: 500,
     concurrentProviderCalls: 2,
+  },
+  queue: {
+    maxPendingRequests: 0,
+    waitTimeoutSeconds: 20,
   },
   providerTimeoutSeconds: 30,
 };

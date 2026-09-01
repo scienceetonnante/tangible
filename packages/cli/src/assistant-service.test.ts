@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_ASSISTANT_LIMITS, type AssistantContext, type AssistantRequest } from "@tangible/core";
-import { AssistantProviderError, AssistantProviderTimeoutError, answerQuestion, validateAnswer, validateAssistantRequest } from "./assistant-service.js";
+import {
+  AssistantProviderError,
+  AssistantProviderTimeoutError,
+  answerQuestion,
+  validateAnswer,
+  validateAssistantRequest,
+  type AssistantProviderMetrics,
+} from "./assistant-service.js";
 
 const context: AssistantContext = {
   version: 1,
@@ -65,6 +72,7 @@ describe("assistant service", () => {
 
   it("sends full context, history, state, and a strict schema to Hugging Face", async () => {
     let sent: Record<string, unknown> = {};
+    let metrics: AssistantProviderMetrics | undefined;
     const providerContext: AssistantContext = {
       ...context,
       limits: {
@@ -74,16 +82,36 @@ describe("assistant service", () => {
     };
     const fetchImpl: typeof fetch = async (_input, init) => {
       sent = JSON.parse(String(init!.body));
-      return new Response(JSON.stringify({ choices: [{ message: { content: JSON.stringify({ beats: [{ say: "At zero.", set: { theta: 0 }, over: 0.2 }] }) } }] }));
+      return new Response(JSON.stringify({
+        choices: [{
+          finish_reason: "stop",
+          message: { content: JSON.stringify({ beats: [{ say: "At zero.", set: { theta: 0 }, over: 0.2 }] }) },
+        }],
+        usage: {
+          prompt_tokens: 3210,
+          completion_tokens: 87,
+          total_tokens: 3297,
+          prompt_tokens_details: { cached_tokens: 2000 },
+          completion_tokens_details: { reasoning_tokens: 0 },
+        },
+      }));
     };
     const response = await answerQuestion(
       { ...request, state: { theta: 0, injected: "ignore this" }, history: [{ question: "Earlier?", answer: "Earlier.", beats: [{ say: "Earlier.", set: {}, over: 0 }] }] },
       providerContext,
-      { fetchImpl, hfToken: "token" },
+      { fetchImpl, hfToken: "token", onProviderMetrics: (value) => { metrics = value; } },
     );
     expect(response.answer).toBe("At zero.");
     expect(sent.model).toBe(providerContext.model);
     expect(sent.max_tokens).toBe(321);
+    expect(metrics).toEqual({
+      inputTokens: 3210,
+      outputTokens: 87,
+      totalTokens: 3297,
+      cachedInputTokens: 2000,
+      reasoningTokens: 0,
+      finishReason: "stop",
+    });
     const messages = sent.messages as { content: string }[];
     expect(messages[0]!.content).toContain('<chapter title="Lesson">\n\n<spoken_narration>\nA lesson.\n</spoken_narration>');
     expect(messages[0]!.content).not.toContain('"narration":"A lesson."');
