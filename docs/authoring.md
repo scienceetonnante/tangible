@@ -793,6 +793,10 @@ adds the Tangible base tags and any lesson tags from the manifest, and completes
 the narration Git LFS rules. It preserves a valid existing Space card and
 refuses to replace a different deployment target.
 
+The generated Space title remains the lesson title. Its short description keeps
+the lesson promise first and appends “an interactive Tangible lesson,” so the
+subject stays prominent while the framework remains visible on Hugging Face.
+
 Record only the stable remote Space identifier in `lesson.yaml`:
 
 ```yaml

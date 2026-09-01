@@ -73,6 +73,7 @@ function validateSpaceId(space: string): void {
 
 function spaceCard(manifest: Manifest): string {
   const runtime = manifest.assistant ? "sdk: docker\napp_port: 7860" : "sdk: static\napp_file: index.html";
+  const shortDescription = `${manifest.promise.trim().replace(/\.$/, "")} — an interactive Tangible lesson`;
   const tags = [...new Set(["tangible", "education", "interactive-learning", ...(manifest.tags ?? [])])]
     .map((tag) => `  - ${JSON.stringify(tag)}`)
     .join("\n");
@@ -85,7 +86,7 @@ ${runtime}
 fullWidth: true
 header: default
 pinned: false
-short_description: ${JSON.stringify(manifest.promise)}
+short_description: ${JSON.stringify(shortDescription)}
 tags:
 ${tags}
 ---
