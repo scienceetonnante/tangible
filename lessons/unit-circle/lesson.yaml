@@ -1,6 +1,10 @@
 id: unit-circle
 title: The unit circle
 promise: See how an angle on the unit circle determines its sine and cosine.
+tags:
+  - mathematics
+  - trigonometry
+  - geometry
 scene: ./scenes/scene.ts
 defaults:
   anticipation: -0.2

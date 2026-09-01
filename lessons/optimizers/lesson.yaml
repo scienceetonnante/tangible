@@ -1,6 +1,12 @@
 id: optimizers
 title: Why adaptive optimizers exist
 promise: See how SGD, momentum, and AdamW navigate the same loss landscape.
+tags:
+  - machine-learning
+  - optimization
+  - gradient-descent
+  - sgd
+  - adamw
 scene: ./scenes/scene.ts
 defaults:
   anticipation: -0.2

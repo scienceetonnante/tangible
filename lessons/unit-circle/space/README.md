@@ -6,7 +6,14 @@ colorTo: blue
 sdk: docker
 app_port: 7860
 pinned: false
-short_description: An interactive narrated explorable of the unit circle
+short_description: How an angle determines sine and cosine — an interactive Tangible lesson
+tags:
+  - tangible
+  - education
+  - interactive-learning
+  - mathematics
+  - trigonometry
+  - geometry
 ---
 
 # The Unit Circle — an interactive narrated explorable

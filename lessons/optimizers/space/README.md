@@ -8,7 +8,16 @@ app_port: 7860
 fullWidth: true
 header: default
 pinned: false
-short_description: Explore why momentum and AdamW outperform plain SGD
+short_description: Why momentum and AdamW outperform plain SGD — an interactive Tangible lesson
+tags:
+  - tangible
+  - education
+  - interactive-learning
+  - machine-learning
+  - optimization
+  - gradient-descent
+  - sgd
+  - adamw
 ---
 
 # Why Adaptive Optimizers Exist
