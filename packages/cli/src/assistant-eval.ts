@@ -227,6 +227,7 @@ export async function runAssistantEval(opts: AssistantEvalOptions): Promise<void
                 ...(rubric ? { rubric } : {}),
                 evaluationContext,
                 latencyMs: Date.now() - started,
+                ...(metrics ? { metrics } : {}),
                 error: failure,
               });
               failedTurn = failure.category;

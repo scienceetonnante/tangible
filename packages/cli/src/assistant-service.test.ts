@@ -179,6 +179,26 @@ describe("assistant service", () => {
     await expect(answerQuestion(request, context, { fetchImpl, hfToken: "token" })).rejects.not.toThrow("private provider detail");
   });
 
+  it("reports provider metrics before rejecting malformed answer JSON", async () => {
+    let metrics: AssistantProviderMetrics | undefined;
+    const fetchImpl: typeof fetch = async () => new Response(JSON.stringify({
+      choices: [{ finish_reason: "length", message: { content: '{"beats":[' } }],
+      usage: {
+        prompt_tokens: 100,
+        completion_tokens: 321,
+        total_tokens: 421,
+        completion_tokens_details: { reasoning_tokens: 250 },
+      },
+    }));
+
+    await expect(answerQuestion(request, context, {
+      fetchImpl,
+      hfToken: "token",
+      onProviderMetrics: (value) => { metrics = value; },
+    })).rejects.toBeInstanceOf(SyntaxError);
+    expect(metrics).toMatchObject({ outputTokens: 321, reasoningTokens: 250, finishReason: "length" });
+  });
+
   it("retains a concise JSON provider error for local diagnostics", async () => {
     const fetchImpl: typeof fetch = async () => new Response(JSON.stringify({
       error: "The selected model does not support this parameter.",
