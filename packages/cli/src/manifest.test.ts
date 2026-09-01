@@ -17,6 +17,7 @@ describe("lesson manifest", () => {
 id: circle
 title: Circle
 promise: See how a point defines an angle.
+tags: [mathematics, trigonometry]
 scene: ./scenes/scene.ts
 defaults:
   anticipation: -0.2
@@ -59,6 +60,7 @@ deployment:
   provider: huggingface
   space: example/circle
 `)).resolves.toMatchObject({
+      tags: ["mathematics", "trigonometry"],
       tts: { provider: "elevenlabs", voice: "voice-id", model: "eleven_multilingual_v2", speed: 0.9 },
       assistant: {
         provider: "huggingface",
@@ -74,6 +76,20 @@ deployment:
       },
       deployment: { provider: "huggingface", space: "example/circle" },
     });
+  });
+
+  it("rejects empty discovery tags", async () => {
+    await expect(manifest(`
+id: circle
+title: Circle
+promise: See how a point defines an angle.
+tags: [mathematics, ""]
+scene: ./scenes/scene.ts
+defaults:
+  anticipation: -0.2
+  ease: linear
+  transition: 1
+`)).rejects.toThrow('field "tags"');
   });
 
   it("uses the documented assistant limits when the block is absent", async () => {

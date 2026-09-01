@@ -73,6 +73,9 @@ function validateSpaceId(space: string): void {
 
 function spaceCard(manifest: Manifest): string {
   const runtime = manifest.assistant ? "sdk: docker\napp_port: 7860" : "sdk: static\napp_file: index.html";
+  const tags = [...new Set(["tangible", "education", "interactive-learning", ...(manifest.tags ?? [])])]
+    .map((tag) => `  - ${JSON.stringify(tag)}`)
+    .join("\n");
   return `---
 title: ${JSON.stringify(manifest.title)}
 emoji: 📚
@@ -84,9 +87,7 @@ header: default
 pinned: false
 short_description: ${JSON.stringify(manifest.promise)}
 tags:
-  - tangible
-  - education
-  - interactive-learning
+${tags}
 ---
 
 # ${manifest.title}

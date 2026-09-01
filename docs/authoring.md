@@ -57,6 +57,17 @@ guidance, and phone-orientation notice. The player renders the initial scene
 behind a translucent, input-blocking card, so lesson authors do not create or
 style a separate onboarding screen.
 
+Add an optional `tags` list with the lesson's subject terms when the lesson will
+be published on Hugging Face. Tangible combines these terms with `tangible`,
+`education`, and `interactive-learning` when it creates the Space card. Use a
+small set of familiar terms that someone might search or filter for:
+
+```yaml
+tags:
+  - machine-learning
+  - optimization
+```
+
 Each lesson has one scene entry module, selected by the `scene` field in
 `lesson.yaml`. Narration chapters are sections on the lesson timeline; they do
 not select different scene files. The `scenes/` directory is plural because a
@@ -778,8 +789,9 @@ pnpm lesson deploy --prepare --space namespace/space-name --lesson lessons/my-le
 
 This command makes no Hugging Face API calls. It records the target in
 `lesson.yaml`, creates the appropriate static or Docker Space card when absent,
-and completes the narration Git LFS rules. It preserves a valid existing Space
-card and refuses to replace a different deployment target.
+adds the Tangible base tags and any lesson tags from the manifest, and completes
+the narration Git LFS rules. It preserves a valid existing Space card and
+refuses to replace a different deployment target.
 
 Record only the stable remote Space identifier in `lesson.yaml`:
 

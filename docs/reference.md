@@ -205,6 +205,7 @@ A minimal `lesson.yaml` is:
 id: unit-circle
 title: The unit circle
 promise: See how an angle on the unit circle determines its sine and cosine.
+tags: [mathematics, trigonometry]
 scene: ./scenes/scene.ts
 defaults:
   anticipation: -0.2
@@ -226,6 +227,11 @@ Start button, interaction guidance, loading and failure states, and the
 portrait-phone orientation notice. The framework shows this content in a
 translucent card over the initial lesson scene and prevents scene interaction
 until narration starts.
+
+The optional `tags` list contains subject terms for Hugging Face discovery.
+When Tangible creates a Space card, it removes duplicates and combines these
+terms with the automatic `tangible`, `education`, and `interactive-learning`
+tags. An existing custom Space card remains under the author's control.
 
 The `tts` section is optional while a lesson is being developed with `--offline`
 or `--silent`. A provider-backed preview and deployment require it. When present,

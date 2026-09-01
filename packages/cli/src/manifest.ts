@@ -13,6 +13,7 @@ export interface Manifest {
   id: string;
   title: string;
   promise: string;
+  tags?: string[];
   scene: string;
   defaults: { anticipation: number; ease: string; transition: number };
   tts?: TtsConfig;
@@ -56,6 +57,12 @@ function validateManifest(value: unknown): asserts value is Manifest {
   nonEmptyString(manifest.id, 'lesson.yaml field "id"');
   nonEmptyString(manifest.title, 'lesson.yaml field "title"');
   nonEmptyString(manifest.promise, 'lesson.yaml field "promise"');
+  if (
+    manifest.tags !== undefined
+    && (!Array.isArray(manifest.tags) || manifest.tags.some((value) => typeof value !== "string" || !value.trim()))
+  ) {
+    throw new Error('lesson.yaml field "tags" must be a list of non-empty strings');
+  }
   nonEmptyString(manifest.scene, 'lesson.yaml field "scene"');
 
   const defaults = object(manifest.defaults, 'lesson.yaml field "defaults"');

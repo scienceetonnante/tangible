@@ -32,10 +32,26 @@ describe("Space preparation", () => {
       expect(card).toContain("sdk: static");
       expect(card).toContain("app_file: index.html");
       expect(card).toContain("header: default");
-      expect(card).toContain("tags:\n  - tangible\n  - education\n  - interactive-learning");
+      expect(card).toContain('tags:\n  - "tangible"\n  - "education"\n  - "interactive-learning"');
       const attributes = await readFile(join(dir, "space", ".gitattributes"), "utf8");
       expect(attributes).toContain("*.webm filter=lfs");
       expect(attributes).toContain("*.m4a filter=lfs");
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("merges lesson-specific tags with the Tangible tags", async () => {
+    const dir = await fixture(`tags:
+  - machine-learning
+  - optimization
+  - tangible
+`);
+    try {
+      await prepareSpace(dir, await loadManifest(dir), "example/tagged-lesson");
+      const card = await readFile(join(dir, "space", "README.md"), "utf8");
+      expect(card).toContain('  - "machine-learning"\n  - "optimization"');
+      expect(card.match(/  - "tangible"/g)).toHaveLength(1);
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
