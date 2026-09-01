@@ -97,6 +97,19 @@ assistant:
     expect(loaded.assistant?.limits).toEqual(DEFAULT_ASSISTANT_LIMITS);
   });
 
+  it("allows draft-only lessons to omit production speech configuration", async () => {
+    await expect(manifest(`
+id: circle
+title: Circle
+promise: See how a point defines an angle.
+scene: ./scenes/scene.ts
+defaults:
+  anticipation: -0.2
+  ease: linear
+  transition: 1
+`)).resolves.toMatchObject({ id: "circle", title: "Circle" });
+  });
+
   it("rejects non-positive assistant limits", async () => {
     await expect(manifest(`
 id: circle
@@ -151,7 +164,7 @@ defaults:
   anticipation: -0.2
   ease: linear
   transition: 1
-`)).rejects.toThrow('lesson.yaml field "tts" must be an object');
+`)).rejects.toThrow('field "voice" was replaced');
   });
 
   it("rejects settings that the selected speech provider does not support", async () => {

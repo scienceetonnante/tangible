@@ -41,6 +41,11 @@ assets/              optional authored assets
 The generated `build/` and `.cache/` directories must not be edited or
 committed. Tangible currently assumes that every lesson is in English.
 
+New lessons omit production speech configuration. This keeps scene development,
+silent builds, and offline narration independent of paid credentials. Add a
+`tts` section only when you are ready to review a production voice; a normal
+provider-backed preview or deployment then requires that section.
+
 Write a concise, one-sentence `promise` in `lesson.yaml`. It appears below the
 lesson title before playback and should tell a visitor what they will see or
 understand. Tangible adds the duration, loading status, Start button, interaction

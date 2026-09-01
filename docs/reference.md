@@ -220,6 +220,8 @@ portrait-phone orientation notice. The framework shows this content in a
 translucent card over the initial lesson scene and prevents scene interaction
 until narration starts.
 
+The `tts` section is optional while a lesson is being developed with `--offline`
+or `--silent`. A provider-backed preview and deployment require it. When present,
 `tts.provider` supports `elevenlabs` and `hf-endpoint`. Both providers require a
 `voice`. ElevenLabs also accepts an optional `model` and `speed`. The private
 Hugging Face endpoint selects its own model and generation settings, so those

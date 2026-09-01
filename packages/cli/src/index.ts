@@ -141,13 +141,18 @@ type NarrationMode = "provider" | "offline" | "silent";
 class LessonBuildError extends Error {}
 
 /** Choose the configured provider, local draft voice, or silent test substitute. */
-function selectTts(config: TtsConfig, mode: NarrationMode): { adapter: TtsAdapter; voice: string } {
-  if (mode === "silent") return { adapter: new FakeTtsAdapter(), voice: config.voice };
+function selectTts(config: TtsConfig | undefined, mode: NarrationMode): { adapter: TtsAdapter; voice: string } {
+  if (mode === "silent") return { adapter: new FakeTtsAdapter(), voice: config?.voice ?? "draft" };
   if (mode === "offline") {
     return {
       adapter: new SupertonicTtsAdapter({ onStatus: (message) => console.error(message) }),
       voice: "supertonic-3-speaker-0",
     };
+  }
+  if (!config) {
+    throw new Error(
+      'real narration requires a "tts" section in lesson.yaml; use --offline or --silent while drafting',
+    );
   }
   if (config.provider === "hf-endpoint") {
     return {
@@ -184,7 +189,7 @@ async function buildLesson(lessonDir: string, manifest: Manifest, scene: SceneIn
   const result = await synthesize(adapter, parsed.narration, {
     voice,
     cacheDir: join(lessonDir, ".cache", "tts"),
-    speed: manifest.tts.provider === "elevenlabs" ? manifest.tts.speed : undefined,
+    speed: manifest.tts?.provider === "elevenlabs" ? manifest.tts.speed : undefined,
     segmentOffsets: narrationSegmentOffsets(parsed.narration, parsed.directives.map((directive) => directive.anchorOffset)),
   });
 

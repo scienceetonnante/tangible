@@ -15,7 +15,7 @@ export interface Manifest {
   promise: string;
   scene: string;
   defaults: { anticipation: number; ease: string; transition: number };
-  tts: TtsConfig;
+  tts?: TtsConfig;
   deployment?: {
     provider: "huggingface";
     space: string;
@@ -62,16 +62,21 @@ function validateManifest(value: unknown): asserts value is Manifest {
   nonEmptyString(defaults.ease, 'lesson.yaml field "defaults.ease"');
   finiteNumber(defaults.transition, 'lesson.yaml field "defaults.transition"');
 
-  const tts = object(manifest.tts, 'lesson.yaml field "tts"');
-  if (tts.provider !== "elevenlabs" && tts.provider !== "hf-endpoint") {
-    throw new Error('lesson.yaml field "tts.provider" must be "elevenlabs" or "hf-endpoint"');
+  if (manifest.voice !== undefined) {
+    throw new Error('lesson.yaml field "voice" was replaced by the optional "tts" section');
   }
-  nonEmptyString(tts.voice, 'lesson.yaml field "tts.voice"');
-  if (tts.provider === "elevenlabs") {
-    optionalString(tts.model, 'lesson.yaml field "tts.model"');
-    optionalNumber(tts.speed, 'lesson.yaml field "tts.speed"');
-  } else if (tts.model !== undefined || tts.speed !== undefined) {
-    throw new Error('lesson.yaml fields "tts.model" and "tts.speed" are supported only by ElevenLabs');
+  if (manifest.tts !== undefined) {
+    const tts = object(manifest.tts, 'lesson.yaml field "tts"');
+    if (tts.provider !== "elevenlabs" && tts.provider !== "hf-endpoint") {
+      throw new Error('lesson.yaml field "tts.provider" must be "elevenlabs" or "hf-endpoint"');
+    }
+    nonEmptyString(tts.voice, 'lesson.yaml field "tts.voice"');
+    if (tts.provider === "elevenlabs") {
+      optionalString(tts.model, 'lesson.yaml field "tts.model"');
+      optionalNumber(tts.speed, 'lesson.yaml field "tts.speed"');
+    } else if (tts.model !== undefined || tts.speed !== undefined) {
+      throw new Error('lesson.yaml fields "tts.model" and "tts.speed" are supported only by ElevenLabs');
+    }
   }
 
   if (manifest.deployment !== undefined) {
