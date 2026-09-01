@@ -6,14 +6,12 @@ configurations:
   - id: gemma-direct
     model: google/gemma-4-31B-it:cerebras
     request:
-      chat_template_kwargs:
-        enable_thinking: false
+      reasoning_effort: none
 
   - id: gemma-thinking
     model: google/gemma-4-31B-it:cerebras
     request:
-      chat_template_kwargs:
-        enable_thinking: true
+      reasoning_effort: medium
 
   - id: qwen-direct
     model: Qwen/Qwen3.8-27B:deepinfra
