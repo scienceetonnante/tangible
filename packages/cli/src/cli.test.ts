@@ -1,4 +1,6 @@
 import { describe, it, expect } from "vitest";
+import { mkdtemp, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { loadScene } from "./scene-loader.js";
 import { refSheet } from "./ref.js";
@@ -19,6 +21,13 @@ describe("loadScene", () => {
     const scene = await loadScene(OPTIMIZER_SCENE_PATH);
     expect(scene.schema.camera!.type.kind).toBe("orbit");
     expect(scene.schema.kappa!.type.kind).toBe("scalar");
+  });
+
+  it("rejects a schema-only module when runtime validation is required", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "tangible-runtime-check-"));
+    const path = join(dir, "scene.ts");
+    await writeFile(path, `export const schema = { scene: { type: { kind: "enum", values: ["main"] }, default: "main", interpolate: "snap", ownership: "script" } };`);
+    await expect(loadScene(path, { requireRuntime: true })).rejects.toThrow('does not export a runtime "scene"');
   });
 });
 

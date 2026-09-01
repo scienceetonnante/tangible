@@ -80,7 +80,7 @@ Compiled lesson files go to `build/lesson/`. The deployable site goes to
 | `new <id>` | Create `lesson.yaml`, `script.md`, `scenes/scene.ts`, and an assets directory. |
 | `scene` | Run the interactive scene alone while it is being built. |
 | `ref` | Print scene parameters, ranges, presets, groups, constants, and bakers. |
-| `check` | Validate `script.md`, scene cues, and assistant configuration without network calls. |
+| `check` | Validate the runtime scene, `script.md`, cues, and assistant configuration without network calls. |
 | `preview` | Rebuild changed files and serve the complete lesson locally. |
 | `build` | Compile narration, captions, and animation tracks into `build/lesson/`. |
 | `build --bundle` | Also create the deployable site in `build/site/`. |

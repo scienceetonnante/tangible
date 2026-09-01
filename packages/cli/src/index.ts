@@ -95,7 +95,7 @@ async function main() {
 async function cmdCheck(flags: Flags): Promise<number> {
   const lessonDir = flags.lesson ?? process.cwd();
   const manifest = await loadManifest(lessonDir);
-  const scene = await loadScene(join(lessonDir, manifest.scene));
+  const scene = await loadScene(join(lessonDir, manifest.scene), { requireRuntime: true });
   let errors = 0;
   const file = "script.md";
   const script = await readFile(join(lessonDir, file), "utf8");
