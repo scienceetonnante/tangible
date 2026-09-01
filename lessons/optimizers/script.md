@@ -23,7 +23,7 @@ The white puck is the starting point. Try changing the point of view while I'm s
 @cue(step -> 10, over: 5s) 
 This orange trail shows ordinary gradient descent trajectory.
 With SGD, at each iteration, we compute the gradient and take a small step in the opposite direction.
-@board(sgd: $\begin{aligned}\text{SGD: }\Delta w_t&=-\eta g_t\end{aligned}$)
+@board(sgd: $\begin{aligned}\text{SGD: }\\ \Delta w_t&=-\eta g_t\end{aligned}$)
 @cue(step -> 12, over: 1 s)
 I have omitted minibatch noise so that the geometry remains easy to read.
 The size of each step is controlled by the @cue(sgd.lr -> 0.02, over: 1s) learning rate, eta. @cue(sgd.lr -> 0.075, over: 1s) 
@@ -54,7 +54,7 @@ Press play when you are ready to continue.")
 Let us return to the same ravine and compare every optimizer.
 @camera(target: [0, 0.4, 0], distance: 7, azimuth: 32°, elevation: 60°, over: 5s)
 First, add momentum. @cue(active.momentum = true) The blue path smooths the wall-to-wall motion, and the parameter beta controls how much history the optimizer retains.
-@board(momentum: $\begin{aligned}\text{Momentum: }u_t&=\beta u_{t-1}+(1-\beta)g_t\\\Delta w_t&=-\eta u_t\end{aligned}$)
+@board(momentum: $\begin{aligned}\text{Momentum: }\\ u_t&=\beta u_{t-1}+(1-\beta)g_t\\\Delta w_t&=-\eta u_t\end{aligned}$)
 
 @cue(momentum.beta -> 0.65, over: 4s) As beta rises, the optimizer averages gradients over a longer history. In this ravine, alternating gradients across the steep direction cancel, while gradients that point along the floor reinforce one another.
 
@@ -62,7 +62,7 @@ First, add momentum. @cue(active.momentum = true) The blue path smooths the wall
 Now consider AdamW, a widely used variant of Adam. Adam stands for adaptive moment estimation, and AdamW adds decoupled weight decay.
 @cue(active.adamw = true) The green path tracks running averages of the gradient and its square for each coordinate. 
 
-@board(adamw: $\begin{aligned}m_t&\leftarrow\beta_1m_{t-1}+(1-\beta_1)g_t\\v_t&\leftarrow\beta_2v_{t-1}+(1-\beta_2)g_t^2\\\Delta w_t&=-\eta\frac{\hat m_t}{\sqrt{\hat v_t}+\epsilon}-\eta\lambda w_t\end{aligned}$)
+@board(adamw: $\begin{aligned}\text{AdamW: }\\ m_t&\leftarrow\beta_1m_{t-1}+(1-\beta_1)g_t\\v_t&\leftarrow\beta_2v_{t-1}+(1-\beta_2)g_t^2\\\Delta w_t&=-\eta\frac{\hat m_t}{\sqrt{\hat v_t}+\epsilon}-\eta\lambda w_t\end{aligned}$)
 It divides the first average by a scale derived from the second, so a direction does not dominate the update merely because its gradients are consistently larger.
 
 Momentum mainly changes how gradients are combined across steps. AdamW also adapts the scale separately for each coordinate. One global learning rate may be too large for some coordinates and too small for others, so this coordinate-wise adaptation can make
