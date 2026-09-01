@@ -11,6 +11,9 @@ demonstrate ideas in the scene.
 
 [Open “Why adaptive optimizers exist” on Hugging Face
 Spaces](https://huggingface.co/spaces/dlouapre/tangible-optimizers).
+[Browse the public Tangible lessons
+collection](https://huggingface.co/collections/dlouapre/tangible-lessons-6a96e2c4be1533d68e65d7a2)
+to find lessons published from this repository and by other creators.
 
 The lesson lets you play or seek through the explanation, orbit the loss
 landscape, move the starting point, change optimizer settings, pause for
@@ -128,6 +131,12 @@ prints logs when startup fails. It never makes an existing Space public, changes
 hardware, or replaces secrets. Review the private Space before changing its
 visibility. The [deployment guide](./docs/authoring.md#deploy-to-hugging-face-spaces)
 explains production narration, assistant secrets, logs, and release checks.
+
+Once your Space is public, you can ask the maintainers to add it to the
+[Tangible lessons collection](https://huggingface.co/collections/dlouapre/tangible-lessons-6a96e2c4be1533d68e65d7a2)
+by [opening a GitHub issue](https://github.com/scienceetonnante/tangible/issues/new)
+with the Space URL. The collection accepts public lessons from any Hugging Face
+account.
 
 ## Current scope and limitations
 

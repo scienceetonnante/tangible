@@ -912,6 +912,28 @@ The command never makes an existing Space public or private, changes its
 hardware, or replaces secrets. Make visibility changes separately and only
 after reviewing the deployed lesson.
 
+### Add a public lesson to the Tangible collection
+
+After the private review is complete and the author has made the Space public,
+submit its URL to the [public Tangible lessons
+collection](https://huggingface.co/collections/dlouapre/tangible-lessons-6a96e2c4be1533d68e65d7a2).
+The collection can include public Spaces from any Hugging Face account. Open a
+[GitHub issue](https://github.com/scienceetonnante/tangible/issues/new) with the
+Space URL and a one-sentence description so a Tangible maintainer can add it.
+
+A maintainer can add the lesson with the current Hugging Face CLI:
+
+```bash
+hf collections add-item \
+  dlouapre/tangible-lessons-6a96e2c4be1533d68e65d7a2 \
+  namespace/space-name \
+  space \
+  --exists-ok
+```
+
+Collection membership is separate from deployment. Tangible does not require a
+creator's collection credentials and does not add a private Space automatically.
+
 ### Credentials and limits
 
 Store a dedicated fine-grained inference token as the Space secret `HF_TOKEN`.
