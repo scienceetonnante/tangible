@@ -32,6 +32,7 @@ describe("Space preparation", () => {
       expect(card).toContain("sdk: static");
       expect(card).toContain("app_file: index.html");
       expect(card).toContain("header: default");
+      expect(card).toContain("tags:\n  - tangible\n  - education\n  - interactive-learning");
       const attributes = await readFile(join(dir, "space", ".gitattributes"), "utf8");
       expect(attributes).toContain("*.webm filter=lfs");
       expect(attributes).toContain("*.m4a filter=lfs");

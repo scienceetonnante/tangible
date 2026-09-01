@@ -83,6 +83,10 @@ fullWidth: true
 header: default
 pinned: false
 short_description: ${JSON.stringify(manifest.promise)}
+tags:
+  - tangible
+  - education
+  - interactive-learning
 ---
 
 # ${manifest.title}
