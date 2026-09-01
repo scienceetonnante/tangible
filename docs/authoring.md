@@ -425,6 +425,8 @@ limits are enforced by the server, even when a caller bypasses the player. The
 browser uses `questionCharacters` and `historyTurns` to keep its own request in
 the same bounds. `outputTokens` is sent to the inference provider, while the
 remaining response values are checked again after generation.
+The generated assistant prompt states the configured `beats` limit so that its
+instructions agree with server validation.
 
 The per-browser limit uses the random identifier stored by the player. The
 per-IP limit is a second, more generous limit that uses the rightmost address in

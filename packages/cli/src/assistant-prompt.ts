@@ -13,7 +13,7 @@ function legacyPrompt(context: AssistantContext): string {
   return [
     "You are the narrator of an interactive lesson. Answer in English.",
     "Use only the supplied lesson content. Be concise, correct, and pedagogical.",
-    "Return one to six written beats. Each beat may set allowed scene parameters using absolute values.",
+    `${beatLimitInstruction(context)} Each beat may set allowed scene parameters using absolute values.`,
     "Use an empty set object when no visual change helps. Never mention internal parameter names.",
     "The learner may manipulate the scene while reading, so the explanation must remain understandable if they do.",
     "LESSON CONTEXT:",
@@ -47,7 +47,7 @@ function structuredPrompt(context: AssistantContext): string {
     ...formatControls(context),
     "## 5. Response",
     "",
-    "Return one to six written beats. Use one beat when one visual state is enough, and use several beats only when the explanation benefits from a sequence of visual states.",
+    `${beatLimitInstruction(context)} Use one beat when one visual state is enough, and use several beats only when the explanation benefits from a sequence of visual states.`,
     "",
     "Each beat contains:",
     "",
@@ -59,6 +59,11 @@ function structuredPrompt(context: AssistantContext): string {
     "The learner may manipulate the scene while reading, so every `say` must remain understandable if the visible state changes.",
     "Return only the JSON object required by the response schema.",
   ].join("\n");
+}
+
+function beatLimitInstruction(context: AssistantContext): string {
+  const maximum = context.limits.response.beats;
+  return maximum === 1 ? "Return one written beat." : `Return no more than ${maximum} written beats.`;
 }
 
 function formatControls(context: AssistantContext): string[] {

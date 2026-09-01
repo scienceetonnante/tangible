@@ -65,4 +65,17 @@ describe("assistant prompt", () => {
     expect(prompt).toContain('"narration":"The cosine becomes zero."');
     expect(prompt).toContain('"ownership":"script"');
   });
+
+  it("states the configured beat limit", () => {
+    const prompt = formatAssistantSystemPrompt({
+      ...context,
+      limits: {
+        ...context.limits,
+        response: { ...context.limits.response, beats: 2 },
+      },
+    }, "structured");
+
+    expect(prompt).toContain("Return no more than 2 written beats.");
+    expect(prompt).not.toContain("Return one to six written beats.");
+  });
 });
