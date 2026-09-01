@@ -19,7 +19,8 @@ style.textContent = PLAYER_CSS;
 document.head.append(style);
 
 const mount = document.getElementById("app")!;
-const arrivalMode = new URLSearchParams(location.search).get("arrival");
+const query = new URLSearchParams(location.search);
+const arrivalMode = query.get("arrival");
 const arrival = arrivalMode !== null;
 const audio = preferredAudioSource(data.audio);
 const player = new Player({
@@ -43,7 +44,7 @@ const player = new Player({
   introduction: arrival
     ? { title: "The unit circle", promise: "See how an angle on the unit circle determines its sine and cosine." }
     : undefined,
-  assistant: { context: data.assistant },
+  assistant: { context: data.assistant, startOpen: query.get("assistant") === "open" },
 });
 window.__player = player;
 player.start();

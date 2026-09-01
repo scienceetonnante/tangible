@@ -16,6 +16,7 @@ assistant:
   provider: huggingface
   model: google/gemma-4-31B-it:cerebras
   context: assistant.md
+  startOpen: true
   limits:
     request:
       bodyBytes: 65536

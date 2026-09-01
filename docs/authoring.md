@@ -187,8 +187,8 @@ Use these principles for future lessons:
 - Keep touch targets at least 44 by 44 CSS pixels. Separate repeated controls by
   enough distance that their touch regions do not compete.
 - Test a dense, post-Start lesson state with the board, captions, playback
-  controls, and collapsed assistant present. The landing card can hide scene
-  layout failures.
+  controls, and the assistant in its configured initial state. The landing card
+  can hide scene layout failures.
 
 For the current player, include 667 × 375, 844 × 390, and 896 × 414 phone
 landscape windows in the review set, alongside a desktop and a tablet. Capture
@@ -365,13 +365,18 @@ assistant:
   provider: huggingface
   model: google/gemma-4-31B-it:cerebras
   context: assistant.md
+  startOpen: true
   commandable: []
 ```
 
 An empty `commandable` list enables written answers without giving the assistant
 control of the scene. `model` selects the Hugging Face router model used by the
-deployed lesson. Then create a short `assistant.md` containing only guidance that
-cannot be generated from the scene contract or lesson script:
+deployed lesson. Set `startOpen: true` when the question field should be visible
+on arrival. The player keeps it collapsed on viewports no wider than 600 pixels
+or no taller than 500 pixels, where an open panel would leave too little room
+for the scene. Omit the field to start collapsed everywhere. Then create a short
+`assistant.md` containing only guidance that cannot be generated from the scene
+contract or lesson script:
 
 ```markdown
 # Concepts and limits
@@ -805,7 +810,9 @@ app_file: index.html
 ```
 
 The other Space card fields, including `fullWidth` and `header`, also belong in
-this README.
+this README. Tangible prepares `header: default` so Hugging Face keeps its
+repository controls outside the lesson. The `mini` header floats over the Space
+and can obscure interactive content near the top-right corner.
 
 Track every narration format through Git LFS in `space/.gitattributes`:
 

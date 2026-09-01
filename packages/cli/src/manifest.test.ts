@@ -31,6 +31,7 @@ assistant:
   provider: huggingface
   model: test/model:provider
   context: assistant.md
+  startOpen: true
   limits:
     request:
       bodyBytes: 65536
@@ -62,6 +63,7 @@ deployment:
       assistant: {
         provider: "huggingface",
         model: "test/model:provider",
+        startOpen: true,
         limits: {
           request: { questionCharacters: 900, historyTurns: 4 },
           response: { outputTokens: 800, transitionSeconds: 1.5 },
@@ -95,6 +97,25 @@ assistant:
 `);
 
     expect(loaded.assistant?.limits).toEqual(DEFAULT_ASSISTANT_LIMITS);
+  });
+
+  it("rejects a non-boolean assistant start state", async () => {
+    await expect(manifest(`
+id: circle
+title: Circle
+promise: See how a point defines an angle.
+scene: ./scenes/scene.ts
+defaults:
+  anticipation: -0.2
+  ease: linear
+  transition: 1
+assistant:
+  provider: huggingface
+  model: test/model:provider
+  context: assistant.md
+  startOpen: yes please
+  commandable: []
+`)).rejects.toThrow("assistant.startOpen");
   });
 
   it("allows draft-only lessons to omit production speech configuration", async () => {

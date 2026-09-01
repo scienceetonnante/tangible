@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { AssistantPanel } from "./assistant-panel.js";
 
 describe("lesson assistant drawer", () => {
-  it("starts closed and exposes its state to assistive technology", () => {
+  it("starts closed by default and exposes its state to assistive technology", () => {
     const panel = new AssistantPanel({ onAsk: vi.fn(), onCancel: vi.fn() });
     const toggle = panel.el.querySelector(".xv-assistant-toggle") as HTMLButtonElement;
     const body = panel.el.querySelector(".xv-assistant-body") as HTMLElement;
@@ -16,6 +16,24 @@ describe("lesson assistant drawer", () => {
     toggle.click();
     expect(toggle.getAttribute("aria-expanded")).toBe("true");
     expect(body.hidden).toBe(false);
+  });
+
+  it("can start open and reports later changes", () => {
+    const onExpandedChange = vi.fn();
+    const panel = new AssistantPanel({
+      onAsk: vi.fn(),
+      onCancel: vi.fn(),
+      onExpandedChange,
+      startOpen: true,
+    });
+    const toggle = panel.el.querySelector(".xv-assistant-toggle") as HTMLButtonElement;
+    const body = panel.el.querySelector(".xv-assistant-body") as HTMLElement;
+
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(body.hidden).toBe(false);
+    toggle.click();
+    expect(onExpandedChange).toHaveBeenCalledWith(false);
+    expect(body.hidden).toBe(true);
   });
 
   it("keeps the complete question workflow inside the drawer", () => {

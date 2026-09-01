@@ -80,7 +80,7 @@ colorFrom: blue
 colorTo: indigo
 ${runtime}
 fullWidth: true
-header: mini
+header: default
 pinned: false
 short_description: ${JSON.stringify(manifest.promise)}
 ---

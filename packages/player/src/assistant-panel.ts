@@ -8,7 +8,9 @@ let nextPanelId = 0;
 export interface AssistantPanelOptions {
   onAsk(question: string): void;
   onCancel(): void;
+  onExpandedChange?(expanded: boolean): void;
   maxQuestionCharacters?: number;
+  startOpen?: boolean;
 }
 
 export class AssistantPanel {
@@ -22,20 +24,22 @@ export class AssistantPanel {
   private cancelButton: HTMLButtonElement;
   private status: HTMLElement;
   private transcript: HTMLElement;
+  private onExpandedChange?: (expanded: boolean) => void;
   private pauseEnabled = false;
   private busy = false;
 
   constructor(opts: AssistantPanelOptions) {
+    this.onExpandedChange = opts.onExpandedChange;
     this.el = document.createElement("section");
     this.el.className = "xv-assistant";
     this.el.setAttribute("aria-label", "Lesson assistant");
 
     this.toggle = button("Ask about this lesson", "xv-assistant-toggle");
     this.toggle.type = "button";
-    this.toggle.setAttribute("aria-expanded", "false");
+    this.toggle.setAttribute("aria-expanded", String(opts.startOpen === true));
     this.body = div("xv-assistant-body");
     this.body.id = `xv-assistant-body-${++nextPanelId}`;
-    this.body.hidden = true;
+    this.body.hidden = opts.startOpen !== true;
     this.toggle.setAttribute("aria-controls", this.body.id);
     this.toggle.onclick = () => this.setExpanded(this.body.hidden);
 
@@ -84,6 +88,7 @@ export class AssistantPanel {
   setExpanded(expanded: boolean): void {
     this.body.hidden = !expanded;
     this.toggle.setAttribute("aria-expanded", String(expanded));
+    this.onExpandedChange?.(expanded);
     if (expanded && typeof requestAnimationFrame !== "undefined") {
       requestAnimationFrame(() => this.body.scrollIntoView?.({ block: "nearest" }));
     }

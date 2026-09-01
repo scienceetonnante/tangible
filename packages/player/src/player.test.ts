@@ -260,6 +260,21 @@ After the pause.
     player.dispose();
   });
 
+  it("can present the assistant open from the first frame", () => {
+    const mount = document.createElement("div");
+    const player = new Player({
+      mount,
+      scene: stubScene([]),
+      tracks,
+      assistant: { context: assistantContext, startOpen: true },
+    });
+
+    expect(mount.querySelector(".xv-shell")!.classList.contains("xv-assistant-expanded")).toBe(true);
+    expect(mount.querySelector(".xv-assistant-toggle")?.getAttribute("aria-expanded")).toBe("true");
+    expect((mount.querySelector(".xv-assistant-body") as HTMLElement).hidden).toBe(false);
+    player.dispose();
+  });
+
   it("sends a persistent anonymous client id with assistant requests", async () => {
     const stored = new Map<string, string>();
     vi.stubGlobal("localStorage", {

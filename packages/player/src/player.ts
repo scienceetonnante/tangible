@@ -41,6 +41,7 @@ export interface PlayerOptions {
     context: AssistantContext;
     endpoint?: string;
     fetchImpl?: typeof fetch;
+    startOpen?: boolean;
   };
 }
 
@@ -99,7 +100,13 @@ export class Player {
     this.activityTracker = new ParameterActivityTracker(opts.tracks.tracks);
 
     // DOM layers, bottom to top.
-    this.shell = el("div", opts.assistant ? "xv-shell xv-with-assistant" : "xv-shell");
+    const assistantStartsOpen = opts.assistant?.startOpen === true && hasRoomForOpenAssistant();
+    this.shell = el(
+      "div",
+      opts.assistant
+        ? `xv-shell xv-with-assistant${assistantStartsOpen ? " xv-assistant-expanded" : ""}`
+        : "xv-shell",
+    );
     this.container = el("div", "xv-player");
     this.canvas = el("canvas", "") as HTMLCanvasElement;
     const overlay = el("div", "xv-overlay");
@@ -160,7 +167,13 @@ export class Player {
       this.assistant = new AssistantPanel({
         onAsk: (question) => void this.ask(question, opts.assistant!.context),
         onCancel: () => this.cancelAnswer("Cancelled"),
+        onExpandedChange: (expanded) => {
+          this.shell.classList.toggle("xv-assistant-expanded", expanded);
+          this.resize();
+          this.driver.tick();
+        },
         maxQuestionCharacters: opts.assistant.context.limits.request.questionCharacters,
+        startOpen: assistantStartsOpen,
       });
       this.shell.append(this.assistant.el);
       let hasPlayed = false;
@@ -409,6 +422,11 @@ function portraitMessage(): HTMLElement {
 }
 
 const CLIENT_ID_KEY = "tangible.assistantClientId";
+
+function hasRoomForOpenAssistant(): boolean {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") return true;
+  return !window.matchMedia("(max-width: 600px), (max-height: 500px)").matches;
+}
 
 function persistentClientId(): string {
   try {

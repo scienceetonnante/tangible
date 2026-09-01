@@ -31,6 +31,7 @@ describe("Space preparation", () => {
       const card = await readFile(join(dir, "space", "README.md"), "utf8");
       expect(card).toContain("sdk: static");
       expect(card).toContain("app_file: index.html");
+      expect(card).toContain("header: default");
       const attributes = await readFile(join(dir, "space", ".gitattributes"), "utf8");
       expect(attributes).toContain("*.webm filter=lfs");
       expect(attributes).toContain("*.m4a filter=lfs");

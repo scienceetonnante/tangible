@@ -266,6 +266,7 @@ describe("optimizer scene", () => {
     const landscape = landscapeBox({ width: 1000, height: 600 });
     expect(hint.x).toBe(landscape.x + landscape.width);
     expect(hint.y).toBe(readout.y);
+    expect(hint.y).toBe(524);
   });
 
   it("uses one readable camera hint in a compact viewport", () => {

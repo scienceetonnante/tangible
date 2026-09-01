@@ -6,7 +6,7 @@ colorTo: indigo
 sdk: docker
 app_port: 7860
 fullWidth: true
-header: mini
+header: default
 pinned: false
 short_description: Explore why momentum and AdamW outperform plain SGD
 ---

@@ -3,8 +3,9 @@
 
 export const PLAYER_CSS = `
 .xv-shell { width: min(100%, 177.7778vh); width: min(100%, 177.7778dvh); margin-inline: auto; }
-/* Reserve the height of the closed assistant drawer below the 16:9 scene. */
+/* Reserve the visible assistant controls below the 16:9 scene. */
 .xv-shell.xv-with-assistant { width: min(100%, max(0px, calc(177.7778vh - 116px))); width: min(100%, max(0px, calc(177.7778dvh - 116px))); }
+.xv-shell.xv-with-assistant.xv-assistant-expanded { width: min(100%, max(0px, calc(177.7778vh - 320px))); width: min(100%, max(0px, calc(177.7778dvh - 320px))); }
 .xv-player { position: relative; width: 100%; aspect-ratio: 16 / 9; background: #fafafa; overflow: hidden; user-select: none; }
 .xv-player > canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; }
 .xv-overlay { position: absolute; inset: 0; pointer-events: none; }

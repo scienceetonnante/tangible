@@ -34,6 +34,20 @@ test("scene fits the viewport while keeping the question field visible", async (
   expect(formAfter.y + formAfter.height).toBeLessThanOrEqual(400);
 });
 
+test("an authored assistant starts open only when the viewport has room", async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto("/?assistant=open");
+  await expect(page.locator(".xv-assistant-toggle")).toHaveAttribute("aria-expanded", "true");
+  await expect(page.locator(".xv-assistant-body")).toBeVisible();
+  const form = (await page.locator(".xv-assistant-form").boundingBox())!;
+  expect(form.y + form.height).toBeLessThanOrEqual(720);
+
+  await page.setViewportSize({ width: 844, height: 390 });
+  await page.reload();
+  await expect(page.locator(".xv-assistant-toggle")).toHaveAttribute("aria-expanded", "false");
+  await expect(page.locator(".xv-assistant-body")).toBeHidden();
+});
+
 test("paused question writes, demonstrates, yields to interaction, and resumes", async ({ page }) => {
   await ready(page);
   await page.locator(".xv-assistant-toggle").click();

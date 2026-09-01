@@ -24,6 +24,7 @@ export interface Manifest {
     provider: "huggingface";
     model: string;
     context: string;
+    startOpen?: boolean;
     commandable: string[];
     limits: AssistantLimits;
   };
@@ -92,6 +93,7 @@ function validateManifest(value: unknown): asserts value is Manifest {
     if (assistant.provider !== "huggingface") throw new Error('lesson.yaml field "assistant.provider" must be "huggingface"');
     nonEmptyString(assistant.model, 'lesson.yaml field "assistant.model"');
     nonEmptyString(assistant.context, 'lesson.yaml field "assistant.context"');
+    optionalBoolean(assistant.startOpen, 'lesson.yaml field "assistant.startOpen"');
     if (!Array.isArray(assistant.commandable) || assistant.commandable.some((value) => typeof value !== "string" || !value)) {
       throw new Error('lesson.yaml field "assistant.commandable" must be a list of parameter names');
     }
@@ -172,4 +174,8 @@ function optionalString(value: unknown, name: string): void {
 
 function optionalNumber(value: unknown, name: string): void {
   if (value !== undefined) finiteNumber(value, name);
+}
+
+function optionalBoolean(value: unknown, name: string): void {
+  if (value !== undefined && typeof value !== "boolean") throw new Error(`${name} must be a boolean`);
 }

@@ -294,6 +294,7 @@ assistant:
   provider: huggingface
   model: google/gemma-4-31B-it:cerebras
   context: assistant.md
+  startOpen: true
   commandable: [theta, show.projection]
 ```
 
@@ -303,6 +304,9 @@ terminology, and answer guidance. Only allowlisted parameters may be returned
 by the provider. Assistant-enabled bundles include a same-origin server; other
 lessons remain static. See
 [the assistant section of the authoring guide](./authoring.md#add-a-lesson-assistant).
+`startOpen: true` displays the question field immediately when the viewport has
+room. The player keeps the panel collapsed on phone-width or short-landscape
+viewports. The field is optional and defaults to `false`.
 The optional nested `assistant.limits` block records all request, response,
 traffic, queue, and provider-timeout values. See
 [Configure assistant limits](./authoring.md#configure-assistant-limits) for the

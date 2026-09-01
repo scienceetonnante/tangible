@@ -29,6 +29,7 @@ export async function bundleSite(lessonDir: string, manifest: Manifest, scenePat
 import { Player, PLAYER_CSS, mimeForAudio, preferredAudioSource } from "@tangible/player";
 import { scene } from ${JSON.stringify(scenePath)};
 const HAS_ASSISTANT = ${JSON.stringify(Boolean(manifest.assistant))};
+const ASSISTANT_START_OPEN = ${JSON.stringify(manifest.assistant?.startOpen === true)};
 const INTRODUCTION = ${JSON.stringify({ title: manifest.title, promise: manifest.promise })};
 async function required(url) {
   const response = await fetch(url);
@@ -41,7 +42,7 @@ async function main() {
     required("./captions.vtt").then((response) => response.text()),
     HAS_ASSISTANT ? required("./assistant.json").then((response) => response.json()) : undefined,
   ]);
-  const assistant = HAS_ASSISTANT ? { context: assistantContext } : undefined;
+  const assistant = HAS_ASSISTANT ? { context: assistantContext, startOpen: ASSISTANT_START_OPEN } : undefined;
   const style = document.createElement("style"); style.textContent = PLAYER_CSS; document.head.append(style);
   const mount = document.getElementById("app");
   mount.replaceChildren();

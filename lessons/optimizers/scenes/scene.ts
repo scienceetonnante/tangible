@@ -203,7 +203,7 @@ const NIGHT_CSS = `
 .xv-player.optimizers-night .xv-board-inner { gap: 30px; }
 .xv-player.optimizers-night .xv-board-item { width: 100%; text-align: center; }
 .xv-player.optimizers-night .xv-captions { color: #fff; background: rgba(5, 6, 9, 0.74); border-radius: 5px; text-shadow: 0 1px 3px #000; }
-.xv-player.optimizers-night .xv-chrome { background: rgba(5, 6, 9, 0.9); }
+.xv-player.optimizers-night .xv-chrome { border-top: 1px solid #2b313b; background: #050609; }
 .xv-player.optimizers-night .xv-chrome button { color: #f5f7fa; }
 .xv-player.optimizers-night .xv-chrome button:hover { background: rgba(255, 255, 255, 0.1); }
 .xv-player.optimizers-night .xv-chrome button:focus-visible,

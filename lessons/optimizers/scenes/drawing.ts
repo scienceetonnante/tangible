@@ -8,6 +8,7 @@ import { cssPixels, cssWidth, landscapeBox, lossPlotBox, SERIES, type View } fro
 const BACKGROUND = "#050609";
 const FOREGROUND = "#f5f7fa";
 const CAMERA_READOUT = "#b8bec8";
+const CAMERA_READOUT_BOTTOM_INSET = 76;
 
 export function draw(
   g: CanvasRenderingContext2D,
@@ -36,7 +37,7 @@ function drawCameraReadout(g: CanvasRenderingContext2D, view: View, state: Reado
   g.font = `${Math.max(cssPixels(view, 10), unit * 0.013)}px ui-monospace, SFMono-Regular, Menlo, monospace`;
   g.textAlign = "left";
   g.textBaseline = "middle";
-  const y = view.height - cssPixels(view, 64);
+  const y = view.height - cssPixels(view, CAMERA_READOUT_BOTTOM_INSET);
   const landscape = landscapeBox(view);
   if (cssWidth(view) < 900) {
     g.fillText("drag to orbit · scroll to zoom", landscape.x, y);
