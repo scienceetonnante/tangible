@@ -8,7 +8,7 @@ title: Why adaptive optimizers exist
 @cue(step = 20, active = [true, false, false])
 
 @camera(azimuth: 125°, over:10s, ease: linear)
-Training a machine-learning models requires minimizing a loss function.  
+Training a machine-learning model requires minimizing a loss function.  
 @cue(step = 20, active -> [true, false, true])
 While stochastic gradient descent, or SGD, is the basic method for this, an algorithm like Adam  usually works more effectively. 
 How are they different?
@@ -20,8 +20,8 @@ The white puck is the starting point. Try changing the point of view while I'm s
 
 @camera(target: [0, 0.4, 0], distance: 7.4, azimuth: -8.59°, elevation: 69.9°, over: 2s) 
 @cue(active = [true , false, false])
-@cue(step -> 10, over: 5s) 
-This orange trail shows ordinary gradient descent trajectory.
+@cue(step -> 10, over: 5s)
+This orange trail shows the trajectory of ordinary gradient descent.
 With SGD, at each iteration, we compute the gradient and take a small step in the opposite direction.
 @board(sgd: $\begin{aligned}\text{SGD: }\\ \Delta w_t&=-\eta g_t\end{aligned}$)
 @cue(step -> 12, over: 1 s)
@@ -68,6 +68,6 @@ It divides the first average by a scale derived from the second, so a direction 
 Momentum mainly changes how gradients are combined across steps. AdamW also adapts the scale separately for each coordinate. One global learning rate may be too large for some coordinates and too small for others, so this coordinate-wise adaptation can make
 optimization much easier.
 
-However this ravine is deliberately simple, real neural networks are much more complicated, and AdamW is not universally better. 
+However, this ravine is deliberately simple. Real neural networks are much more complicated, and AdamW is not universally better. 
 
 @pause(prompt: "Keep exploring: drag the start puck, change the condition number, or compare all three paths at the same step.")

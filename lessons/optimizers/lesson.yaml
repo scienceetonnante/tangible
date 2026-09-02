@@ -1,5 +1,5 @@
 id: optimizers
-title: Why adaptive optimizers exist
+title: Why adaptive optimizers exist — A Tangible experience
 promise: See how SGD, momentum, and AdamW navigate the same loss landscape.
 tags:
   - machine-learning
