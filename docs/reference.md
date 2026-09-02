@@ -75,7 +75,10 @@ pnpm lesson build --bundle --lesson lessons/my-lesson
 ```
 
 Compiled lesson files go to `build/lesson/`. The deployable site goes to
-`build/site/`. Both directories are generated.
+`build/site/`. Both directories are generated. Assistant-enabled Docker bundles
+also contain precompressed Brotli and gzip representations of browser text
+assets; the lesson server selects the best representation supported by each
+visitor's browser.
 
 ### Commands
 

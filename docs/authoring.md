@@ -900,6 +900,10 @@ release containing only that generated site plus `space/README.md` and
 Git metadata, and any generated file containing a loaded provider credential.
 It never publishes the monorepo or the lesson source.
 
+Assistant-enabled Docker releases include precompressed Brotli and gzip versions
+of browser text assets. The lesson server negotiates these representations while
+continuing to serve narration audio with byte-range support for Safari.
+
 The command uses `hf upload` to replace obsolete remote files in one normal
 Space commit. The commit message records the clean Tangible source revision, so
 the Space history remains a useful deployment and rollback history. No local

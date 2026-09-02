@@ -8,17 +8,23 @@ import { mkdir, writeFile, copyFile, readFile, readdir, unlink } from "node:fs/p
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { dirname } from "node:path";
+import { promisify } from "node:util";
 import { fileURLToPath } from "node:url";
+import { brotliCompress, constants as zlibConstants, gzip } from "node:zlib";
 import type { Manifest } from "./manifest.js";
 import type { AssistantLimits, LessonTracks } from "@tangible/core";
 
 const require = createRequire(import.meta.url);
+const brotliCompressAsync = promisify(brotliCompress);
+const gzipAsync = promisify(gzip);
+const COMPRESSIBLE_SITE_FILE = /\.(?:html|js|css|json|vtt)$/;
+const MIN_COMPRESSIBLE_BYTES = 1024;
 
 export async function bundleSite(lessonDir: string, manifest: Manifest, scenePath: string): Promise<string> {
   const outDir = join(lessonDir, "build", "site");
   await mkdir(outDir, { recursive: true });
   for (const name of await readdir(outDir)) {
-    if (/^audio\.(wav|mp3|webm|m4a|ogg)$/.test(name)) await unlink(join(outDir, name));
+    if (/^audio\.(wav|mp3|webm|m4a|ogg)$/.test(name) || /\.(?:br|gz)$/.test(name)) await unlink(join(outDir, name));
   }
 
   const playerPath = require.resolve("@tangible/player");
@@ -92,8 +98,32 @@ main().catch((error) => {
   if (existsSync(join(src, "assistant.json"))) await copyFile(join(src, "assistant.json"), join(outDir, "assistant.json"));
   await copyFile(katexCss, join(outDir, "katex.css"));
   await writeFile(join(outDir, "index.html"), indexHtml(manifest));
-  if (manifest.assistant) await bundleAssistantServer(outDir, manifest.assistant.limits);
+  if (manifest.assistant) {
+    await precompressSiteAssets(outDir);
+    await bundleAssistantServer(outDir, manifest.assistant.limits);
+  }
   return outDir;
+}
+
+/** Write smaller Brotli and gzip representations for browser text assets. */
+export async function precompressSiteAssets(outDir: string): Promise<void> {
+  for (const name of await readdir(outDir)) {
+    if (/\.(?:br|gz)$/.test(name)) await unlink(join(outDir, name));
+  }
+
+  for (const name of await readdir(outDir)) {
+    if (!COMPRESSIBLE_SITE_FILE.test(name)) continue;
+    const source = await readFile(join(outDir, name));
+    if (source.length < MIN_COMPRESSIBLE_BYTES) continue;
+    const [brotli, gzipped] = await Promise.all([
+      brotliCompressAsync(source, {
+        params: { [zlibConstants.BROTLI_PARAM_QUALITY]: zlibConstants.BROTLI_MAX_QUALITY },
+      }),
+      gzipAsync(source, { level: zlibConstants.Z_BEST_COMPRESSION }),
+    ]);
+    if (brotli.length < source.length) await writeFile(join(outDir, `${name}.br`), brotli);
+    if (gzipped.length < source.length) await writeFile(join(outDir, `${name}.gz`), gzipped);
+  }
 }
 
 export async function bundleAssistantServer(outDir: string, limits: AssistantLimits): Promise<void> {

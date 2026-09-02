@@ -4,6 +4,7 @@ import type { AddressInfo } from "node:net";
 import { mkdtemp, mkdir, realpath, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { brotliCompressSync, gzipSync } from "node:zlib";
 import { serveFromDir, resolveStaticFile } from "./static-server.js";
 
 const servers: Server[] = [];
@@ -20,8 +21,12 @@ async function fixture() {
   await writeFile(join(site, "index.html"), "<h1>safe</h1>");
   await writeFile(join(site, "audio.wav"), "0123456789");
   await writeFile(join(site, "audio.m4a"), "m4a");
+  const script = "const lesson = 'tangible';\n".repeat(100);
+  await writeFile(join(site, "player.js"), script);
+  await writeFile(join(site, "player.js.br"), brotliCompressSync(script));
+  await writeFile(join(site, "player.js.gz"), gzipSync(script));
   await writeFile(outside, "secret");
-  return { site, outside };
+  return { site, outside, script };
 }
 
 async function start(site: string): Promise<string> {
@@ -73,5 +78,35 @@ describe("static server containment", () => {
     expect((await fetch(`${base}/..%2foutside.txt`)).status).toBe(404);
     expect((await fetch(base, { method: "POST" })).status).toBe(405);
     expect((await fetch(`${base}/audio.wav`, { headers: { range: "bytes=99-100" } })).status).toBe(416);
+  });
+
+  it("negotiates precompressed text without changing range responses", async () => {
+    const { site, script } = await fixture();
+    const base = await start(site);
+
+    const brotli = await fetch(`${base}/player.js`, { headers: { "accept-encoding": "br, gzip" } });
+    expect(brotli.headers.get("content-encoding")).toBe("br");
+    expect(brotli.headers.get("vary")).toBe("Accept-Encoding");
+    expect(await brotli.text()).toBe(script);
+
+    const gzip = await fetch(`${base}/player.js`, { headers: { "accept-encoding": "gzip;q=1, br;q=0.5" } });
+    expect(gzip.headers.get("content-encoding")).toBe("gzip");
+    expect(await gzip.text()).toBe(script);
+
+    const identity = await fetch(`${base}/player.js`, { headers: { "accept-encoding": "identity" } });
+    expect(identity.headers.get("content-encoding")).toBeNull();
+    expect(await identity.text()).toBe(script);
+
+    const head = await fetch(`${base}/player.js`, { method: "HEAD", headers: { "accept-encoding": "br" } });
+    expect(head.headers.get("content-encoding")).toBe("br");
+    expect(head.headers.get("content-length")).toBe(String(brotliCompressSync(script).length));
+    expect(await head.text()).toBe("");
+
+    const range = await fetch(`${base}/player.js`, {
+      headers: { "accept-encoding": "br", range: "bytes=0-4" },
+    });
+    expect(range.status).toBe(206);
+    expect(range.headers.get("content-encoding")).toBeNull();
+    expect(await range.text()).toBe(script.slice(0, 5));
   });
 });
