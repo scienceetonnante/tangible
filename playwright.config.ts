@@ -4,6 +4,7 @@ export default defineConfig({
   testDir: "./e2e",
   globalSetup: "./e2e/prepare.mjs",
   fullyParallel: true,
+  workers: process.env.CI ? 1 : undefined,
   reporter: "list",
   use: {
     baseURL: "http://localhost:5178",
