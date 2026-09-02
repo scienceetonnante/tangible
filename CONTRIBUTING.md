@@ -32,6 +32,3 @@ Run `pnpm test:e2e` when changing the player, browser interaction, bundling, or
 the complete authoring workflow. Use silent or offline providers in automated
 tests. Do not commit lesson `build/` or `.cache/` directories, credentials, or
 generated evaluation results.
-
-Please report security problems privately as described in
-[SECURITY.md](./SECURITY.md).

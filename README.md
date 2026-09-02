@@ -1,25 +1,25 @@
 # Tangible
 
-Tangible is an open-source toolkit for creating narrated, interactive lessons. 
+*Tangible* is **an open-source toolkit for creating narrated, interactive lessons**. 
 
-Each lesson combines a scene that learners can manipulate with spoken explanation and synchronized visual changes. Lessons can also include an AI assistant that answers questions and demonstrates ideas directly in the scene, and they can be published as 🤗Hugging Face Spaces.
+Each lesson combines a scene that learners can manipulate with spoken explanation and synchronized visual changes. Lessons can also include an AI assistant that answers questions and demonstrates ideas directly in the scene, and they can be published as 🤗 Hugging Face Spaces.
 
 For an example, open [“Why adaptive optimizers exist”](https://huggingface.co/spaces/dlouapre/tangible-optimizers) on Hugging Face Spaces. The lesson lets you play or seek through the explanation, orbit the loss landscape, move the starting point, change optimizer settings, pause for exploration, and ask written questions to an LLM assistant.
 
 <p align="center">
 <img src="./docs/assets/optimizer-lesson.png" alt="The Tangible optimizer lesson comparing SGD, momentum, and AdamW on an interactive loss landscape." width="700">
-/</p>
+</p>
 
 Browse the public [Tangible lessons collection](https://huggingface.co/collections/dlouapre/tangible-lessons-6a96e2c4be1533d68e65d7a2) to find lessons published from this repository and by other creators.
 
 
 ## How does it work?
 
-A lesson is generated from a TypeScript interactive scene, a Markdown script file containing narration and scene synchronization, and a YAML configuration file. The compiler creates an audio track using a Text-To-Speech model, and synchronizes it to a scene manipulation track. 
+A lesson is built from a TypeScript interactive scene, a Markdown script file containing narration and scene synchronization, and a YAML configuration file. The compiler creates an audio track using a Text-To-Speech model (TTS), and synchronizes it to a scene manipulation track. 
 
-During playback, the scene combines scripted changes with learner interaction. When the LLM assistant is asked a question, it receives the lesson, the state of the scene and instructions to control it.
+During playback, the scene combines scripted changes with learner interaction. When the LLM assistant is asked a question, it receives the script of the lesson, the state of the scene and instructions to control it.
 
-Every scene renders from the complete state at the current lesson time. Seeking directly to a time therefore recreates the same view without replaying the lesson from the beginning.
+Every scene renders from the lessons parameters at the current lesson time. Seeking directly to a time therefore recreates the same view without replaying the lesson from the beginning.
 
 
 ## Installation
@@ -33,18 +33,23 @@ corepack enable
 pnpm install
 pnpm build
 ```
-
+You can check everything is working well by starting a lesson in silent mode (see below)
+```bash
+pnpm lesson preview --silent --lesson lessons/optimizers
+```
 
 ## Build your own lesson
 
 Authoring a lesson involves:
 
-- building an interactive scene in `scenes/scene.ts`,
-- writing the `script.md` file, which contains both the narration and the instructions for the synchronized manipulation of the scene,
-- writing the `assistant.md` file for custom instructions to the LLM assistant (optional)
+- building an interactive scene in `scenes/scene.ts`;
+- writing the `script.md` file, which contains both the narration and the instructions for the synchronized manipulation of the scene;
+- writing the `assistant.md` file for custom instructions to the LLM assistant (optional);
 - adjusting the `lesson.yaml` configuration file to customize TTS model, assistant LLM and deployment parameters.
 
-You can work with a coding agent throughout the process (see the `create-tangible-lesson` skill) in particular for scene creation and authoring synchronized manipulations.
+You can work with a coding agent throughout the process (see the `create-tangible-lesson` skill) in particular for scene creation and authoring synchronized manipulations (see below).
+
+[Creator quick start](./docs/quickstart.md) leads from a fresh clone to a modified lesson without paid credentials.
 
 ### 1. Create a new lesson
 
@@ -64,21 +69,22 @@ pnpm lesson scene --lesson lessons/my-lesson
 
 ### 3. Write the script and the choreography
 
-The `script.md` file contains both your narration and instructions for synchronized manipulations the scene, for instance:
+The `script.md` file contains both your narration and instructions for synchronized manipulations of the scene, for instance:
 
 ```
 @camera(target: [0, 0.4, 0], distance: 7.4, azimuth: 7°, elevation: 62°, over: 3s) 
 Now watch the orange path.
 
 @cue(step -> 30, over: 5s) 
-Each step crosses the ravine, overshoots, crosses back, and only slowly makes progress along the floor.
+Each step crosses the ravine, overshoots, crosses back, and only slowly 
+makes progress along the floor.
 ```
 
 Start with your text, then add instructions for the choreography. You can either do it manually or use a coding agent.
 
 #### Manually
 Keywords for the choreography are documented in the [reference guide](./docs/reference.md). 
-Before writing formal cues, run `lesson ref` to see exactly what the scene exposes.
+Before writing formal cues, run `pnpm lesson ref` to see exactly what the scene exposes.
 ```bash
 pnpm lesson ref --lesson lessons/my-lesson
 ```
@@ -92,7 +98,8 @@ You can also first write the visual intentions in double brackets and ask your c
 Now watch the orange path.
 
 [[Advance the optimizer to step 30 during the next sentence.]]
-Each step crosses the ravine, overshoots, crosses back, and only slowly makes progress along the floor.
+Each step crosses the ravine, overshoots, crosses back, and only slowly 
+makes progress along the floor.
 ```
 
 
@@ -103,18 +110,14 @@ Check your lesson with
 pnpm lesson check --lesson lessons/my-lesson
 ```
 
-To review your lesson while you are building it, you have three options:
-- a silent preview
-- an audible offline preview that uses a local TTS model
-- a production voice version that uses the TTS model you defined in the `lesson.yaml` configuration file
-
+To review your lesson while you are building it, you have three options: silent preview, audible offline and production voice.
 
 You can first generate a silent preview version: activate closed captions and follow the choreography to see if it matches your intent.
 ```bash
 pnpm lesson preview --silent --lesson lessons/my-lesson
 ```
 
-Replace the `--silent` flag by `--offline` to get an audible offline preview. It requires FFmpeg and downloads a pinned 123 MB local speech model on its first run.
+Replace the `--silent` flag with `--offline` to get an audible offline preview. It requires FFmpeg and downloads a pinned 123 MB local speech model on its first run.
 It needs no API key.
 ```bash
 pnpm lesson preview --offline --lesson lessons/my-lesson
@@ -166,27 +169,22 @@ account.
 
 ## Current scope and limitations
 
-The first release supports desktop and tablet layouts. Portrait phones ask visitors to rotate the device or use a larger screen. 
+*Tangible* currently supports desktop and tablet layouts. Portrait phones ask visitors to rotate the device or use a larger screen. 
 Phone landscape uses a compact layout that is still being refined.
 
 
 ## Documentation
 
-- [Creator quick start](./docs/quickstart.md) leads from a fresh clone to a
-  modified lesson without paid credentials.
+- [Creator quick start](./docs/quickstart.md) leads from a fresh clone to a modified lesson without paid credentials.
+- [Authoring a lesson](./docs/authoring.md) covers scene design, narration, choreography, review, assistants, and deployment.
+- [Reference](./docs/reference.md) documents every command, lesson file, manifest field, scene export, and narration directive.
+- [Contributing](./CONTRIBUTING.md) explains how to work on lessons or the framework.
 
-- [Authoring a lesson](./docs/authoring.md) covers scene design, narration,
-  choreography, review, assistants, and deployment.
 
-- [Reference](./docs/reference.md) documents every command, lesson file,
-  manifest field, scene export, and narration directive.
+## Acknowledgements
 
-- [Contributing](./CONTRIBUTING.md) explains how to work on lessons or the
-  framework.
-
+Inspired by the [interactive explorables](https://eater.net/quaternions) of Ben Eater and Grant Sanderson, and the article by [Andy Matuschak](https://medium.com/khan-academy-early-product-development/narrated-explorables-three-mental-models-e16e0d80e4c1).
 
 ## License
 
-Read [CONTRIBUTING.md](./CONTRIBUTING.md) before submitting changes.
-
-Tangible is licensed under the [Apache License 2.0](./LICENSE).
+*Tangible* is licensed under the [Apache License 2.0](./LICENSE).
