@@ -1,36 +1,30 @@
 # Tangible
 
-Tangible is an open-source toolkit for creating narrated, interactive lessons. Each lesson combines a scene that learners can manipulate 
-with spoken explanation and synchronized visual changes. Lessons can also include an AI assistant that answers questions and demonstrates   
-ideas directly in the scene, and they can be published as 🤗Hugging Face Spaces.
+Tangible is an open-source toolkit for creating narrated, interactive lessons. 
 
-[Open “Why adaptive optimizers exist” on Hugging Face
-Spaces](https://huggingface.co/spaces/dlouapre/tangible-optimizers). The lesson lets you play or seek through the explanation, orbit the loss
-landscape, move the starting point, change optimizer settings, pause for
-exploration, and ask written questions to an LLM assistant.
+Each lesson combines a scene that learners can manipulate with spoken explanation and synchronized visual changes. Lessons can also include an AI assistant that answers questions and demonstrates ideas directly in the scene, and they can be published as 🤗Hugging Face Spaces.
 
-<img src="./docs/assets/optimizer-lesson.png" alt="The Tangible optimizer lesson comparing SGD, momentum, and AdamW on an interactive loss landscape." width="900">
+For an example, open [“Why adaptive optimizers exist”](https://huggingface.co/spaces/dlouapre/tangible-optimizers) on Hugging Face Spaces. The lesson lets you play or seek through the explanation, orbit the loss landscape, move the starting point, change optimizer settings, pause for exploration, and ask written questions to an LLM assistant.
 
-[Browse the public Tangible lessons
-collection](https://huggingface.co/collections/dlouapre/tangible-lessons-6a96e2c4be1533d68e65d7a2)
-to find lessons published from this repository and by other creators.
+<p align="center">
+<img src="./docs/assets/optimizer-lesson.png" alt="The Tangible optimizer lesson comparing SGD, momentum, and AdamW on an interactive loss landscape." width="700">
+/</p>
+
+Browse the public [Tangible lessons collection](https://huggingface.co/collections/dlouapre/tangible-lessons-6a96e2c4be1533d68e65d7a2) to find lessons published from this repository and by other creators.
 
 
 ## How does it work?
 
-A lesson is generated from a TypeScript scene, a Markdown script file containing narration and scene synchronization, and a YAML configuration file.
-The compiler creates an audio track using a TTS model, and synchronizes it to a scene manipulation track.
-During playback, the scene combines scripted changes with learner interaction.
+A lesson is generated from a TypeScript interactive scene, a Markdown script file containing narration and scene synchronization, and a YAML configuration file. The compiler creates an audio track using a Text-To-Speech model, and synchronizes it to a scene manipulation track. 
 
-When the LLM assistant is asked a question, it receives the lesson, the state of the scene and instructions to control it.
+During playback, the scene combines scripted changes with learner interaction. When the LLM assistant is asked a question, it receives the lesson, the state of the scene and instructions to control it.
 
 Every scene renders from the complete state at the current lesson time. Seeking directly to a time therefore recreates the same view without replaying the lesson from the beginning.
 
 
 ## Installation
 
-Tangible currently requires Node.js 22 or newer, Git, and pnpm. Node 22 includes
-Corepack, which can activate the pnpm version pinned by the repository:
+*Tangible* currently requires Node.js 22 or newer, Git, and pnpm. Node 22 includes Corepack, which can activate the pnpm version pinned by the repository:
 
 ```bash
 git clone https://github.com/scienceetonnante/tangible.git
@@ -41,37 +35,36 @@ pnpm build
 ```
 
 
-## Create your own lesson
+## Build your own lesson
 
-Authoring a lesson typically involves:
+Authoring a lesson involves:
 
-- building an interactive scene `scenes/scene.ts`,
-- writing a script `script.md` containing both the narration and the instructions for the synchronized manipulation of the scene,
-- writing `assistant.md` file for custom instructions to the LLM assistant.
-- adjusting `lesson.yaml` configuration file
+- building an interactive scene in `scenes/scene.ts`,
+- writing the `script.md` file, which contains both the narration and the instructions for the synchronized manipulation of the scene,
+- writing the `assistant.md` file for custom instructions to the LLM assistant (optional)
+- adjusting the `lesson.yaml` configuration file to customize TTS model, assistant LLM and deployment parameters.
 
-You can work with a coding agent throughout the process (see the `create-tangible-lesson` skill) in particular for scene creation.
+You can work with a coding agent throughout the process (see the `create-tangible-lesson` skill) in particular for scene creation and authoring synchronized manipulations.
 
-### (1) Create a new lesson
+### 1. Create a new lesson
 
 First create a new lesson with
-
 ```bash
 pnpm lesson new my-lesson --lesson lessons/my-lesson
 ```
 
-### (2) Build the interactive scene
+### 2. Build the interactive scene
 
-Work on the interactive scene in `scenes/scene.ts`, possibly with a coding agent.
+Build your interactive scene in `scenes/scene.ts` (possibly with a coding agent).
 
-Preview the interactive scene with
+Preview the scene with
 ```bash
 pnpm lesson scene --lesson lessons/my-lesson
 ```
 
-### (3) Write the script and the choreography
+### 3. Write the script and the choreography
 
-The `script.md` file contains both your narration and instructions for manipulating the scene, for instance:
+The `script.md` file contains both your narration and instructions for synchronized manipulations the scene, for instance:
 
 ```
 @camera(target: [0, 0.4, 0], distance: 7.4, azimuth: 7°, elevation: 62°, over: 3s) 
@@ -81,8 +74,10 @@ Now watch the orange path.
 Each step crosses the ravine, overshoots, crosses back, and only slowly makes progress along the floor.
 ```
 
-Start with your text. Instructions for the choreography are documented in the [reference guide](./docs/reference.md).
+Start with your text, then add instructions for the choreography. You can either do it manually or use a coding agent.
 
+#### Manually
+Keywords for the choreography are documented in the [reference guide](./docs/reference.md). 
 Before writing formal cues, run `lesson ref` to see exactly what the scene exposes.
 ```bash
 pnpm lesson ref --lesson lessons/my-lesson
@@ -90,7 +85,8 @@ pnpm lesson ref --lesson lessons/my-lesson
 It prints the scene’s parameters, valid ranges, default values, ownership rules, camera presets, constants, groups, and other available
 controls. 
 
-You can first write the visual intentions in double brackets and ask your coding agent to translate them into formal directives.
+#### With a coding agent
+You can also first write the visual intentions in double brackets and ask your coding agent to translate them into formal directives.
 ```
 [[Move to an overhead view before the next sentence.]]
 Now watch the orange path.
@@ -98,10 +94,9 @@ Now watch the orange path.
 [[Advance the optimizer to step 30 during the next sentence.]]
 Each step crosses the ravine, overshoots, crosses back, and only slowly makes progress along the floor.
 ```
-and ask your coding agent to translate your intentions into formal instructions.
 
 
-### (4) Check and iterate
+### 4. Check and iterate
 
 Check your lesson with
 ```bash
@@ -119,7 +114,7 @@ You can first generate a silent preview version: activate closed captions and fo
 pnpm lesson preview --silent --lesson lessons/my-lesson
 ```
 
-Remove the `silent` flag to get an audible offline preview. It requires FFmpeg and downloads a pinned 123 MB local speech model on its first run.
+Replace the `--silent` flag by `--offline` to get an audible offline preview. It requires FFmpeg and downloads a pinned 123 MB local speech model on its first run.
 It needs no API key.
 ```bash
 pnpm lesson preview --offline --lesson lessons/my-lesson
@@ -133,12 +128,13 @@ pnpm lesson preview --lesson lessons/my-lesson
 The [creator quick start](./docs/quickstart.md) walks through one visible scene change, one narration edit, and one cue edit.
 
 
-### (5) Build and review the finished lesson
+### 5. Build and review the finished lesson
 ```bash
-pnpm lesson build --bundle --lesson lessons/my-lesson```
+pnpm lesson build --bundle --lesson lessons/my-lesson
 ```
 
-### (6) Publish on Hugging Face Spaces
+
+### 6. Publish on Hugging Face Spaces
 
 After reviewing the complete lesson with its production voice, prepare the local
 Space metadata without contacting Hugging Face:
