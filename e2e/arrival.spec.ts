@@ -7,8 +7,8 @@ test("loading becomes a deliberate start and never autoplays", async ({ page }, 
   const screen = page.locator(".xv-start-screen");
   await expect(screen).toHaveAttribute("data-state", "loading");
   await expect(page.locator(".xv-start-title")).toHaveText("The unit circle");
-  await expect(page.locator(".xv-start-promise")).toContainText("determines its sine and cosine");
-  await expect(page.locator(".xv-start-meta")).toHaveText(/About \d+ minutes?/);
+  await expect(page.locator(".xv-start-promise")).toHaveCount(0);
+  await expect(page.locator(".xv-start-meta")).toHaveCount(0);
   await expect(page.locator(".xv-start-button")).toBeDisabled();
   await expect(page.locator("canvas")).toBeVisible();
   const card = await page.locator(".xv-start-content").boundingBox();

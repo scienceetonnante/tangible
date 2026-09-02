@@ -1,6 +1,5 @@
 export interface LessonIntroduction {
   title: string;
-  promise: string;
 }
 
 export interface StartScreenActions {
@@ -16,7 +15,7 @@ export class StartScreen {
   private spinner: HTMLElement;
   private action: "start" | "retry" = "start";
 
-  constructor(introduction: LessonIntroduction, duration: number, actions: StartScreenActions) {
+  constructor(introduction: LessonIntroduction, actions: StartScreenActions) {
     this.el = div("xv-start-screen");
     this.el.setAttribute("aria-label", "Lesson introduction");
 
@@ -25,14 +24,6 @@ export class StartScreen {
     const title = document.createElement("h1");
     title.className = "xv-start-title";
     title.textContent = introduction.title;
-
-    const promise = document.createElement("p");
-    promise.className = "xv-start-promise";
-    promise.textContent = introduction.promise;
-
-    const meta = document.createElement("p");
-    meta.className = "xv-start-meta";
-    meta.textContent = approximateDuration(duration);
 
     const interactive = document.createElement("p");
     interactive.className = "xv-start-interactive";
@@ -60,7 +51,7 @@ export class StartScreen {
     };
 
     controls.append(live, this.button);
-    content.append(title, promise, meta, interactive, orientation, controls);
+    content.append(title, interactive, orientation, controls);
     this.el.append(content);
     this.setLoading();
   }
@@ -99,11 +90,6 @@ export class StartScreen {
     this.button.textContent = "Try again";
     this.button.disabled = false;
   }
-}
-
-export function approximateDuration(duration: number): string {
-  const minutes = Math.max(1, Math.round(duration / 60));
-  return `About ${minutes} ${minutes === 1 ? "minute" : "minutes"}`;
 }
 
 function div(className: string): HTMLDivElement {

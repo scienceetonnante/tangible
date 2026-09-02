@@ -32,7 +32,7 @@ pnpm lesson new my-lesson --lesson lessons/my-lesson
 The authored files are:
 
 ```text
-lesson.yaml          title, visitor promise, build and provider configuration
+lesson.yaml          title, public description, build and provider configuration
 script.md            spoken narration, scene hints, and formal cues
 assistant.md         optional lesson-assistant guidance
 assistant.eval.yaml  optional tracked assistant question cases
@@ -50,12 +50,12 @@ silent builds, and offline narration independent of paid credentials. Add a
 `tts` section only when you are ready to review a production voice; a normal
 provider-backed preview or deployment then requires that section.
 
-Write a concise, one-sentence `promise` in `lesson.yaml`. It appears below the
-lesson title before playback and should tell a visitor what they will see or
-understand. Tangible adds the duration, loading status, Start button, interaction
-guidance, and phone-orientation notice. The player renders the initial scene
-behind a translucent, input-blocking card, so lesson authors do not create or
-style a separate onboarding screen.
+Write a concise, one-sentence `promise` in `lesson.yaml`. Tangible uses it as the
+public description in the Hugging Face Space card. The lesson start screen shows
+the title, interaction guidance, loading status, Start button, and
+phone-orientation notice. The player renders the initial scene behind a
+translucent, input-blocking card, so lesson authors do not create or style a
+separate onboarding screen.
 
 Add an optional `tags` list with the lesson's subject terms when the lesson will
 be published on Hugging Face. Tangible combines these terms with `tangible`,

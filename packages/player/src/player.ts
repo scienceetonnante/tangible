@@ -193,7 +193,7 @@ export class Player {
     }
 
     if (opts.introduction) {
-      this.startScreen = new StartScreen(opts.introduction, opts.tracks.duration, {
+      this.startScreen = new StartScreen(opts.introduction, {
         onStart: () => void this.beginLesson(),
         onRetry: () => void this.loadAudio(),
       });

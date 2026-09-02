@@ -114,7 +114,7 @@ describe("Player composition", () => {
       mount,
       scene: stubScene([]),
       tracks,
-      introduction: { title: "A useful lesson", promise: "See how the example works." },
+      introduction: { title: "A useful lesson" },
       audioLoader,
     });
     player.audio.load = vi.fn();
@@ -123,7 +123,8 @@ describe("Player composition", () => {
     player.start();
     expect(mount.querySelector(".xv-start-screen")?.getAttribute("data-state")).toBe("loading");
     expect(mount.querySelector(".xv-start-title")?.textContent).toBe("A useful lesson");
-    expect(mount.querySelector(".xv-start-promise")?.textContent).toBe("See how the example works.");
+    expect(mount.querySelector(".xv-start-promise")).toBeNull();
+    expect(mount.querySelector(".xv-start-meta")).toBeNull();
     expect((mount.querySelector(".xv-start-button") as HTMLButtonElement).disabled).toBe(true);
     expect(player.audio.play).not.toHaveBeenCalled();
 
@@ -147,7 +148,7 @@ describe("Player composition", () => {
       mount,
       scene: stubScene([]),
       tracks,
-      introduction: { title: "A useful lesson", promise: "See how the example works." },
+      introduction: { title: "A useful lesson" },
       audioLoader,
     });
     player.audio.load = vi.fn();
@@ -171,7 +172,7 @@ describe("Player composition", () => {
       mount,
       scene: stubScene([]),
       tracks,
-      introduction: { title: "A useful lesson", promise: "See how the example works." },
+      introduction: { title: "A useful lesson" },
     });
     player.audio.play = vi.fn(() => new Promise<void>(() => {}));
     player.audio.pause = vi.fn();

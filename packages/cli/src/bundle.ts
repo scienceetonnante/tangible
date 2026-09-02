@@ -36,7 +36,7 @@ import { Player, PLAYER_CSS, mimeForAudio, preferredAudioSource } from "@tangibl
 import { scene } from ${JSON.stringify(scenePath)};
 const HAS_ASSISTANT = ${JSON.stringify(Boolean(manifest.assistant))};
 const ASSISTANT_START_OPEN = ${JSON.stringify(manifest.assistant?.startOpen === true)};
-const INTRODUCTION = ${JSON.stringify({ title: manifest.title, promise: manifest.promise })};
+const INTRODUCTION = ${JSON.stringify({ title: manifest.title })};
 async function required(url) {
   const response = await fetch(url);
   if (!response.ok) throw new Error(url + " returned " + response.status);
@@ -152,7 +152,6 @@ export async function bundleAssistantServer(outDir: string, limits: AssistantLim
 
 function indexHtml(manifest: Manifest): string {
   const title = escapeHtml(manifest.title);
-  const promise = escapeHtml(manifest.promise);
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -166,13 +165,12 @@ body { margin: 0; font-family: system-ui, sans-serif; background: #0b111a; }
 .xv-bootstrap { display: grid; place-items: center; width: min(100%, 177.7778dvh); aspect-ratio: 16 / 9; margin-inline: auto; padding: clamp(14px, 3vw, 28px); box-sizing: border-box; background: radial-gradient(circle at 50% 35%, #263b52 0%, #111a27 70%); color: #fff; }
 .xv-bootstrap-content { width: min(560px, 100%); padding: clamp(22px, 3.5vw, 34px); border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 20px; box-sizing: border-box; background: rgba(18, 27, 41, 0.84); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.38); }
 .xv-bootstrap h1 { margin: 0; font-size: clamp(26px, 4.2vw, 40px); line-height: 1.05; }
-.xv-bootstrap-promise { max-width: 46ch; margin: 12px 0; font-size: clamp(16px, 2vw, 20px); line-height: 1.35; }
-.xv-bootstrap-status { color: #cbd8e4; font-size: 14px; }
+.xv-bootstrap-status { margin: 14px 0 0; color: #cbd8e4; font-size: 14px; }
 @media (max-width: 520px) { .xv-bootstrap { align-items: start; padding: 12px; } .xv-bootstrap-content { padding: 20px; border-radius: 16px; } }
 </style>
 </head>
 <body>
-<div id="app"><div class="xv-bootstrap"><main class="xv-bootstrap-content"><h1>${title}</h1><p class="xv-bootstrap-promise">${promise}</p><p class="xv-bootstrap-status" role="status">Loading lesson…</p></main></div></div>
+<div id="app"><div class="xv-bootstrap"><main class="xv-bootstrap-content"><h1>${title}</h1><p class="xv-bootstrap-status" role="status">Loading lesson…</p></main></div></div>
 <noscript>This lesson requires JavaScript. A video fallback can be linked here.</noscript>
 <script src="player.js"></script>
 </body>

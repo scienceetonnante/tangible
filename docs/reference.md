@@ -180,7 +180,7 @@ stored in `build/scene-preview/`.
 ### Authored files
 
 ```text
-lesson.yaml             identity, visitor promise, defaults, voice provider, assistant
+lesson.yaml             identity, public description, defaults, voice provider, assistant
 script.md               narration, natural-language hints, and formal directives
 assistant.md            optional semantic assistant context
 assistant.eval.yaml     optional tracked assistant question cases
@@ -224,12 +224,12 @@ deployment:
   space: example/lesson-space
 ```
 
-`promise` is the one-sentence explanation shown on the lesson's start screen.
-Tangible supplies the rest of that screen: the title, approximate duration,
-Start button, interaction guidance, loading and failure states, and the
-portrait-phone orientation notice. The framework shows this content in a
-translucent card over the initial lesson scene and prevents scene interaction
-until narration starts.
+`promise` is the one-sentence public description included in the Hugging Face
+Space card prepared by Tangible. It does not appear inside the lesson player.
+The start screen shows the title, Start button, interaction guidance, loading
+and failure states, and the portrait-phone orientation notice. The framework
+shows this content in a translucent card over the initial lesson scene and
+prevents scene interaction until narration starts.
 
 The optional `tags` list contains subject terms for Hugging Face discovery.
 When Tangible creates a Space card, it removes duplicates and combines these

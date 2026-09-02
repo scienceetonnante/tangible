@@ -42,7 +42,7 @@ const player = new Player({
       }
     : undefined,
   introduction: arrival
-    ? { title: "The unit circle", promise: "See how an angle on the unit circle determines its sine and cosine." }
+    ? { title: "The unit circle" }
     : undefined,
   assistant: { context: data.assistant, startOpen: query.get("assistant") === "open" },
 });
