@@ -7,7 +7,7 @@ Each lesson combines a scene that learners can manipulate with spoken explanatio
 For an example, open [“Why adaptive optimizers exist”](https://huggingface.co/spaces/dlouapre/tangible-optimizers) on Hugging Face Spaces. The lesson lets you play or seek through the explanation, orbit the loss landscape, move the starting point, change optimizer settings, pause for exploration, and ask written questions to an LLM assistant.
 
 <p align="center">
-<img src="./docs/assets/optimizer-lesson.png" alt="The Tangible optimizer lesson comparing SGD, momentum, and AdamW on an interactive loss landscape." width="700">
+<img src="./docs/assets/optimizer-lesson.jpg" alt="The Tangible optimizer lesson comparing SGD, momentum, and AdamW on an interactive loss landscape." width="700">
 </p>
 
 Browse the public [Tangible lessons collection](https://huggingface.co/collections/dlouapre/tangible-lessons-6a96e2c4be1533d68e65d7a2) to find lessons published from this repository and by other creators.
@@ -15,16 +15,16 @@ Browse the public [Tangible lessons collection](https://huggingface.co/collectio
 
 ## How does it work?
 
-A lesson is built from a TypeScript interactive scene, a Markdown script file containing narration and scene synchronization, and a YAML configuration file. The compiler creates an audio track using a Text-To-Speech model (TTS), and synchronizes it to a scene manipulation track. 
+A lesson is built from a TypeScript interactive scene, a Markdown script file containing narration and scene synchronization, and a YAML configuration file. The scene is an ordinary TypeScript module that runs in the browser, so you can draw it with the DOM, with SVG, with a 2D canvas, or in three dimensions with WebGL through Three.js. The compiler creates an audio track using a Text-To-Speech model (TTS), and synchronizes it to a scene manipulation track. 
 
 During playback, the scene combines scripted changes with learner interaction. When the LLM assistant is asked a question, it receives the script of the lesson, the state of the scene and instructions to control it.
 
-Every scene renders from the lessons parameters at the current lesson time. Seeking directly to a time therefore recreates the same view without replaying the lesson from the beginning.
+Every scene renders from the lesson's parameters at the current lesson time. Seeking directly to a time therefore recreates the same view without replaying the lesson from the beginning.
 
 
-## Installation
+## Requirements and installation
 
-*Tangible* currently requires Node.js 22 or newer, Git, and pnpm. Node 22 includes Corepack, which can activate the pnpm version pinned by the repository:
+Writing a lesson, previewing its scene, and reviewing it with silent narration require nothing more than Node.js 22 or newer, Git, and pnpm. Node 22 includes Corepack, which can activate the pnpm version pinned by the repository:
 
 ```bash
 git clone https://github.com/scienceetonnante/tangible.git
@@ -33,10 +33,29 @@ corepack enable
 pnpm install
 pnpm build
 ```
-You can check everything is working well by starting a lesson in silent mode (see below)
+You can check that everything works by starting one of the example lessons in silent mode (see below):
 ```bash
 pnpm lesson preview --silent --lesson lessons/optimizers
 ```
+
+Three further requirements matter only at specific steps, so you can install them when you reach those steps:
+
+- FFmpeg, for the audible offline preview of step 4;
+- an API key for the speech provider and for the assistant, as described in the next section;
+- the Hugging Face command line tool `hf`, to publish a lesson as a Space in step 6.
+
+
+## Credentials
+
+Most of the work needs no account at all. The scene preview, `pnpm lesson check`, the silent preview, and the audible offline preview all run on your own machine. Only two features contact an external provider and therefore need an API key: the production voice that reads your narration, and the LLM assistant that answers learner questions.
+
+Tangible reads these keys from a `.env` file, which it looks for both in the repository root and in the lesson directory. That file is listed in `.gitignore`, and the keys never reach the browser: they are used when the narration is compiled and, for the assistant, by a small server that runs beside the lesson.
+
+- The production voice reads `ELEVENLABS_API_KEY` when `lesson.yaml` sets `tts.provider: elevenlabs`, or `TTS_ENDPOINT_URL` together with `HF_TTS_TOKEN` when it sets `tts.provider: hf-endpoint`.
+- The assistant reads `HF_TOKEN`. The same token must also be added as a secret of the Hugging Face Space once the lesson is deployed.
+
+The [authoring guide](./docs/authoring.md) explains which tokens to use and how to keep them out of the released lesson.
+
 
 ## Build your own lesson
 
@@ -123,7 +142,7 @@ It needs no API key.
 pnpm lesson preview --offline --lesson lessons/my-lesson
 ```
 
-To use production voice (TTS model defined in `lesson.yaml`)
+To use the production voice, meaning the TTS model defined in `lesson.yaml`, you need the provider key described above:
 ```bash
 pnpm lesson preview --lesson lessons/my-lesson
 ```
@@ -132,8 +151,15 @@ The [creator quick start](./docs/quickstart.md) walks through one visible scene 
 
 
 ### 5. Build and review the finished lesson
+
+Compile the lesson and write a static site into `lessons/my-lesson/build/site/`:
 ```bash
 pnpm lesson build --bundle --lesson lessons/my-lesson
+```
+
+Then review that bundle in your browser, as a visitor will see it, without rebuilding it:
+```bash
+pnpm lesson serve --lesson lessons/my-lesson
 ```
 
 
@@ -171,6 +197,18 @@ account.
 
 *Tangible* currently supports desktop and tablet layouts. Portrait phones ask visitors to rotate the device or use a larger screen. 
 Phone landscape uses a compact layout that is still being refined.
+
+Building and reviewing a lesson is free, since everything up to the offline preview runs on your machine. The production voice and the LLM assistant are the only paid parts, and they are billed to your own provider account.
+
+
+## Repository layout
+
+- `packages/` contains the framework itself: the state model, the script compiler, the browser player, the speech adapters, the shared scene ingredients, and the `lesson` command line tool.
+- `lessons/` contains the example lessons, and it is where your own lesson goes.
+- `docs/` contains the quick start, the authoring guide, and the reference.
+- `e2e/` contains the browser tests.
+
+Run `pnpm lesson --help` to list the available commands, and `pnpm lesson help <command>` to see the main options of one of them.
 
 
 ## Documentation
