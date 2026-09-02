@@ -19,7 +19,6 @@ export const PLAYER_CSS = `
 .xv-hl { background: #fff3a0; border-radius: 3px; }
 .xv-start-screen { position: absolute; inset: 0; z-index: 10; display: grid; place-items: center; overflow: auto; padding: clamp(14px, 3vw, 28px); box-sizing: border-box; background: rgba(4, 8, 15, 0.46); -webkit-backdrop-filter: grayscale(0.55) brightness(0.72); backdrop-filter: grayscale(0.55) brightness(0.72); color: #fff; font-family: system-ui, sans-serif; user-select: text; }
 .xv-start-content { width: min(560px, 100%); padding: clamp(22px, 3.5vw, 34px); border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 20px; box-sizing: border-box; background: rgba(18, 27, 41, 0.84); box-shadow: 0 20px 60px rgba(0, 0, 0, 0.38); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
-.xv-start-kind { margin-bottom: 10px; color: #b9d8ed; font-size: clamp(11px, 1.4vw, 13px); font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
 .xv-start-title { max-width: 21ch; margin: 0; font-size: clamp(26px, 4.2vw, 40px); line-height: 1.05; letter-spacing: -0.025em; }
 .xv-start-promise { max-width: 46ch; margin: 12px 0 0; font-size: clamp(16px, 2vw, 20px); line-height: 1.35; }
 .xv-start-meta { margin: 12px 0 0; color: #cbd8e4; font-size: clamp(13px, 1.6vw, 15px); }
@@ -42,7 +41,6 @@ export const PLAYER_CSS = `
 @media (max-height: 500px) and (orientation: landscape) {
   .xv-start-screen { align-items: start; padding: 8px; }
   .xv-start-content { padding: 14px 18px; border-radius: 14px; }
-  .xv-start-kind { margin-bottom: 6px; font-size: 10px; }
   .xv-start-title { font-size: 28px; }
   .xv-start-promise { margin-top: 8px; font-size: 15px; line-height: 1.3; }
   .xv-start-meta { margin-top: 8px; font-size: 13px; }

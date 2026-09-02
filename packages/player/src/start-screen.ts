@@ -21,8 +21,6 @@ export class StartScreen {
     this.el.setAttribute("aria-label", "Lesson introduction");
 
     const content = div("xv-start-content");
-    const kind = div("xv-start-kind");
-    kind.textContent = "Narrated interactive lesson";
 
     const title = document.createElement("h1");
     title.className = "xv-start-title";
@@ -38,7 +36,7 @@ export class StartScreen {
 
     const interactive = document.createElement("p");
     interactive.className = "xv-start-interactive";
-    interactive.textContent = "Interactive scene — explore while listening.";
+    interactive.textContent = "This scene is interactive. Change the point of view and parameters while you listen.";
 
     const orientation = document.createElement("p");
     orientation.className = "xv-orientation-notice";
@@ -62,7 +60,7 @@ export class StartScreen {
     };
 
     controls.append(live, this.button);
-    content.append(kind, title, promise, meta, interactive, orientation, controls);
+    content.append(title, promise, meta, interactive, orientation, controls);
     this.el.append(content);
     this.setLoading();
   }
