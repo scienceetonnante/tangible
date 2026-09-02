@@ -1,25 +1,33 @@
 # Tangible
 
-Tangible is an open-source toolkit for narrated interactive lessons. A lesson
-combines a manipulable scene, spoken explanation, synchronized visual changes,
-and an optional language model that can answer questions and temporarily
-demonstrate ideas in the scene.
-
-![The Tangible optimizer lesson comparing SGD, momentum, and AdamW on an interactive loss landscape.](./docs/assets/optimizer-lesson.png)
-
-## Try the optimizer lesson
+Tangible is an open-source toolkit for creating narrated, interactive lessons. Each lesson combines a scene that learners can manipulate 
+with spoken explanation and synchronized visual changes. Lessons can also include an AI assistant that answers questions and demonstrates   
+ideas directly in the scene, and they can be published as 🤗Hugging Face Spaces.
 
 [Open “Why adaptive optimizers exist” on Hugging Face
-Spaces](https://huggingface.co/spaces/dlouapre/tangible-optimizers).
+Spaces](https://huggingface.co/spaces/dlouapre/tangible-optimizers). The lesson lets you play or seek through the explanation, orbit the loss
+landscape, move the starting point, change optimizer settings, pause for
+exploration, and ask written questions to an LLM assistant.
+
+<img src="./docs/assets/optimizer-lesson.png" alt="The Tangible optimizer lesson comparing SGD, momentum, and AdamW on an interactive loss landscape." width="900">
+
 [Browse the public Tangible lessons
 collection](https://huggingface.co/collections/dlouapre/tangible-lessons-6a96e2c4be1533d68e65d7a2)
 to find lessons published from this repository and by other creators.
 
-The lesson lets you play or seek through the explanation, orbit the loss
-landscape, move the starting point, change optimizer settings, pause for
-exploration, and ask written questions.
 
-## Create your first lesson
+## How does it work?
+
+A lesson is generated from a TypeScript scene, a Markdown script file containing narration and scene synchronization, and a YAML configuration file.
+The compiler creates an audio track using a TTS model, and synchronizes it to a scene manipulation track.
+During playback, the scene combines scripted changes with learner interaction.
+
+When the LLM assistant is asked a question, it receives the lesson, the state of the scene and instructions to control it.
+
+Every scene renders from the complete state at the current lesson time. Seeking directly to a time therefore recreates the same view without replaying the lesson from the beginning.
+
+
+## Installation
 
 Tangible currently requires Node.js 22 or newer, Git, and pnpm. Node 22 includes
 Corepack, which can activate the pnpm version pinned by the repository:
@@ -32,93 +40,114 @@ pnpm install
 pnpm build
 ```
 
-Run an existing lesson without a credential, model download, or ffmpeg:
 
-```bash
-pnpm lesson preview --silent --lesson lessons/unit-circle
-```
+## Create your own lesson
 
-Generate a complete working lesson and open its interactive scene:
+Authoring a lesson typically involves:
+
+- building an interactive scene `scenes/scene.ts`,
+- writing a script `script.md` containing both the narration and the instructions for the synchronized manipulation of the scene,
+- writing `assistant.md` file for custom instructions to the LLM assistant.
+- adjusting `lesson.yaml` configuration file
+
+You can work with a coding agent throughout the process (see the `create-tangible-lesson` skill) in particular for scene creation.
+
+### (1) Create a new lesson
+
+First create a new lesson with
 
 ```bash
 pnpm lesson new my-lesson --lesson lessons/my-lesson
+```
+
+### (2) Build the interactive scene
+
+Work on the interactive scene in `scenes/scene.ts`, possibly with a coding agent.
+
+Preview the interactive scene with
+```bash
 pnpm lesson scene --lesson lessons/my-lesson
 ```
 
-The generated lesson contains an accessible range control, a linked visual
-result, short narration, a synchronized cue, and an interaction pause. Change
-the scene and `script.md`, then validate and preview the complete lesson:
+### (3) Write the script and the choreography
 
+The `script.md` file contains both your narration and instructions for manipulating the scene, for instance:
+
+```
+@camera(target: [0, 0.4, 0], distance: 7.4, azimuth: 7°, elevation: 62°, over: 3s) 
+Now watch the orange path.
+
+@cue(step -> 30, over: 5s) 
+Each step crosses the ravine, overshoots, crosses back, and only slowly makes progress along the floor.
+```
+
+Start with your text. Instructions for the choreography are documented in the [reference guide](./docs/reference.md).
+
+Before writing formal cues, run `lesson ref` to see exactly what the scene exposes.
+```bash
+pnpm lesson ref --lesson lessons/my-lesson
+```
+It prints the scene’s parameters, valid ranges, default values, ownership rules, camera presets, constants, groups, and other available
+controls. 
+
+You can first write the visual intentions in double brackets and ask your coding agent to translate them into formal directives.
+```
+[[Move to an overhead view before the next sentence.]]
+Now watch the orange path.
+
+[[Advance the optimizer to step 30 during the next sentence.]]
+Each step crosses the ravine, overshoots, crosses back, and only slowly makes progress along the floor.
+```
+and ask your coding agent to translate your intentions into formal instructions.
+
+
+### (4) Check and iterate
+
+Check your lesson with
 ```bash
 pnpm lesson check --lesson lessons/my-lesson
+```
+
+To review your lesson while you are building it, you have three options:
+- a silent preview
+- an audible offline preview that uses a local TTS model
+- a production voice version that uses the TTS model you defined in the `lesson.yaml` configuration file
+
+
+You can first generate a silent preview version: activate closed captions and follow the choreography to see if it matches your intent.
+```bash
+pnpm lesson preview --silent --lesson lessons/my-lesson
+```
+
+Remove the `silent` flag to get an audible offline preview. It requires FFmpeg and downloads a pinned 123 MB local speech model on its first run.
+It needs no API key.
+```bash
 pnpm lesson preview --offline --lesson lessons/my-lesson
 ```
 
-Audible offline preview requires ffmpeg and downloads a pinned 123 MB local
-speech model on its first run. It needs no API key. The
-[creator quick start](./docs/quickstart.md) walks through one visible scene
-change, one narration edit, and one cue edit.
-
-## Create a lesson with a coding agent
-
-The repository includes instructions and a `create-tangible-lesson` skill for
-coding agents. Copy this prompt and replace the bracketed text:
-
-> Use `$create-tangible-lesson` and help me create a lesson about [subject]. The
-> relationship I want learners to see is [relationship]. Build the smallest
-> interactive scene first and stop for my review. Preserve my narration, turn
-> my double-bracket hints into formal cues, and do not deploy until I explicitly
-> authorize it.
-
-The human owns the teaching argument, spoken narration, and final visual
-judgment. The agent implements the scene, translates natural-language hints
-after scene review, runs technical checks, and prepares builds. Production
-narration and deployment begin only after the lesson is stable.
-
-## How a lesson works
-
-Tangible keeps authored state in readable text and TypeScript:
-
-```text
-script.md ─────────┐
-                   ├─ compiler ─► narration + captions + animation tracks
-scenes/scene.ts ───┘                              │
-                                                 ▼
-                              player: time ► state ◄ learner interaction
+To use production voice (TTS model defined in `lesson.yaml`)
+```bash
+pnpm lesson preview --lesson lessons/my-lesson
 ```
 
-The scene schema gives the narration and the learner a shared vocabulary. The
-human can write silent visual intent in double brackets:
+The [creator quick start](./docs/quickstart.md) walks through one visible scene change, one narration edit, and one cue edit.
 
-```markdown
-The horizontal projection is the cosine.
-[[Reveal the projection as the narrator says “horizontal”.]]
+
+### (5) Build and review the finished lesson
+```bash
+pnpm lesson build --bundle --lesson lessons/my-lesson```
 ```
 
-An agent runs `lesson ref`, translates the hint into a schema-valid directive,
-and checks it without contacting a provider:
-
-```markdown
-The @show(projection) horizontal projection is the cosine.
-```
-
-Every scene renders from the complete state at the current lesson time. Seeking
-directly to a time therefore recreates the same view without replaying the
-lesson from the beginning.
-
-## Publish on Hugging Face Spaces
+### (6) Publish on Hugging Face Spaces
 
 After reviewing the complete lesson with its production voice, prepare the local
 Space metadata without contacting Hugging Face:
 
 ```bash
-pnpm lesson deploy --prepare \
-  --space namespace/space-name \
-  --lesson lessons/my-lesson
+pnpm lesson deploy --prepare --space namespace/space-name --lesson lessons/my-lesson
 ```
 
-Review and commit those files. Then authenticate, run the local release checks,
-and create the Space privately:
+Review and commit those files. Then authenticate, run the local release checks, and create the Space privately.
 
 ```bash
 hf auth login
@@ -138,21 +167,12 @@ by [opening a GitHub issue](https://github.com/scienceetonnante/tangible/issues/
 with the Space URL. The collection accepts public lessons from any Hugging Face
 account.
 
+
 ## Current scope and limitations
 
-- Tangible currently assumes that narration is written in English.
+The first release supports desktop and tablet layouts. Portrait phones ask visitors to rotate the device or use a larger screen. 
+Phone landscape uses a compact layout that is still being refined.
 
-- The first release supports desktop and tablet layouts. Portrait phones ask
-  visitors to rotate the device or use a larger screen. Phone landscape uses a
-  compact layout.
-
-- Standard playback and assistant controls work with a keyboard, show visible
-  focus indicators, and provide captions.
-
-- Individual lessons can still contain canvas controls without equivalent HTML
-  controls. The optimizer lesson describes its canvas for screen readers and
-  distinguishes paths by labels, shapes, and line patterns, but its sliders,
-  starting point, and camera are not fully keyboard-operable.
 
 ## Documentation
 
@@ -168,20 +188,8 @@ account.
 - [Contributing](./CONTRIBUTING.md) explains how to work on lessons or the
   framework.
 
-## Included lessons
 
-- `unit-circle` is a compact two-dimensional lesson and the primary integration
-  example.
-
-- `optimizers` is a navigable three-dimensional optimizer comparison.
-
-- `python-sampler` contains editable browser-based Python examples.
-
-Authored lessons live in `lessons/`. Framework packages and the command-line
-tool live in `packages/`. Generated `build/` and `.cache/` directories must not
-be edited or committed.
-
-## Contributing, security, and license
+## License
 
 Read [CONTRIBUTING.md](./CONTRIBUTING.md) before submitting changes.
 
