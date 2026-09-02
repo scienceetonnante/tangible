@@ -5,6 +5,24 @@ async function ready(page: import("@playwright/test").Page) {
   await page.waitForFunction(() => (window as any).__player?.clock.duration > 0, null, { timeout: 20000 });
 }
 
+async function togglePlayback(
+  page: import("@playwright/test").Page,
+  event: "play" | "pause",
+) {
+  const audio = page.locator("audio");
+  await audio.evaluate((element, eventName) => {
+    element.removeAttribute("data-e2e-playback-event");
+    element.addEventListener(
+      eventName,
+      () => element.setAttribute("data-e2e-playback-event", eventName),
+      { once: true },
+    );
+  }, event);
+  await page.locator(".xv-play").click();
+  await expect(audio).toHaveAttribute("data-e2e-playback-event", event, { timeout: 30000 });
+  await expect.poll(() => page.evaluate(() => (window as any).__player.clock.playing)).toBe(event === "play");
+}
+
 test("scene fits the viewport while keeping the question field visible", async ({ page }) => {
   await page.setViewportSize({ width: 800, height: 400 });
   await ready(page);
@@ -48,15 +66,15 @@ test("an authored assistant starts open only when the viewport has room", async 
   await expect(page.locator(".xv-assistant-body")).toBeHidden();
 });
 
-test("paused question writes, demonstrates, yields to interaction, and resumes", async ({ page }) => {
+test("paused question writes, demonstrates, yields to interaction, and resumes", async ({ page }, testInfo) => {
+  if (testInfo.project.name === "webkit") testInfo.setTimeout(60000);
   await ready(page);
   await page.locator(".xv-assistant-toggle").click();
   const input = page.locator(".xv-assistant-input");
   await expect(input).toBeDisabled();
 
-  await page.locator(".xv-play").click();
-  await page.waitForFunction(() => (window as any).__player.clock.playing === true);
-  await page.locator(".xv-play").click();
+  await togglePlayback(page, "play");
+  await togglePlayback(page, "pause");
   await expect(input).toBeEnabled();
 
   await input.fill("Why is the cosine zero at a quarter turn?");
@@ -88,6 +106,5 @@ test("paused question writes, demonstrates, yields to interaction, and resumes",
 
   await expect(input).toBeEnabled({ timeout: 10000 });
   await expect(page.locator(".xv-assistant-turn")).toHaveCount(1);
-  await page.locator(".xv-play").click();
-  await page.waitForFunction(() => (window as any).__player.clock.playing === true);
+  await togglePlayback(page, "play");
 });
