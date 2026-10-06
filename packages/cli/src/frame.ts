@@ -18,7 +18,7 @@ export async function renderFrame(siteDir: string, opts: FrameOptions): Promise<
   const port = await new Promise<number>((res) => server.listen(0, "127.0.0.1", () => res((server.address() as AddressInfo).port)));
   const [w, h] = (opts.size ?? "1280x720").split("x").map(Number);
 
-  const browser = await chromium.launch({ args: ["--autoplay-policy=no-user-gesture-required"] });
+  const browser = await chromium.launch({ channel: "chromium", args: ["--autoplay-policy=no-user-gesture-required"] });
   try {
     const page = await browser.newPage({ viewport: { width: w!, height: h! } });
     await page.goto(`http://localhost:${port}/?export&t=${opts.t}`);
